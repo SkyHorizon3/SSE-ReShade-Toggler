@@ -5,11 +5,13 @@
 
 namespace logger = SKSE::log;
 
+// All these globals are bad practice, will prolly be fixed
 HMODULE g_hModule = nullptr;
 static reshade::api::effect_runtime* s_pRuntime = nullptr;
 std::shared_ptr<spdlog::logger> g_Logger;
 std::vector<std::string> g_INImenus;
-std::vector<std::string> g_menuValue;
+std::vector<std::string> g_MenuValue;
+bool g_IsInputLoaded = false;
 
 class MyEffectRuntime : public reshade::api::effect_runtime 
 {
@@ -35,9 +37,9 @@ public:
         const std::string_view menuName = event->menuName;
 
         // Iterate over vectors to find matching menuName
-        for (size_t i = 0; i < g_menuValue.size(); i++)
+        for (size_t i = 0; i < g_MenuValue.size(); i++)
         {
-            if (menuName == g_menuValue[i])
+            if (menuName == g_MenuValue[i])
             {
                 const bool opening = event->opening;
                 logger::info("Menu {} {}", menuName, opening ? "open" : "closed");
@@ -78,9 +80,9 @@ void MenusInINI()
     for (const auto& key : keys) 
     {
         g_INImenus.push_back(key.pItem);
-        g_menuValue.push_back(ini.GetValue(section, key.pItem, nullptr));
+        g_MenuValue.push_back(ini.GetValue(section, key.pItem, nullptr));
 
-        logger::info("Menu:  {} - Value: {}", g_INImenus.back(), g_menuValue.back());
+        logger::info("Menu:  {} - Value: {} - Vector Size: {}", g_INImenus.back(), g_MenuValue.back(), g_INImenus.size());
     }
 }
 
@@ -128,6 +130,15 @@ void SetupLog()
     spdlog::flush_on(spdlog::level::trace);
 }
 
+void isInputLoaded(SKSE::MessagingInterface::Message* message)
+{
+    if(message->type == SKSE::MessagingInterface::kInputLoaded)
+    {
+        g_IsInputLoaded = true;
+        logger::info("g_IsInputLoaded: {}", g_IsInputLoaded);
+    } 
+}
+
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID) 
 {
     if (fdwReason == DLL_PROCESS_ATTACH) 
@@ -148,11 +159,14 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
     SetupLog();
     g_Logger->info("Loaded plugin");
     
+    SKSE::GetMessagingInterface()->RegisterListener(isInputLoaded);
+     
     MenusInINI();
 
     auto& eventProcessor = EventProcessor::GetSingleton();
     RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessor);
     Load();
+    
 
     return true;
 }
