@@ -8,8 +8,8 @@ namespace logger = SKSE::log;
 HMODULE g_hModule = nullptr;
 static reshade::api::effect_runtime* s_pRuntime = nullptr;
 std::shared_ptr<spdlog::logger> g_Logger;
-std::string g_INImenus;
-std::string g_menuValue;
+std::vector<std::string> g_INImenus;
+std::vector<std::string> g_menuValue;
 
 class MyEffectRuntime : public reshade::api::effect_runtime 
 {
@@ -33,12 +33,21 @@ public:
                                           RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override 
     {
         const std::string_view menuName = event->menuName;
-        if (menuName == g_menuValue) {
-            const bool opening = event->opening;
-            logger::info("Menu {} {}", menuName, opening ? "open" : "closed");
-            if (s_pRuntime != nullptr) {
-                s_pRuntime->set_effects_state(!opening);
-                logger::info("Reshade {}", opening ? "disabled" : "enabled");
+
+        // Iterate over vectors to find matching menuName
+        for (size_t i = 0; i < g_menuValue.size(); i++)
+        {
+            if (menuName == g_menuValue[i])
+            {
+                const bool opening = event->opening;
+                logger::info("Menu {} {}", menuName, opening ? "open" : "closed");
+                if (s_pRuntime != nullptr) 
+                {
+                    s_pRuntime->set_effects_state(!opening);
+                    logger::info("Reshade {}", opening ? "disabled" : "enabled");
+                }
+
+                break; // Exit after finding match
             }
         }
 
@@ -68,11 +77,10 @@ void MenusInINI()
 
     for (const auto& key : keys) 
     {
-        g_INImenus = key.pItem;
-        g_menuValue = ini.GetValue(section, key.pItem, nullptr);
-        
-        logger::info("Menu: {} - Value: {}", g_INImenus, g_menuValue);
-        
+        g_INImenus.push_back(key.pItem);
+        g_menuValue.push_back(ini.GetValue(section, key.pItem, nullptr));
+
+        logger::info("Menu:  {} - Value: {}", g_INImenus.back(), g_menuValue.back());
     }
 }
 
@@ -139,7 +147,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
     SKSE::Init(skse);
     SetupLog();
     g_Logger->info("Loaded plugin");
-
+    
     MenusInINI();
 
     auto& eventProcessor = EventProcessor::GetSingleton();
