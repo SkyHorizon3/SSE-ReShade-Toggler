@@ -1,5 +1,5 @@
-﻿#include <spdlog/sinks/basic_file_sink.h>
-#include <SimpleIni.h>
+﻿#include <SimpleIni.h>
+#include <spdlog/sinks/basic_file_sink.h>
 #include "PCH.h"
 #include "include/reshade.hpp"
 
@@ -8,6 +8,8 @@ namespace logger = SKSE::log;
 HMODULE g_hModule = nullptr;
 static reshade::api::effect_runtime* s_pRuntime = nullptr;
 std::shared_ptr<spdlog::logger> g_Logger;
+std::string g_INImenus;
+std::string g_menuValue;
 
 class MyEffectRuntime : public reshade::api::effect_runtime 
 {
@@ -31,14 +33,10 @@ public:
                                           RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override 
     {
         const std::string_view menuName = event->menuName;
-        if (menuName == "MapMenu") 
-        {
+        if (menuName == g_menuValue) {
             const bool opening = event->opening;
             logger::info("Menu {} {}", menuName, opening ? "open" : "closed");
-
-            // Toggle Reshade effects based on menuState
-            if (s_pRuntime != nullptr) 
-            {
+            if (s_pRuntime != nullptr) {
                 s_pRuntime->set_effects_state(!opening);
                 logger::info("Reshade {}", opening ? "disabled" : "enabled");
             }
@@ -54,7 +52,29 @@ private:
     EventProcessor(EventProcessor&&) = delete;
     EventProcessor& operator=(const EventProcessor&) = delete;
     EventProcessor& operator=(EventProcessor&&) = delete;
+
 };
+
+void MenusInINI() 
+{
+    CSimpleIniA ini;
+    ini.SetUnicode();
+    ini.LoadFile(L"Data\\SKSE\\Plugins\\ReshadeToggler.ini");
+
+    const char* section = "Menus";
+
+    CSimpleIniA::TNamesDepend keys;
+    ini.GetAllKeys(section, keys);
+
+    for (const auto& key : keys) 
+    {
+        g_INImenus = key.pItem;  // Assign the value to the global variable
+        g_menuValue = ini.GetValue(section, key.pItem, nullptr);
+        
+        logger::info("Menu: {} - Value: {}", g_INImenus, g_menuValue);
+        
+    }
+}
 
 static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime) 
 { 
@@ -73,7 +93,8 @@ void unregister_addon_events()
 
 void Load() 
 {
-    if (reshade::register_addon(g_hModule)) {
+    if (reshade::register_addon(g_hModule)) 
+    {
         g_Logger->info("Registered addon");
         register_addon_events();
     } else {
@@ -99,16 +120,12 @@ void SetupLog()
     spdlog::flush_on(spdlog::level::trace);
 }
 
-
-// Fun Fact: 'BOOL' ist eigentlich ein int und 'TRUE' is 1, 'FALSE' dementsprechend 0. Warum Microsoft ihre eigenen Typen gemacht hat, die eigentlich nur int sind, keine Ahnung. Es gibt noch viel mehr von sowas
-// 'APIENTRY' ist einfach nur __stdcall, aber einfacher zu verstehen gj Microsoft!
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID) 
 {
     if (fdwReason == DLL_PROCESS_ATTACH) 
     {
         g_hModule = hModule;
-    } 
-    else if (fdwReason == DLL_PROCESS_DETACH) 
+    } else if (fdwReason == DLL_PROCESS_DETACH) 
     {
         unregister_addon_events();
         reshade::unregister_addon(hModule);
@@ -117,11 +134,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
     return TRUE;
 }
 
-SKSEPluginLoad(const SKSE::LoadInterface* skse)
+SKSEPluginLoad(const SKSE::LoadInterface* skse) 
 {
     SKSE::Init(skse);
     SetupLog();
     g_Logger->info("Loaded plugin");
+
+    MenusInINI();
 
     auto& eventProcessor = EventProcessor::GetSingleton();
     RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessor);
