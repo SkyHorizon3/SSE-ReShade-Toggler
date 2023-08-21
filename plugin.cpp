@@ -68,7 +68,7 @@ void MenusInINI()
 
     for (const auto& key : keys) 
     {
-        g_INImenus = key.pItem;  // Assign the value to the global variable
+        g_INImenus = key.pItem;
         g_menuValue = ini.GetValue(section, key.pItem, nullptr);
         
         logger::info("Menu: {} - Value: {}", g_INImenus, g_menuValue);
