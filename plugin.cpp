@@ -55,12 +55,13 @@ public:
                 break;
             }
         }
-
         if (s_pRuntime != nullptr)
         {
-            logger::info("Menu {} {}", menuName, opening ? "open" : "closed");
             s_pRuntime->set_effects_state(enableReshade);
+#if _DEBUG
+            logger::info("Menu {} {}", menuName, opening ? "open" : "closed");
             logger::info("Reshade {}", enableReshade ? "disabled" : "enabled");
+#endif
         }
 
         return RE::BSEventNotifyControl::kContinue;
