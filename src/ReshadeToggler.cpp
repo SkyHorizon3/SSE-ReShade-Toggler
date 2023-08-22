@@ -106,7 +106,7 @@ void ReshadeToggler::MenusInINI()
         m_INImenus.push_back(key.pItem);
         g_MenuValue.emplace(ini.GetValue(section, key.pItem, nullptr));
         const char* menuItem = m_INImenus.back().c_str();
-        const char* itemValue = key.pItem;
+        const char* itemValue = ini.GetValue(section, key.pItem, nullptr);
         g_Logger->info("Menu:  {} - Value: {}", menuItem, itemValue);
     }
 }
