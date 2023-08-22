@@ -1,9 +1,8 @@
-﻿
-#include "PCH.h"
+﻿#include "PCH.h"
 #include <unordered_set>
 #include <SimpleIni.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#include "include/reshade.hpp"
+#include "../include/reshade.hpp"
 
 namespace logger = SKSE::log;
 
@@ -11,7 +10,7 @@ HMODULE g_hModule = nullptr;
 static reshade::api::effect_runtime* s_pRuntime = nullptr;
 std::shared_ptr<spdlog::logger> g_Logger;
 std::vector<std::string> g_INImenus;
-std::vector<std::string> g_menuValue;
+std::unordered_set<std::string> g_menuValue;
 
 class MyEffectRuntime : public reshade::api::effect_runtime
 {
@@ -34,22 +33,23 @@ public:
     RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* event,
         RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override
     {
-        const std::string_view menuName = event->menuName;
-        bool opening = event->opening;
-        if (opening)
-        {
-            m_OpenMenus.insert(menuName); // Mark menu as open
-        }
-        else
+
+        const auto& menuName = event->menuName;
+        auto& opening = event->opening;
+
+        // emplace_hint to improve insertion performance
+        auto it = m_OpenMenus.emplace_hint(m_OpenMenus.end(), menuName);
+
+        if (!opening)
         {
             m_OpenMenus.erase(menuName); // Mark menu as closed
         }
 
         // Check if any open menu matches a menu in g_menuValue
         bool enableReshade = true;
-        for (const std::string& menuToDisable : g_menuValue)
+        for (const auto& menuToDisable : g_menuValue)
         {
-            if (m_OpenMenus.count(menuToDisable) > 0)
+            if (m_OpenMenus.find(menuToDisable) != m_OpenMenus.end())
             {
                 enableReshade = false;
                 break;
@@ -93,9 +93,9 @@ void MenusInINI()
     for (const auto& key : keys)
     {
         g_INImenus.push_back(key.pItem);
-        g_menuValue.push_back(ini.GetValue(section, key.pItem, nullptr));
+        g_menuValue.emplace(ini.GetValue(section, key.pItem, nullptr));
 
-        logger::info("Menu:  {} - Value: {}", g_INImenus.back(), g_menuValue.back());
+        logger::info("Menu:  {} - Value: {}", g_INImenus.back(), key.pItem);
     }
 }
 
