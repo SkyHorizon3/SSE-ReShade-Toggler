@@ -9,7 +9,7 @@
 HMODULE g_hModule = nullptr;
 static reshade::api::effect_runtime* s_pRuntime = nullptr;
 std::shared_ptr<spdlog::logger> g_Logger;
-std::unordered_set<std::string> g_menuValue;
+std::unordered_set<std::string> g_MenuValue;
 
 
 class EventProcessor : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
@@ -32,7 +32,7 @@ private:
     EventProcessor& operator=(const EventProcessor&) = delete;
     EventProcessor& operator=(EventProcessor&&) = delete;
 
-    std::unordered_set<std::string_view> m_OpenMenus;
+    std::unordered_set<std::string> m_OpenMenus;
 };
 
 class ReshadeToggler
