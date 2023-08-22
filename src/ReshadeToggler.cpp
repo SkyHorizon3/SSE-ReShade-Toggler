@@ -1,18 +1,8 @@
-﻿#include "PCH.h"
-#include <unordered_set>
-#include <SimpleIni.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include "../include/reshade.hpp"
+﻿#include "ReshadeToggler.h"
 
 namespace logger = SKSE::log;
 
-HMODULE g_hModule = nullptr;
-static reshade::api::effect_runtime* s_pRuntime = nullptr;
-std::shared_ptr<spdlog::logger> g_Logger;
-std::vector<std::string> g_INImenus;
-std::unordered_set<std::string> g_menuValue;
-
-class MyEffectRuntime : public reshade::api::effect_runtime
+class EffectRuntime : public reshade::api::effect_runtime
 {
 public:
     void set_effects_state(bool enabled) override
@@ -20,6 +10,21 @@ public:
         reshade::api::effect_runtime::set_effects_state(enabled);
     }
 };
+
+static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
+{
+    s_pRuntime = runtime;
+}
+
+void register_addon_events()
+{
+    reshade::register_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
+}
+
+void unregister_addon_events()
+{
+    reshade::unregister_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
+}
 
 class EventProcessor : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
@@ -79,70 +84,62 @@ private:
 
 };
 
-void MenusInINI()
+class ReshadeToggler
 {
-    CSimpleIniA ini;
-    ini.SetUnicode();
-    ini.LoadFile(L"Data\\SKSE\\Plugins\\ReshadeToggler.ini");
+public:
+    std::vector<std::string> g_INImenus;
 
-    const char* section = "Menus";
-
-    CSimpleIniA::TNamesDepend keys;
-    ini.GetAllKeys(section, keys);
-
-    for (const auto& key : keys)
+    void SetupLog()
     {
-        g_INImenus.push_back(key.pItem);
-        g_menuValue.emplace(ini.GetValue(section, key.pItem, nullptr));
+        auto logsFolder = SKSE::log::log_directory();
+        if (!logsFolder)
+        {
+            SKSE::stl::report_and_fail("SKSE log_directory not provided, logs disabled.");
+        }
 
-        logger::info("Menu:  {} - Value: {}", g_INImenus.back(), key.pItem);
+        auto pluginName = SKSE::PluginDeclaration::GetSingleton()->GetName();
+        auto logFilePath = *logsFolder / std::format("{}.log", pluginName);
+
+        auto fileLoggerPtr = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFilePath.string(), true);
+        g_Logger = std::make_shared<spdlog::logger>("log", std::move(fileLoggerPtr));
+        spdlog::set_default_logger(g_Logger);
+        spdlog::set_level(spdlog::level::trace);
+        spdlog::flush_on(spdlog::level::trace);
     }
-}
 
-static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
-{
-    s_pRuntime = runtime;
-}
-
-void register_addon_events()
-{
-    reshade::register_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
-}
-
-void unregister_addon_events()
-{
-    reshade::unregister_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
-}
-
-void Load()
-{
-    if (reshade::register_addon(g_hModule))
+    void MenusInINI()
     {
-        g_Logger->info("Registered addon");
-        register_addon_events();
-    }
-    else {
-        g_Logger->info("ReShade not present.");
-    }
-}
+        CSimpleIniA ini;
+        ini.SetUnicode();
+        ini.LoadFile(L"Data\\SKSE\\Plugins\\ReshadeToggler.ini");
 
-void SetupLog()
-{
-    auto logsFolder = SKSE::log::log_directory();
-    if (!logsFolder)
+        const char* section = "Menus";
+
+        CSimpleIniA::TNamesDepend keys;
+        ini.GetAllKeys(section, keys);
+
+        for (const auto& key : keys)
+        {
+            g_INImenus.push_back(key.pItem);
+            g_menuValue.emplace(ini.GetValue(section, key.pItem, nullptr));
+
+            logger::info("Menu:  {} - Value: {}", g_INImenus.back(), key.pItem);
+        }
+    }
+
+    void Load()
     {
-        SKSE::stl::report_and_fail("SKSE log_directory not provided, logs disabled.");
+        if (reshade::register_addon(g_hModule))
+        {
+            g_Logger->info("Registered addon");
+            register_addon_events();
+        }
+        else {
+            g_Logger->info("ReShade not present.");
+        }
     }
 
-    auto pluginName = SKSE::PluginDeclaration::GetSingleton()->GetName();
-    auto logFilePath = *logsFolder / std::format("{}.log", pluginName);
-
-    auto fileLoggerPtr = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFilePath.string(), true);
-    g_Logger = std::make_shared<spdlog::logger>("log", std::move(fileLoggerPtr));
-    spdlog::set_default_logger(g_Logger);
-    spdlog::set_level(spdlog::level::trace);
-    spdlog::flush_on(spdlog::level::trace);
-}
+};
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
 {
@@ -162,14 +159,13 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
 SKSEPluginLoad(const SKSE::LoadInterface* skse)
 {
     SKSE::Init(skse);
-    SetupLog();
+    ReshadeToggler reshadeToggler;
+    reshadeToggler.SetupLog();
+    reshadeToggler.MenusInINI();
+    reshadeToggler.Load();
     g_Logger->info("Loaded plugin");
-
-    MenusInINI();
-
     auto& eventProcessor = EventProcessor::GetSingleton();
     RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessor);
-    Load();
 
     return true;
 }
