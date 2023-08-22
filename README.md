@@ -6,7 +6,9 @@ By default, the reshade effects are disabled in the main menu, loading screen an
 
 # Requirements
 Address Library for SKSE Plugins
+
 SKSE﻿
+
 ReShade 5.9+ with full add-on support﻿﻿
 
 
@@ -21,5 +23,7 @@ SkyHorizon3/ReshadeToggler﻿
 
 # Credits
 crosire﻿ for Reshade
+
 doodlum﻿ and PureDark﻿ for skyrim-reshade-helper
+
 Skyrim Scripting for providing skse tutorials and code snippets
