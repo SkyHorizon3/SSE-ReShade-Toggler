@@ -16,11 +16,6 @@ ReShade 5.9+ with full add-on support﻿﻿
 Compatible with everything thats compatible with Reshade.
 Works on SE and AE. No idea about VR, but it should work.
 
-
-# Source
-SkyHorizon3/ReshadeToggler﻿
-
-
 # Credits
 crosire﻿ for Reshade
 
