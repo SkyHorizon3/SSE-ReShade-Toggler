@@ -1,4 +1,5 @@
-﻿#include "ReShadeToggler.h"
+﻿#include <Windows.h>
+#include "ReShadeToggler.h"
 
 namespace logger = SKSE::log;
 
@@ -68,7 +69,8 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
         m_OpenMenus.erase(it); // Mark menu as closed using the iterator
     }
 
-    if (m_OpenMenus.empty()) {
+    if (m_OpenMenus.empty())
+    {
         return RE::BSEventNotifyControl::kContinue; // Skip if no open menus
     }
 
@@ -95,32 +97,25 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
 #if _DEBUG
                 g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
                 g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
-
 #endif
             }
-
             else if (ToggleStateMenus.find("Specific") != std::string::npos)
             {
                 for (const std::string& LoopmenuValue02 : g_MenuGeneralValue02)
                 {
-                s_pRuntime->enumerate_techniques(LoopmenuValue02.c_str(), [enableReshade](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique) 
-                    {
-                    runtime->set_technique_state(technique, enableReshade); 
-                    });
+                     s_pRuntime->enumerate_techniques(LoopmenuValue02.c_str(), [enableReshade](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique) 
+                     {
+                        runtime->set_technique_state(technique, enableReshade);
+                     });
 
 #if _DEBUG
-                g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
-                g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
-
+                    g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
+                    g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
 #endif
-
                 }
-
-
-
             }
         }
-        }
+    }
         return RE::BSEventNotifyControl::kContinue;
 }
 
@@ -132,7 +127,6 @@ void ReshadeToggler::SetupLog()
     {
         SKSE::stl::report_and_fail("SKSE log_directory not provided, logs disabled.");
     }
-
     auto pluginName = SKSE::PluginDeclaration::GetSingleton()->GetName();
     auto logFilePath = *logsFolder / std::format("{}.log", pluginName);
 
@@ -161,15 +155,9 @@ void ReshadeToggler::MenusInINI()
     CSimpleIniA::TNamesDepend MenusProcess_keys;
 
 
-
     //General
     EnableMenus = ini.GetBoolValue(sectionGeneral, "EnableMenus");
     g_Logger->info("{}: EnableMenus: {}", sectionGeneral, EnableMenus);
-
-
-
-
-
 
 
     // MenusGeneral
@@ -195,27 +183,24 @@ void ReshadeToggler::MenusInINI()
             if (strncmp(key.pItem, togglePrefix, strlen(togglePrefix)) == 0)
             {
                 // Process ToggleSpecific entries
-                itemValuegeneral01 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
-                g_MenuGeneralValue01.emplace(itemValuegeneral01);
-                g_Logger->info("ToggleSpecific Menu:  {} - Value: {}", menuItemgeneral, itemValuegeneral01);
+                itemValueGeneral01 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
+                g_MenuGeneralValue01.emplace(itemValueGeneral01);
+                g_Logger->info("ToggleSpecific Menu:  {} - Value: {}", menuItemgeneral, itemValueGeneral01);
             }
 
             // Check if the key starts with ToggleSpecificState
             else if (strncmp(key.pItem, toggleStatePrefix, strlen(toggleStatePrefix)) == 0)
             {
                 // Process ToggleSpecificState entries
-                itemValuegeneral02 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
-                g_MenuGeneralValue02.emplace(itemValuegeneral02);
-                g_Logger->info("ToggleSpecificState Menu:  {} - Value: {}", menuItemgeneral, itemValuegeneral02);
+                itemValueGeneral02 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
+                g_MenuGeneralValue02.emplace(itemValueGeneral02);
+                g_Logger->info("ToggleSpecificState Menu:  {} - Value: {}", menuItemgeneral, itemValueGeneral02);
             }
         }
     }
 
 
- 
-
-
-//MenusProcess
+    //MenusProcess
     ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
     m_INImenus.reserve(MenusProcess_keys.size()); // Reserve space for vector
 
@@ -272,3 +257,49 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 
     return true;
 }
+
+
+// This is purely hypothetical code that might not even work in the first place
+#if 0
+// Define the memory addresses of the original and hook functions
+uintptr_t addressOfOriginalFunction = 0xADDRESS_OF_ORIGINAL_FUNCTION;
+uintptr_t addressOfHookFunction = (uintptr_t)&HookSetTechniqueState;
+
+// Define a type for the original ReShade function
+typedef void (*OriginalSetTechniqueStateType)(reshade::api::effect_runtime*, reshade::api::effect_technique, bool);
+
+// Original ReShade function
+void OriginalSetTechniqueState(reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique, bool state) {
+    // Call the original function
+    OriginalSetTechniqueStateType originalFunction = (OriginalSetTechniqueStateType)(addressOfOriginalFunction);
+    originalFunction(runtime, technique, state);
+}
+
+// Hook function for modifying ReShade behavior
+void HookSetTechniqueState(reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique, bool state) {
+     //  Code here
+    // For example, call OriginalSetTechniqueState and then modify the state based on menu conditions
+
+    OriginalSetTechniqueState(runtime, technique, state);
+}
+
+int main() {
+    // Calculate the relative offset between HookSetTechniqueState and OriginalSetTechniqueState
+    int offset = addressOfHookFunction - (addressOfOriginalFunction + 5); // 5 bytes for the JMP instruction
+
+    // Change the memory protection of the OriginalSetTechniqueState function to allow writing
+    DWORD oldProtect;
+    VirtualProtect((LPVOID)addressOfOriginalFunction, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
+
+    // Write a jump instruction to redirect execution to HookSetTechniqueState
+    *(BYTE*)(addressOfOriginalFunction) = 0xE9; // JMP opcode
+    *(int*)((int)addressOfOriginalFunction + 1) = offset; // Relative offset
+
+    // Restore the original memory protection
+    VirtualProtect((LPVOID)addressOfOriginalFunction, 5, oldProtect, &oldProtect);
+
+    // Rest of the Logic
+
+    return 0;
+}
+#endif

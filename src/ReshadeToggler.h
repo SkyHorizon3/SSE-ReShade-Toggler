@@ -23,8 +23,8 @@ inline static bool EnableMenus = true;
 
 std::string ToggleStateMenus;
 std::string ToggleAllStateMenus;
-const char* itemValuegeneral01;
-const char* itemValuegeneral02;
+const char* itemValueGeneral01;
+const char* itemValueGeneral02;
 
 class EventProcessorMenu : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
