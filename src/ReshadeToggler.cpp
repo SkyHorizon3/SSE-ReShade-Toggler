@@ -11,16 +11,16 @@ public:
     }
 };
 
-/*
+
 class TechniqueRuntime : public reshade::api::effect_runtime
 {
 public:
     void set_technique_state(reshade::api::effect_technique technique, bool enabled) override
     {
-        reshade::api::effect_runtime::set_technique_state(enabled);
+        reshade::api::effect_runtime::set_technique_state(technique, enabled);
     }
 };
-*/
+
 
 /// <summary>
 /// Enables or disables the specified <paramref name="technique"/>.
@@ -103,7 +103,8 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
             {
                 for (const std::string& LoopmenuValue02 : g_MenuGeneralValue02)
                 {
-                s_pRuntime->enumerate_techniques(LoopmenuValue02.c_str(), [enableReshade](s_pRuntime, reshade::api::effect_technique technique) {
+                s_pRuntime->enumerate_techniques(LoopmenuValue02.c_str(), [enableReshade](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique) 
+                    {
                     runtime->set_technique_state(technique, enableReshade); 
                     });
 
