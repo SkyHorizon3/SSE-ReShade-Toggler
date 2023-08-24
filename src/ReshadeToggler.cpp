@@ -1,4 +1,4 @@
-﻿#include "ReshadeToggler.h"
+﻿#include "ReShadeToggler.h"
 
 namespace logger = SKSE::log;
 
@@ -10,6 +10,24 @@ public:
         reshade::api::effect_runtime::set_effects_state(enabled);
     }
 };
+
+/*
+class TechniqueRuntime : public reshade::api::effect_runtime
+{
+public:
+    void set_technique_state(reshade::api::effect_technique technique, bool enabled) override
+    {
+        reshade::api::effect_runtime::set_technique_state(enabled);
+    }
+};
+*/
+
+/// <summary>
+/// Enables or disables the specified <paramref name="technique"/>.
+/// </summary>
+/// <param name="technique">Opaque handle to the technique.</param>
+/// <param name="enabled">Set to <see langword="true"/> to enable the technique, or <see langword="false"/> to disable it.</param>
+//virtual void set_technique_state(effect_technique technique, bool enabled) = 0;
 
 // Callback when Reshade begins effects
 static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
@@ -29,9 +47,17 @@ void unregister_addon_events()
 }
 
 // Process menu open/close events
-RE::BSEventNotifyControl EventProcessor::ProcessEvent(const RE::MenuOpenCloseEvent* event,
+RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenCloseEvent* event,
     RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
+
+    if (!EnableMenus) 
+    {
+        g_Logger->info("!EnableMenus"); // Skip execution if EnableMenus is false
+        return RE::BSEventNotifyControl::kContinue; 
+    }
+    else if (EnableMenus){
+
     const auto& menuName = event->menuName;
     auto& opening = event->opening;
 
@@ -59,13 +85,41 @@ RE::BSEventNotifyControl EventProcessor::ProcessEvent(const RE::MenuOpenCloseEve
 
         if (s_pRuntime != nullptr)
         {
-            s_pRuntime->set_effects_state(enableReshade);
-#if _DEBUG
-            g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
-            g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
-#endif
-        }
 
+            g_Logger->info("s_pRuntime not 0!");
+            g_Logger->info("General ToggleStateMenus:  {} - ToggleAllStateMenus: {}", ToggleStateMenus, ToggleAllStateMenus);
+
+            if (ToggleStateMenus.find("All") != std::string::npos)
+            {
+                s_pRuntime->set_effects_state(enableReshade);
+#if _DEBUG
+                g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
+                g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
+
+#endif
+            }
+
+            else if (ToggleStateMenus.find("Specific") != std::string::npos)
+            {
+                for (const std::string& LoopmenuValue02 : g_MenuGeneralValue02)
+                {
+                s_pRuntime->enumerate_techniques(LoopmenuValue02.c_str(), [enableReshade](s_pRuntime, reshade::api::effect_technique technique) {
+                    runtime->set_technique_state(technique, enableReshade); 
+                    });
+
+#if _DEBUG
+                g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
+                g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
+
+#endif
+
+                }
+
+
+
+            }
+        }
+        }
         return RE::BSEventNotifyControl::kContinue;
 }
 
@@ -93,19 +147,82 @@ void ReshadeToggler::MenusInINI()
 {
     CSimpleIniA ini;
     ini.SetUnicode();
-    ini.LoadFile(L"Data\\SKSE\\Plugins\\ReshadeToggler.ini");
+    ini.LoadFile(L"Data\\SKSE\\Plugins\\ReShadeToggler.ini");
 
-    const char* section = "Menus";
-    CSimpleIniA::TNamesDepend keys;
-    ini.GetAllKeys(section, keys);
 
-    m_INImenus.reserve(keys.size()); // Reserve space for vector
+    const char* sectionGeneral = "General";
+    const char* sectionMenusGeneral = "MenusGeneral";
+    const char* sectionMenusProcess = "MenusProcess";
+    //const char* sectionGeneral = "Interior";
+    //const char* sectionGeneral = "Weather";
 
-    for (const auto& key : keys)
+    CSimpleIniA::TNamesDepend MenusGeneral_keys;
+    CSimpleIniA::TNamesDepend MenusProcess_keys;
+
+
+
+    //General
+    EnableMenus = ini.GetBoolValue(sectionGeneral, "EnableMenus");
+    g_Logger->info("{}: EnableMenus: {}", sectionGeneral, EnableMenus);
+
+
+
+
+
+
+
+    // MenusGeneral
+    ToggleStateMenus = ini.GetValue(sectionMenusGeneral, "ToggleState");
+    ToggleAllStateMenus = ini.GetValue(sectionMenusGeneral, "ToggleAllState");
+
+    g_Logger->info("General ToggleStateMenus:  {} - ToggleAllStateMenus: {}", ToggleStateMenus, ToggleAllStateMenus);
+
+    ini.GetAllKeys(sectionMenusGeneral, MenusGeneral_keys);
+    m_Specific.reserve(MenusGeneral_keys.size()); // Reserve space for vector
+
+    const char* toggleStatePrefix = "aToggleSpecificState";
+    const char* togglePrefix = "bToggleSpecific";
+
+    for (const auto& key : MenusGeneral_keys)
+    {
+        if (strcmp(key.pItem, "ToggleState") != 0 && strcmp(key.pItem, "ToggleAllState") != 0)
+        {
+            m_Specific.push_back(key.pItem);
+            const char* menuItemgeneral = m_Specific.back().c_str();
+
+            // Check if the key starts with ToggleSpecific
+            if (strncmp(key.pItem, togglePrefix, strlen(togglePrefix)) == 0)
+            {
+                // Process ToggleSpecific entries
+                itemValuegeneral01 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
+                g_MenuGeneralValue01.emplace(itemValuegeneral01);
+                g_Logger->info("ToggleSpecific Menu:  {} - Value: {}", menuItemgeneral, itemValuegeneral01);
+            }
+
+            // Check if the key starts with ToggleSpecificState
+            else if (strncmp(key.pItem, toggleStatePrefix, strlen(toggleStatePrefix)) == 0)
+            {
+                // Process ToggleSpecificState entries
+                itemValuegeneral02 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
+                g_MenuGeneralValue02.emplace(itemValuegeneral02);
+                g_Logger->info("ToggleSpecificState Menu:  {} - Value: {}", menuItemgeneral, itemValuegeneral02);
+            }
+        }
+    }
+
+
+ 
+
+
+//MenusProcess
+    ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
+    m_INImenus.reserve(MenusProcess_keys.size()); // Reserve space for vector
+
+    for (const auto& key : MenusProcess_keys)
     {
         m_INImenus.push_back(key.pItem);
         const char* menuItem = m_INImenus.back().c_str();
-        const char* itemValue = ini.GetValue(section, key.pItem, nullptr);
+        const char* itemValue = ini.GetValue(sectionMenusProcess, key.pItem, nullptr);
         g_MenuValue.emplace(itemValue);
         g_Logger->info("Menu:  {} - Value: {}", menuItem, itemValue);
     }
@@ -149,8 +266,8 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
     reshadeToggler.MenusInINI();
     reshadeToggler.Load();
     g_Logger->info("Loaded plugin");
-    auto& eventProcessor = EventProcessor::GetSingleton();
-    RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessor);
+    auto& eventProcessorMenu = EventProcessorMenu::GetSingleton();
+    RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
 
     return true;
 }
