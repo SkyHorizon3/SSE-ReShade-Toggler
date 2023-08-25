@@ -48,7 +48,6 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
         g_Logger->info("!EnableMenus"); // Skip execution if EnableMenus is false
         return RE::BSEventNotifyControl::kContinue; 
     }
-    else if (EnableMenus){
 
     const auto& menuName = event->menuName;
     auto& opening = event->opening;
@@ -79,35 +78,58 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
         if (s_pRuntime != nullptr)
         {
 
-            g_Logger->info("s_pRuntime not 0!");
-            g_Logger->info("General ToggleStateMenus:  {} - ToggleAllStateMenus: {}", ToggleStateMenus, ToggleAllStateMenus);
-
             if (ToggleStateMenus.find("All") != std::string::npos)
             {
+                if (ToggleAllStateMenus.find("off") != std::string::npos)
+                {
                 s_pRuntime->set_effects_state(enableReshade);
 #if _DEBUG
                 g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
                 g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
-#endif
+#endif  
+
+                }
+                else if (ToggleAllStateMenus.find("on") != std::string::npos)
+                {
+                    s_pRuntime->set_effects_state(!enableReshade);
+#if _DEBUG
+                    g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
+                    g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
+#endif  
+                }
+
+
             }
             else if (ToggleStateMenus.find("Specific") != std::string::npos)
             {
-                for (const std::string& LoopmenuValue02 : g_MenuGeneralValue01)
+                for (const std::string& LoopmenuValue01 : g_MenuGeneralValue01)
                 {
-                     s_pRuntime->enumerate_techniques(LoopmenuValue02.c_str(), [enableReshade](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique) 
-                     {
-                        runtime->set_technique_state(technique, enableReshade);
-                     });
+
+              
+                    s_pRuntime->enumerate_techniques(LoopmenuValue01.c_str(), [enableReshade](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
+                        {
+                            if (g_MenuGeneralValue02.find("off") != g_MenuGeneralValue02.end()) //Das hier funktioniert nicht. Es muss immer der richtige Wert von MenuGeneralValue02 verwendet werden. Hier schaut er aber nur, ob es sich im String befindet. Ich weiß nicht wie ich das lösen soll....
+                            {                                                                   
+                                runtime->set_technique_state(technique, enableReshade);
+                            }
+                            else if (g_MenuGeneralValue02.find("on") != g_MenuGeneralValue02.end())
+                            {
+                                runtime->set_technique_state(technique, !enableReshade);
+                            }
+
+                        });
 
 #if _DEBUG
                     g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
                     g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
 #endif
+
                 }
+
+
             }
         }
-    }
-        return RE::BSEventNotifyControl::kContinue;
+       return RE::BSEventNotifyControl::kContinue;
 }
 
 // Setup logger for plugin
@@ -160,10 +182,10 @@ void ReshadeToggler::MenusInINI()
 #endif
 
     // MenusGeneral
-    ToggleStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleState");
+    ToggleStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleOption");
     ToggleAllStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleAllState");
 
-    g_Logger->info("General ToggleStateMenus:  {} - ToggleAllStateMenus: {}", ToggleStateMenus, ToggleAllStateMenus);
+    g_Logger->info("General MenuToggleOption:  {} - MenuToggleAllState: {}", ToggleStateMenus, ToggleAllStateMenus);
 
     ini.GetAllKeys(sectionMenusGeneral, MenusGeneral_keys);
     m_SpecificMenu.reserve(MenusGeneral_keys.size()); // Reserve space for vector
@@ -173,27 +195,25 @@ void ReshadeToggler::MenusInINI()
 
     for (const auto& key : MenusGeneral_keys)
     {
-        if (strcmp(key.pItem, "MenuToggleState") != 0 && strcmp(key.pItem, "MenuToggleAllState") != 0)
+        if (strcmp(key.pItem, "MenuToggleOption") != 0 && strcmp(key.pItem, "MenuToggleAllState") != 0)
         {
             m_SpecificMenu.push_back(key.pItem);
             const char* menuItemgeneral = m_SpecificMenu.back().c_str();
 
-            // Check if the key starts with ToggleSpecific
+            // Check if the key starts with MenuToggleSpecificFile
             if (strncmp(key.pItem, togglePrefix01, strlen(togglePrefix01)) == 0)
             {
-                // Process ToggleSpecificFile entries
                 itemValueMenuGeneral01 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
                 g_MenuGeneralValue01.emplace(itemValueMenuGeneral01);
-                g_Logger->info("ToggleSpecificFile Menu:  {} - Value: {}", menuItemgeneral, itemValueMenuGeneral01);
+                g_Logger->info("MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemValueMenuGeneral01);
             }
 
-            // Check if the key starts with ToggleSpecificState
+            // Check if the key starts with MenuToggleSpecificState
             else if (strncmp(key.pItem, togglePrefix02, strlen(togglePrefix02)) == 0)
             {
-                // Process ToggleSpecificState entries
                 itemValueMenuGeneral02 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
                 g_MenuGeneralValue02.emplace(itemValueMenuGeneral02);
-                g_Logger->info("ToggleSpecificState Menu:  {} - Value: {}", menuItemgeneral, itemValueMenuGeneral02);
+                g_Logger->info("MenuToggleSpecificState:  {} - Value: {}", menuItemgeneral, itemValueMenuGeneral02);
             }
         }
     }
@@ -220,10 +240,10 @@ void ReshadeToggler::MenusInINI()
 #endif
 
     //Time
-    ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleState");
+    ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
     ToggleAllStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleAllState");
 
-    g_Logger->info("General ToggleStateTime:  {} - ToggleAllStateTime: {}", ToggleStateTime, ToggleAllStateTime);
+    g_Logger->info("General TimeToggleOption:  {} - TimeToggleAllState: {}", ToggleStateTime, ToggleAllStateTime);
 
     ini.GetAllKeys(sectionTimeGeneral, TimeGeneral_keys);
     m_SpecificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
@@ -233,27 +253,25 @@ void ReshadeToggler::MenusInINI()
 
     for (const auto& key : TimeGeneral_keys)
     {
-        if (strcmp(key.pItem, "TimeToggleState") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0)
+        if (strcmp(key.pItem, "TimeToggleOption") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0)
         {
             m_SpecificTime.push_back(key.pItem);
             const char* TimeItemgeneral = m_SpecificTime.back().c_str();
 
-            // Check if the key starts with ToggleSpecific
+            // Check if the key starts with TimeToggleSpecificFile
             if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
             {
-                // Process ToggleSpecific entries
                 itemValueTimeGeneral01 = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
                 g_TimeGeneralValue01.emplace(itemValueTimeGeneral01);
-                g_Logger->info("ToggleSpecificFile Time:  {} - Value: {}", TimeItemgeneral, itemValueTimeGeneral01);
+                g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", TimeItemgeneral, itemValueTimeGeneral01);
             }
 
-            // Check if the key starts with ToggleSpecificState
+            // Check if the key starts with TimeToggleSpecificState
             else if (strncmp(key.pItem, togglePrefix04, strlen(togglePrefix04)) == 0)
             {
-                // Process ToggleSpecificState entries
                 itemValueTimeGeneral02 = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
                 g_TimeGeneralValue02.emplace(itemValueTimeGeneral02);
-                g_Logger->info("ToggleSpecificState Time:  {} - Value: {}", TimeItemgeneral, itemValueTimeGeneral02);
+                g_Logger->info("TimeToggleSpecificState:  {} - Value: {}", TimeItemgeneral, itemValueTimeGeneral02);
             }
         }
     }
