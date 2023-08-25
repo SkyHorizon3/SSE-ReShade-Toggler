@@ -12,19 +12,25 @@ std::shared_ptr<spdlog::logger> g_Logger;
 std::unordered_set<std::string> g_MenuValue;
 std::unordered_set<std::string> g_MenuGeneralValue01;
 std::unordered_set<std::string> g_MenuGeneralValue02;
+std::unordered_set<std::string> g_TimeGeneralValue01;
+std::unordered_set<std::string> g_TimeGeneralValue02;
 
 
 inline static bool EnableMenus = true;
-//inline static bool EnableInterior = false;
-//inline static bool EnableTime = false;
-//inline static bool EnableWeather = false
+inline static bool EnableTime = true;
+inline static bool EnableInterior = true;
+inline static bool EnableWeather = true;
 
 
 
 std::string ToggleStateMenus;
 std::string ToggleAllStateMenus;
-const char* itemValueGeneral01;
-const char* itemValueGeneral02;
+std::string ToggleStateTime;
+std::string ToggleAllStateTime;
+const char* itemValueMenuGeneral01;
+const char* itemValueMenuGeneral02;
+const char* itemValueTimeGeneral01;
+const char* itemValueTimeGeneral02;
 
 class EventProcessorMenu : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
@@ -59,5 +65,6 @@ public:
 
 private:
     std::vector<std::string> m_INImenus;
-    std::vector<std::string> m_Specific;
+    std::vector<std::string> m_SpecificMenu;
+    std::vector<std::string> m_SpecificTime;
 };

@@ -1,5 +1,4 @@
-﻿#include <Windows.h>
-#include "ReShadeToggler.h"
+﻿#include "ReShadeToggler.h"
 
 namespace logger = SKSE::log;
 
@@ -21,14 +20,6 @@ public:
         reshade::api::effect_runtime::set_technique_state(technique, enabled);
     }
 };
-
-
-/// <summary>
-/// Enables or disables the specified <paramref name="technique"/>.
-/// </summary>
-/// <param name="technique">Opaque handle to the technique.</param>
-/// <param name="enabled">Set to <see langword="true"/> to enable the technique, or <see langword="false"/> to disable it.</param>
-//virtual void set_technique_state(effect_technique technique, bool enabled) = 0;
 
 // Callback when Reshade begins effects
 static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
@@ -101,7 +92,7 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
             }
             else if (ToggleStateMenus.find("Specific") != std::string::npos)
             {
-                for (const std::string& LoopmenuValue02 : g_MenuGeneralValue02)
+                for (const std::string& LoopmenuValue02 : g_MenuGeneralValue01)
                 {
                      s_pRuntime->enumerate_techniques(LoopmenuValue02.c_str(), [enableReshade](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique) 
                      {
@@ -148,57 +139,68 @@ void ReshadeToggler::MenusInINI()
     const char* sectionGeneral = "General";
     const char* sectionMenusGeneral = "MenusGeneral";
     const char* sectionMenusProcess = "MenusProcess";
-    //const char* sectionGeneral = "Interior";
-    //const char* sectionGeneral = "Weather";
+    const char* sectionTimeGeneral = "Time";
+    //const char* sectionInteriorGeneral = "Interior";
+    //const char* sectionWeatherGeneral = "Weather";
 
     CSimpleIniA::TNamesDepend MenusGeneral_keys;
-    CSimpleIniA::TNamesDepend MenusProcess_keys;
-
+    CSimpleIniA::TNamesDepend MenusProcess_keys;  
+    CSimpleIniA::TNamesDepend TimeGeneral_keys;
 
     //General
     EnableMenus = ini.GetBoolValue(sectionGeneral, "EnableMenus");
-    g_Logger->info("{}: EnableMenus: {}", sectionGeneral, EnableMenus);
+    EnableTime = ini.GetBoolValue(sectionGeneral, "EnableTime");
+    EnableInterior = ini.GetBoolValue(sectionGeneral, "EnableInterior");
+    EnableWeather = ini.GetBoolValue(sectionGeneral, "EnableWeather");
 
+    g_Logger->info("{}: EnableMenus: {} - EnableTime: {} - EnableInterior: {} - EnableWeather: {}", sectionGeneral, EnableMenus, EnableTime, EnableInterior, EnableWeather);
+
+#if _DEBUG
+    g_Logger->info("\n");
+#endif
 
     // MenusGeneral
-    ToggleStateMenus = ini.GetValue(sectionMenusGeneral, "ToggleState");
-    ToggleAllStateMenus = ini.GetValue(sectionMenusGeneral, "ToggleAllState");
+    ToggleStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleState");
+    ToggleAllStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleAllState");
 
     g_Logger->info("General ToggleStateMenus:  {} - ToggleAllStateMenus: {}", ToggleStateMenus, ToggleAllStateMenus);
 
     ini.GetAllKeys(sectionMenusGeneral, MenusGeneral_keys);
-    m_Specific.reserve(MenusGeneral_keys.size()); // Reserve space for vector
+    m_SpecificMenu.reserve(MenusGeneral_keys.size()); // Reserve space for vector
 
-    const char* toggleStatePrefix = "aToggleSpecificState";
-    const char* togglePrefix = "bToggleSpecific";
+    const char* togglePrefix01 = "MenuToggleSpecificFile";
+    const char* togglePrefix02 = "MenuToggleSpecificState";
 
     for (const auto& key : MenusGeneral_keys)
     {
-        if (strcmp(key.pItem, "ToggleState") != 0 && strcmp(key.pItem, "ToggleAllState") != 0)
+        if (strcmp(key.pItem, "MenuToggleState") != 0 && strcmp(key.pItem, "MenuToggleAllState") != 0)
         {
-            m_Specific.push_back(key.pItem);
-            const char* menuItemgeneral = m_Specific.back().c_str();
+            m_SpecificMenu.push_back(key.pItem);
+            const char* menuItemgeneral = m_SpecificMenu.back().c_str();
 
             // Check if the key starts with ToggleSpecific
-            if (strncmp(key.pItem, togglePrefix, strlen(togglePrefix)) == 0)
+            if (strncmp(key.pItem, togglePrefix01, strlen(togglePrefix01)) == 0)
             {
-                // Process ToggleSpecific entries
-                itemValueGeneral01 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
-                g_MenuGeneralValue01.emplace(itemValueGeneral01);
-                g_Logger->info("ToggleSpecific Menu:  {} - Value: {}", menuItemgeneral, itemValueGeneral01);
+                // Process ToggleSpecificFile entries
+                itemValueMenuGeneral01 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
+                g_MenuGeneralValue01.emplace(itemValueMenuGeneral01);
+                g_Logger->info("ToggleSpecificFile Menu:  {} - Value: {}", menuItemgeneral, itemValueMenuGeneral01);
             }
 
             // Check if the key starts with ToggleSpecificState
-            else if (strncmp(key.pItem, toggleStatePrefix, strlen(toggleStatePrefix)) == 0)
+            else if (strncmp(key.pItem, togglePrefix02, strlen(togglePrefix02)) == 0)
             {
                 // Process ToggleSpecificState entries
-                itemValueGeneral02 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
-                g_MenuGeneralValue02.emplace(itemValueGeneral02);
-                g_Logger->info("ToggleSpecificState Menu:  {} - Value: {}", menuItemgeneral, itemValueGeneral02);
+                itemValueMenuGeneral02 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
+                g_MenuGeneralValue02.emplace(itemValueMenuGeneral02);
+                g_Logger->info("ToggleSpecificState Menu:  {} - Value: {}", menuItemgeneral, itemValueMenuGeneral02);
             }
         }
     }
 
+#if _DEBUG
+    g_Logger->info("\n");
+#endif
 
     //MenusProcess
     ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
@@ -212,6 +214,54 @@ void ReshadeToggler::MenusInINI()
         g_MenuValue.emplace(itemValue);
         g_Logger->info("Menu:  {} - Value: {}", menuItem, itemValue);
     }
+
+#if _DEBUG
+    g_Logger->info("\n");
+#endif
+
+    //Time
+    ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleState");
+    ToggleAllStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleAllState");
+
+    g_Logger->info("General ToggleStateTime:  {} - ToggleAllStateTime: {}", ToggleStateTime, ToggleAllStateTime);
+
+    ini.GetAllKeys(sectionTimeGeneral, TimeGeneral_keys);
+    m_SpecificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
+
+    const char* togglePrefix03 = "TimeToggleSpecificFile";
+    const char* togglePrefix04 = "TimeToggleSpecificState";
+
+    for (const auto& key : TimeGeneral_keys)
+    {
+        if (strcmp(key.pItem, "TimeToggleState") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0)
+        {
+            m_SpecificTime.push_back(key.pItem);
+            const char* TimeItemgeneral = m_SpecificTime.back().c_str();
+
+            // Check if the key starts with ToggleSpecific
+            if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
+            {
+                // Process ToggleSpecific entries
+                itemValueTimeGeneral01 = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
+                g_TimeGeneralValue01.emplace(itemValueTimeGeneral01);
+                g_Logger->info("ToggleSpecificFile Time:  {} - Value: {}", TimeItemgeneral, itemValueTimeGeneral01);
+            }
+
+            // Check if the key starts with ToggleSpecificState
+            else if (strncmp(key.pItem, togglePrefix04, strlen(togglePrefix04)) == 0)
+            {
+                // Process ToggleSpecificState entries
+                itemValueTimeGeneral02 = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
+                g_TimeGeneralValue02.emplace(itemValueTimeGeneral02);
+                g_Logger->info("ToggleSpecificState Time:  {} - Value: {}", TimeItemgeneral, itemValueTimeGeneral02);
+            }
+        }
+    }
+
+#if _DEBUG
+    g_Logger->info("\n");
+#endif
+
 }
 
 // Load Reshade and register events
@@ -257,49 +307,3 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 
     return true;
 }
-
-
-// This is purely hypothetical code that might not even work in the first place
-#if 0
-// Define the memory addresses of the original and hook functions
-uintptr_t addressOfOriginalFunction = 0xADDRESS_OF_ORIGINAL_FUNCTION;
-uintptr_t addressOfHookFunction = (uintptr_t)&HookSetTechniqueState;
-
-// Define a type for the original ReShade function
-typedef void (*OriginalSetTechniqueStateType)(reshade::api::effect_runtime*, reshade::api::effect_technique, bool);
-
-// Original ReShade function
-void OriginalSetTechniqueState(reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique, bool state) {
-    // Call the original function
-    OriginalSetTechniqueStateType originalFunction = (OriginalSetTechniqueStateType)(addressOfOriginalFunction);
-    originalFunction(runtime, technique, state);
-}
-
-// Hook function for modifying ReShade behavior
-void HookSetTechniqueState(reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique, bool state) {
-     //  Code here
-    // For example, call OriginalSetTechniqueState and then modify the state based on menu conditions
-
-    OriginalSetTechniqueState(runtime, technique, state);
-}
-
-int main() {
-    // Calculate the relative offset between HookSetTechniqueState and OriginalSetTechniqueState
-    int offset = addressOfHookFunction - (addressOfOriginalFunction + 5); // 5 bytes for the JMP instruction
-
-    // Change the memory protection of the OriginalSetTechniqueState function to allow writing
-    DWORD oldProtect;
-    VirtualProtect((LPVOID)addressOfOriginalFunction, 5, PAGE_EXECUTE_READWRITE, &oldProtect);
-
-    // Write a jump instruction to redirect execution to HookSetTechniqueState
-    *(BYTE*)(addressOfOriginalFunction) = 0xE9; // JMP opcode
-    *(int*)((int)addressOfOriginalFunction + 1) = offset; // Relative offset
-
-    // Restore the original memory protection
-    VirtualProtect((LPVOID)addressOfOriginalFunction, 5, oldProtect, &oldProtect);
-
-    // Rest of the Logic
-
-    return 0;
-}
-#endif
