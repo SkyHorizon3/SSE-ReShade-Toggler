@@ -75,61 +75,50 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
         return true; // If no disabled menus are open, enable Reshade
     }();
 
-        if (s_pRuntime != nullptr)
+    if (s_pRuntime != nullptr)
+    {
+        if (ToggleStateMenus.find("All") != std::string::npos)
         {
-
-            if (ToggleStateMenus.find("All") != std::string::npos)
+            g_Logger->info("All is enabled! - EnableReshade: {}", enableReshade);
+            if (ToggleAllStateMenus.find("off") != std::string::npos)
             {
-                if (ToggleAllStateMenus.find("off") != std::string::npos)
-                {
                 s_pRuntime->set_effects_state(enableReshade);
-#if _DEBUG
-                g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
-                g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
-#endif  
-
-                }
-                else if (ToggleAllStateMenus.find("on") != std::string::npos)
-                {
-                    s_pRuntime->set_effects_state(!enableReshade);
-#if _DEBUG
-                    g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
-                    g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
-#endif  
-                }
-
-
             }
-            else if (ToggleStateMenus.find("Specific") != std::string::npos)
+            else if (ToggleAllStateMenus.find("on") != std::string::npos)
             {
-                for (const std::string& LoopmenuValue01 : g_MenuGeneralValue01)
-                {
-
-              
-                    s_pRuntime->enumerate_techniques(LoopmenuValue01.c_str(), [enableReshade](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
-                        {
-                            if (g_MenuGeneralValue02.find("off") != g_MenuGeneralValue02.end()) //Das hier funktioniert nicht. Es muss immer der richtige Wert von MenuGeneralValue02 verwendet werden. Hier schaut er aber nur, ob es sich im String befindet. Ich weiß nicht wie ich das lösen soll....
-                            {                                                                   
-                                runtime->set_technique_state(technique, enableReshade);
-                            }
-                            else if (g_MenuGeneralValue02.find("on") != g_MenuGeneralValue02.end())
-                            {
-                                runtime->set_technique_state(technique, !enableReshade);
-                            }
-
-                        });
-
-#if _DEBUG
-                    g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
-                    g_Logger->info("Reshade {}", enableReshade ? "disabled" : "enabled");
-#endif
-
-                }
-
-
+                s_pRuntime->set_effects_state(!enableReshade);
             }
         }
-       return RE::BSEventNotifyControl::kContinue;
+        else if (ToggleStateMenus.find("Specific") != std::string::npos)
+        {
+            g_Logger->info("Specific is enabled! - EnableReshade: {}", enableReshade);
+
+            for (const TechniqueInfo& info : techniqueInfoList)
+            {
+                s_pRuntime->enumerate_techniques(info.filename.c_str(), [enableReshade, &info](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
+                {
+                    g_Logger->info("State: {} for: {}", info.state.c_str(), info.filename.c_str());
+                    if (info.state == "off") 
+                    {
+                        runtime->set_technique_state(technique, enableReshade);
+                    }
+                    else if (info.state == "on") 
+                    {
+                        runtime->set_technique_state(technique, !enableReshade);
+                    }
+                    else
+                    {
+                        g_Logger->error("Wrong input: MenuToggleSpecificState has to be on/off, input was: {} for: {}", info.state.c_str(), info.filename.c_str());
+                    }
+                });
+            }
+        }
+#if _DEBUG
+    //g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
+    //g_Logger->info("Reshade {}", enableReshade ? "enabled" : "disabled");
+#endif  
+    }
+    return RE::BSEventNotifyControl::kContinue;
 }
 
 // Setup logger for plugin
@@ -203,21 +192,27 @@ void ReshadeToggler::MenusInINI()
             // Check if the key starts with MenuToggleSpecificFile
             if (strncmp(key.pItem, togglePrefix01, strlen(togglePrefix01)) == 0)
             {
-                itemValueMenuGeneral01 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
-                g_MenuGeneralValue01.emplace(itemValueMenuGeneral01);
-                g_Logger->info("MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemValueMenuGeneral01);
-            }
+                itemShaderToToggle = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
+                g_MenuToggleFile.emplace(itemShaderToToggle);
+                g_Logger->info("MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemShaderToToggle);
 
-            // Check if the key starts with MenuToggleSpecificState
-            else if (strncmp(key.pItem, togglePrefix02, strlen(togglePrefix02)) == 0)
-            {
-                itemValueMenuGeneral02 = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
-                g_MenuGeneralValue02.emplace(itemValueMenuGeneral02);
-                g_Logger->info("MenuToggleSpecificState:  {} - Value: {}", menuItemgeneral, itemValueMenuGeneral02);
+                // Construct the corresponding key for the state
+                std::string stateKeyName = togglePrefix02 + std::to_string(m_SpecificMenu.size());
+
+                // Retrieve the state using the constructed key
+                itemMenuStateValue = ini.GetValue(sectionMenusGeneral, stateKeyName.c_str(), nullptr);
+                g_MenuToggleState.emplace(itemMenuStateValue);
+
+                // Populate the technique info
+                TechniqueInfo info;
+                info.filename = itemShaderToToggle;
+                info.state = itemMenuStateValue;
+                techniqueInfoList.push_back(info);
+                g_Logger->info("Populated TechniqueInfo: {} - {}", itemShaderToToggle, itemMenuStateValue);
             }
         }
     }
-
+    
 #if _DEBUG
     g_Logger->info("\n");
 #endif
@@ -262,7 +257,7 @@ void ReshadeToggler::MenusInINI()
             if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
             {
                 itemValueTimeGeneral01 = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
-                g_TimeGeneralValue01.emplace(itemValueTimeGeneral01);
+                g_TimeToggleFile.emplace(itemValueTimeGeneral01);
                 g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", TimeItemgeneral, itemValueTimeGeneral01);
             }
 
@@ -270,7 +265,7 @@ void ReshadeToggler::MenusInINI()
             else if (strncmp(key.pItem, togglePrefix04, strlen(togglePrefix04)) == 0)
             {
                 itemValueTimeGeneral02 = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
-                g_TimeGeneralValue02.emplace(itemValueTimeGeneral02);
+                g_TimeToggleState.emplace(itemValueTimeGeneral02);
                 g_Logger->info("TimeToggleSpecificState:  {} - Value: {}", TimeItemgeneral, itemValueTimeGeneral02);
             }
         }

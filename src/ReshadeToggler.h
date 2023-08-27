@@ -6,14 +6,18 @@
 #include <spdlog/sinks/basic_file_sink.h>
 #include "../include/reshade.hpp"
 
+
+struct TechniqueInfo;
+
 HMODULE g_hModule = nullptr;
 static reshade::api::effect_runtime* s_pRuntime = nullptr;
 std::shared_ptr<spdlog::logger> g_Logger;
 std::unordered_set<std::string> g_MenuValue;
-std::unordered_set<std::string> g_MenuGeneralValue01;
-std::unordered_set<std::string> g_MenuGeneralValue02;
-std::unordered_set<std::string> g_TimeGeneralValue01;
-std::unordered_set<std::string> g_TimeGeneralValue02;
+std::unordered_set<std::string> g_MenuToggleFile;
+std::unordered_set<std::string> g_MenuToggleState;
+std::unordered_set<std::string> g_TimeToggleFile;
+std::unordered_set<std::string> g_TimeToggleState;
+std::vector<TechniqueInfo> techniqueInfoList;
 
 
 inline static bool EnableMenus = true;
@@ -27,8 +31,8 @@ std::string ToggleStateMenus;
 std::string ToggleAllStateMenus;
 std::string ToggleStateTime;
 std::string ToggleAllStateTime;
-const char* itemValueMenuGeneral01;
-const char* itemValueMenuGeneral02;
+const char* itemShaderToToggle;
+const char* itemMenuStateValue;
 const char* itemValueTimeGeneral01;
 const char* itemValueTimeGeneral02;
 
@@ -67,4 +71,10 @@ private:
     std::vector<std::string> m_INImenus;
     std::vector<std::string> m_SpecificMenu;
     std::vector<std::string> m_SpecificTime;
+};
+
+struct TechniqueInfo
+{
+    std::string filename;
+    std::string state;
 };
