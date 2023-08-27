@@ -79,46 +79,61 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
     {
         if (ToggleStateMenus.find("All") != std::string::npos)
         {
-            g_Logger->info("All is enabled! - EnableReshade: {}", enableReshade);
-            if (ToggleAllStateMenus.find("off") != std::string::npos)
-            {
-                s_pRuntime->set_effects_state(enableReshade);
-            }
-            else if (ToggleAllStateMenus.find("on") != std::string::npos)
-            {
-                s_pRuntime->set_effects_state(!enableReshade);
-            }
+            ApplyReshadeState(enableReshade, ToggleStateMenus);
         }
         else if (ToggleStateMenus.find("Specific") != std::string::npos)
         {
-            g_Logger->info("Specific is enabled! - EnableReshade: {}", enableReshade);
-
-            for (const TechniqueInfo& info : techniqueInfoList)
-            {
-                s_pRuntime->enumerate_techniques(info.filename.c_str(), [enableReshade, &info](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
-                {
-                    g_Logger->info("State: {} for: {}", info.state.c_str(), info.filename.c_str());
-                    if (info.state == "off") 
-                    {
-                        runtime->set_technique_state(technique, enableReshade);
-                    }
-                    else if (info.state == "on") 
-                    {
-                        runtime->set_technique_state(technique, !enableReshade);
-                    }
-                    else
-                    {
-                        g_Logger->error("Wrong input: MenuToggleSpecificState has to be on/off, input was: {} for: {}", info.state.c_str(), info.filename.c_str());
-                    }
-                });
-            }
+            ApplySpecificReshadeStates(enableReshade);
         }
-#if _DEBUG
-    //g_Logger->info("Menu {} {}", menuName, opening ? "open" : "closed");
-    //g_Logger->info("Reshade {}", enableReshade ? "enabled" : "disabled");
-#endif  
+
+        DEBUG_LOG(g_Logger, "Menu {} {}", menuName, opening ? "open" : "closed");
+        DEBUG_LOG(g_Logger, "Reshade {}", enableReshade ? "enabled" : "disabled");
     }
     return RE::BSEventNotifyControl::kContinue;
+}
+
+void EventProcessorMenu::ApplyReshadeState(bool enableReshade, const std::string& toggleState)
+{
+    DEBUG_LOG(g_Logger, "{} is enabled! - EnableReshade: {}", toggleState, enableReshade);
+
+    if (toggleState == "off")
+    {
+        s_pRuntime->set_effects_state(enableReshade);
+    }
+    else if (toggleState == "on")
+    {
+        s_pRuntime->set_effects_state(!enableReshade);
+    }
+}
+
+void EventProcessorMenu::ApplySpecificReshadeStates(bool enableReshade)
+{
+   DEBUG_LOG(g_Logger, "Specific is enabled! - EnableReshade: {}", enableReshade);
+
+    for (const TechniqueInfo& info : techniqueInfoList)
+    {
+        ApplyTechniqueState(enableReshade, info);
+    }
+}
+
+void EventProcessorMenu::ApplyTechniqueState(bool enableReshade, const TechniqueInfo& info)
+{
+    s_pRuntime->enumerate_techniques(info.filename.c_str(), [&enableReshade, &info](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
+    {
+        g_Logger->info("State: {} for: {}", info.state.c_str(), info.filename.c_str());
+        if (info.state == "off")
+        {
+            runtime->set_technique_state(technique, enableReshade);
+        }
+        else if (info.state == "on")
+        {
+            runtime->set_technique_state(technique, !enableReshade);
+        }
+        else
+        {
+            g_Logger->error("Wrong input: MenuToggleSpecificState has to be on/off, input was: {} for: {}", info.state.c_str(), info.filename.c_str());
+        }
+    });
 }
 
 // Setup logger for plugin
@@ -166,9 +181,8 @@ void ReshadeToggler::MenusInINI()
 
     g_Logger->info("{}: EnableMenus: {} - EnableTime: {} - EnableInterior: {} - EnableWeather: {}", sectionGeneral, EnableMenus, EnableTime, EnableInterior, EnableWeather);
 
-#if _DEBUG
-    g_Logger->info("\n");
-#endif
+    DEBUG_LOG(g_Logger, "\n", nullptr);
+
 
     // MenusGeneral
     ToggleStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleOption");
@@ -213,9 +227,8 @@ void ReshadeToggler::MenusInINI()
         }
     }
     
-#if _DEBUG
-    g_Logger->info("\n");
-#endif
+    DEBUG_LOG(g_Logger, "\n", nullptr);
+
 
     //MenusProcess
     ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
@@ -230,9 +243,8 @@ void ReshadeToggler::MenusInINI()
         g_Logger->info("Menu:  {} - Value: {}", menuItem, itemValue);
     }
 
-#if _DEBUG
-    g_Logger->info("\n");
-#endif
+    DEBUG_LOG(g_Logger, "\n", nullptr);
+
 
     //Time
     ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
@@ -271,10 +283,7 @@ void ReshadeToggler::MenusInINI()
         }
     }
 
-#if _DEBUG
-    g_Logger->info("\n");
-#endif
-
+    DEBUG_LOG(g_Logger, "\n", nullptr);
 }
 
 // Load Reshade and register events

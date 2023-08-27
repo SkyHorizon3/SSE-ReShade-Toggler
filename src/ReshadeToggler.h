@@ -7,6 +7,12 @@
 #include "../include/reshade.hpp"
 
 
+#if _DEBUG
+    #define DEBUG_LOG(logger, msg, ...) logger->info(msg, __VA_ARGS__)
+#else
+    #define DEBUG_LOG(logger, msg, ...)
+#endif
+
 struct TechniqueInfo;
 
 HMODULE g_hModule = nullptr;
@@ -36,6 +42,7 @@ const char* itemMenuStateValue;
 const char* itemValueTimeGeneral01;
 const char* itemValueTimeGeneral02;
 
+
 class EventProcessorMenu : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
 public:
@@ -47,6 +54,10 @@ public:
 
     RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* event,
         RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override;
+
+    void ApplyReshadeState(bool enableReshade, const std::string& toggleState);
+    void ApplySpecificReshadeStates(bool enableReshade);
+    void ApplyTechniqueState(bool enableReshade, const TechniqueInfo& info);
 
 private:
     EventProcessorMenu() = default;
