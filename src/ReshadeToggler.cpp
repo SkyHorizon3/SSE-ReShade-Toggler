@@ -1,4 +1,4 @@
-﻿    #include "../include/ReshadeToggler.h"
+﻿#include "../include/ReshadeToggler.h"
 
 namespace logger = SKSE::log;
 
@@ -84,7 +84,7 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
         }
         else if (ToggleStateMenus.find("Specific") != std::string::npos)
         {
-            ReshadeToggler::ApplySpecificReshadeStates(enableReshade);
+            ReshadeToggler::ApplySpecificReshadeStates(enableReshade, Categories::Menu);
         }
 
         DEBUG_LOG(g_Logger, "Menu {} {}", menuName, opening ? "open" : "closed");
@@ -112,13 +112,26 @@ void ReshadeToggler::ApplyReshadeState(bool enableReshade, const std::string& to
     }
 }
 
-void ReshadeToggler::ApplySpecificReshadeStates(bool enableReshade)
+void ReshadeToggler::ApplySpecificReshadeStates(bool enableReshade, Categories ProcessState)
 {
     DEBUG_LOG(g_Logger, "Specific is enabled! - EnableReshade: {}", enableReshade);
 
-    for (const TechniqueInfo& info : techniqueMenuInfoList)
+    switch (ProcessState)
     {
-        ApplyTechniqueState(enableReshade, info);
+    case Categories::Menu:
+        for (const TechniqueInfo& info : techniqueMenuInfoList)
+        {
+            ApplyTechniqueState(enableReshade, info);
+        }
+        break;
+    case Categories::Time:
+        for (const TechniqueInfo& info : techniqueTimeInfoList)
+        {
+            ApplyTechniqueState(enableReshade, info);
+        }
+        break;
+    default:
+        g_Logger->info("Invalid option");
     }
 }
 
@@ -140,6 +153,18 @@ void ReshadeToggler::ApplyTechniqueState(bool enableReshade, const TechniqueInfo
             g_Logger->error("Wrong input: MenuToggleSpecificState has to be on/off, input was: {} for: {}", info.state.c_str(), info.filename.c_str());
         }
     });
+}
+
+bool ReshadeToggler::IsTimeWithinRange(double currentTime, double startTime, double endTime)
+{
+    if (currentTime >= startTime && currentTime <= endTime)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 // Setup logger for plugin
@@ -276,6 +301,8 @@ void ReshadeToggler::LoadINI()
 
     const char* togglePrefix03 = "TimeToggleSpecificFile";
     const char* togglePrefix04 = "TimeToggleSpecificState";
+    const char* togglePrefix05 = "TimeToggleSpecificTimeStart";
+    const char* togglePrefix06 = "TimeToggleSpecificTimeStop";
 
     for (const auto& key : TimeGeneral_keys)
     {
@@ -297,17 +324,66 @@ void ReshadeToggler::LoadINI()
                 itemTimeStateValue = ini.GetValue(sectionTimeGeneral, stateKeyName.c_str(), nullptr);
                 g_TimeToggleState.emplace(itemTimeStateValue);
 
+                // Construct the corresponding key for the the start and stop times
+                std::string startTimeKey = togglePrefix05 + std::to_string(m_SpecificTime.size());
+                std::string endTimeKey = togglePrefix06 + std::to_string(m_SpecificTime.size());
+                itemTimeStartHour = ini.GetDoubleValue(sectionGeneral, startTimeKey.c_str());
+                itemTimeStopHour = ini.GetDoubleValue(sectionGeneral, endTimeKey.c_str());
+                // Er liest das ganze als 0.0 ein, obwohl 8.00 und 16.00 als Werte gegeben sind. Warum? Idk
+                g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
+
+
                 // Populate the technique info
                 TechniqueInfo TimeInfo;
                 TimeInfo.filename = itemTimeShaderToToggle;
                 TimeInfo.state = itemTimeStateValue;
+                TimeInfo.startTime = itemTimeStartHour;
+                TimeInfo.stopTime = itemTimeStopHour;
                 techniqueTimeInfoList.push_back(TimeInfo);
-                g_Logger->info("Populated TechniqueTimeInfo: {} - {}", itemTimeShaderToToggle, itemTimeStateValue);
+                g_Logger->info("Set effect {} to {} from {} - {}", itemTimeShaderToToggle, itemTimeStateValue, itemTimeStartHour, itemTimeStopHour);
             }
         }
     }
 
     DEBUG_LOG(g_Logger, "\n", nullptr);
+}
+
+RE::BSEventNotifyControl ReshadeToggler::ProcessTimeBasedToggling(const RE::Calendar* time, double currentTime)
+{
+    if (!EnableTime)
+    {
+        g_Logger->info("Time-based toggling is disabled!");
+        return RE::BSEventNotifyControl::kContinue;
+    }
+
+    currentTime = time->GetHour();
+
+    bool enableReshade = [this, currentTime]()
+    {
+        for (const TechniqueInfo& info : techniqueTimeInfoList)
+        {
+            if (IsTimeWithinRange(currentTime, info.startTime, info.stopTime))
+            {
+                return false; // If any disabled menu is open, disable Reshade
+            }
+        }
+        return true; // If no disabled menus are open, enable Reshade
+    }();
+    
+    if (s_pRuntime != nullptr)
+    {
+        if (ToggleStateTime.find("All") != std::string::npos)
+        {
+            ApplyReshadeState(enableReshade, ToggleStateTime);
+        }
+        else if (ToggleStateTime.find("Specific") != std::string::npos)
+        {
+            ReshadeToggler::ApplySpecificReshadeStates(enableReshade, Categories::Time);
+        }
+    }
+
+    return RE::BSEventNotifyControl::kContinue;
+     
 }
 
 // Entry point for DLL

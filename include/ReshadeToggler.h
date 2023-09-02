@@ -11,6 +11,8 @@ struct TechniqueInfo
 {
     std::string filename;
     std::string state;
+    double startTime;
+    double stopTime;
 };
 
 HMODULE g_hModule = nullptr;
@@ -39,6 +41,16 @@ const char* itemMenuShaderToToggle;
 const char* itemMenuStateValue;
 const char* itemTimeShaderToToggle;
 const char* itemTimeStateValue;
+double itemTimeStartHour;
+double itemTimeStopHour;
+
+enum class Categories
+{
+    Menu,
+    Time,
+    Weather,
+    Interior
+};
 
 class EventProcessorMenu : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
@@ -71,11 +83,16 @@ public:
     void SetupLog();
     void Load();
     void LoadINI();
+
+    RE::BSEventNotifyControl ProcessTimeBasedToggling(const RE::Calendar* time, double currentTime);
+
     static void ApplyReshadeState(bool enableReshade, const std::string& toggleState);
-    static void ApplySpecificReshadeStates(bool enableReshade);
+    static void ApplySpecificReshadeStates(bool enableReshade, Categories ProcessState);
     static void ApplyTechniqueState(bool enableReshade, const TechniqueInfo& info);
 
 private:
+    bool IsTimeWithinRange(double currentTime, double startTime, double endTime);
+
     std::vector<std::string> m_SpecificMenu;
     std::vector<std::string> m_SpecificTime;
     std::vector<std::string> m_INImenus;
