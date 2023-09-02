@@ -4,44 +4,41 @@
 #include <unordered_set>
 #include <SimpleIni.h>
 #include <spdlog/sinks/basic_file_sink.h>
-#include "../include/reshade.hpp"
+#include "../include/Reshade/reshade.hpp"
 
 
-#if _DEBUG
-    #define DEBUG_LOG(logger, msg, ...) logger->info(msg, __VA_ARGS__)
-#else
-    #define DEBUG_LOG(logger, msg, ...)
-#endif
-
-struct TechniqueInfo;
+struct TechniqueInfo
+{
+    std::string filename;
+    std::string state;
+};
 
 HMODULE g_hModule = nullptr;
 static reshade::api::effect_runtime* s_pRuntime = nullptr;
 std::shared_ptr<spdlog::logger> g_Logger;
-std::unordered_set<std::string> g_MenuValue;
-std::unordered_set<std::string> g_MenuToggleFile;
-std::unordered_set<std::string> g_MenuToggleState;
-std::unordered_set<std::string> g_TimeToggleFile;
-std::unordered_set<std::string> g_TimeToggleState;
-std::vector<TechniqueInfo> techniqueInfoList;
-
 
 inline static bool EnableMenus = true;
 inline static bool EnableTime = true;
 inline static bool EnableInterior = true;
 inline static bool EnableWeather = true;
 
-
+std::unordered_set<std::string> g_MenuValue;
+std::unordered_set<std::string> g_MenuToggleFile;
+std::unordered_set<std::string> g_MenuToggleState;
+std::unordered_set<std::string> g_TimeToggleFile;
+std::unordered_set<std::string> g_TimeToggleState;
+std::vector<TechniqueInfo> techniqueMenuInfoList;
+std::vector<TechniqueInfo> techniqueTimeInfoList;
 
 std::string ToggleStateMenus;
 std::string ToggleAllStateMenus;
 std::string ToggleStateTime;
 std::string ToggleAllStateTime;
-const char* itemShaderToToggle;
-const char* itemMenuStateValue;
-const char* itemValueTimeGeneral01;
-const char* itemValueTimeGeneral02;
 
+const char* itemMenuShaderToToggle;
+const char* itemMenuStateValue;
+const char* itemTimeShaderToToggle;
+const char* itemTimeStateValue;
 
 class EventProcessorMenu : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
@@ -55,9 +52,6 @@ public:
     RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* event,
         RE::BSTEventSource<RE::MenuOpenCloseEvent>*) override;
 
-    void ApplyReshadeState(bool enableReshade, const std::string& toggleState);
-    void ApplySpecificReshadeStates(bool enableReshade);
-    void ApplyTechniqueState(bool enableReshade, const TechniqueInfo& info);
 
 private:
     EventProcessorMenu() = default;
@@ -76,16 +70,13 @@ public:
 
     void SetupLog();
     void Load();
-    void MenusInINI();
+    void LoadINI();
+    static void ApplyReshadeState(bool enableReshade, const std::string& toggleState);
+    static void ApplySpecificReshadeStates(bool enableReshade);
+    static void ApplyTechniqueState(bool enableReshade, const TechniqueInfo& info);
 
 private:
-    std::vector<std::string> m_INImenus;
     std::vector<std::string> m_SpecificMenu;
     std::vector<std::string> m_SpecificTime;
-};
-
-struct TechniqueInfo
-{
-    std::string filename;
-    std::string state;
+    std::vector<std::string> m_INImenus;
 };

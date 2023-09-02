@@ -1,4 +1,4 @@
-﻿#include "ReShadeToggler.h"
+﻿    #include "../include/ReshadeToggler.h"
 
 namespace logger = SKSE::log;
 
@@ -45,7 +45,7 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
 
     if (!EnableMenus) 
     {
-        g_Logger->info("!EnableMenus"); // Skip execution if EnableMenus is false
+        g_Logger->info("EnableMenus is set to false, no menus will be processed."); // Skip execution if EnableMenus is false
         return RE::BSEventNotifyControl::kContinue; 
     }
 
@@ -64,6 +64,7 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
         return RE::BSEventNotifyControl::kContinue; // Skip if no open menus
     }
 
+    // Is this necessary? No. Are we still doing it, yes. Why? Idk, it looks fancy
     bool enableReshade = [this]() {
         for (const auto& menuToDisable : g_MenuValue)
         {
@@ -79,20 +80,25 @@ RE::BSEventNotifyControl EventProcessorMenu::ProcessEvent(const RE::MenuOpenClos
     {
         if (ToggleStateMenus.find("All") != std::string::npos)
         {
-            ApplyReshadeState(enableReshade, ToggleStateMenus);
+            ReshadeToggler::ApplyReshadeState(enableReshade, ToggleStateMenus);
         }
         else if (ToggleStateMenus.find("Specific") != std::string::npos)
         {
-            ApplySpecificReshadeStates(enableReshade);
+            ReshadeToggler::ApplySpecificReshadeStates(enableReshade);
         }
 
         DEBUG_LOG(g_Logger, "Menu {} {}", menuName, opening ? "open" : "closed");
         DEBUG_LOG(g_Logger, "Reshade {}", enableReshade ? "enabled" : "disabled");
     }
+    else
+    {
+        g_Logger->critical("Uhm, what? How? s_pRuntime was null. How the fuck did this happen");
+    }
+
     return RE::BSEventNotifyControl::kContinue;
 }
 
-void EventProcessorMenu::ApplyReshadeState(bool enableReshade, const std::string& toggleState)
+void ReshadeToggler::ApplyReshadeState(bool enableReshade, const std::string& toggleState)
 {
     DEBUG_LOG(g_Logger, "{} is enabled! - EnableReshade: {}", toggleState, enableReshade);
 
@@ -106,17 +112,17 @@ void EventProcessorMenu::ApplyReshadeState(bool enableReshade, const std::string
     }
 }
 
-void EventProcessorMenu::ApplySpecificReshadeStates(bool enableReshade)
+void ReshadeToggler::ApplySpecificReshadeStates(bool enableReshade)
 {
-   DEBUG_LOG(g_Logger, "Specific is enabled! - EnableReshade: {}", enableReshade);
+    DEBUG_LOG(g_Logger, "Specific is enabled! - EnableReshade: {}", enableReshade);
 
-    for (const TechniqueInfo& info : techniqueInfoList)
+    for (const TechniqueInfo& info : techniqueMenuInfoList)
     {
         ApplyTechniqueState(enableReshade, info);
     }
 }
 
-void EventProcessorMenu::ApplyTechniqueState(bool enableReshade, const TechniqueInfo& info)
+void ReshadeToggler::ApplyTechniqueState(bool enableReshade, const TechniqueInfo& info)
 {
     s_pRuntime->enumerate_techniques(info.filename.c_str(), [&enableReshade, &info](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
     {
@@ -144,6 +150,7 @@ void ReshadeToggler::SetupLog()
     {
         SKSE::stl::report_and_fail("SKSE log_directory not provided, logs disabled.");
     }
+
     auto pluginName = SKSE::PluginDeclaration::GetSingleton()->GetName();
     auto logFilePath = *logsFolder / std::format("{}.log", pluginName);
 
@@ -154,8 +161,20 @@ void ReshadeToggler::SetupLog()
     spdlog::flush_on(spdlog::level::trace);
 }
 
-// Load menu values from INI
-void ReshadeToggler::MenusInINI()
+// Load Reshade and register events
+void ReshadeToggler::Load()
+{
+    if (reshade::register_addon(g_hModule))
+    {
+        g_Logger->info("Registered addon");
+        register_addon_events();
+    }
+    else {
+        g_Logger->info("ReShade not present.");
+    }
+}
+
+void ReshadeToggler::LoadINI()
 {
     CSimpleIniA ini;
     ini.SetUnicode();
@@ -170,7 +189,7 @@ void ReshadeToggler::MenusInINI()
     //const char* sectionWeatherGeneral = "Weather";
 
     CSimpleIniA::TNamesDepend MenusGeneral_keys;
-    CSimpleIniA::TNamesDepend MenusProcess_keys;  
+    CSimpleIniA::TNamesDepend MenusProcess_keys;
     CSimpleIniA::TNamesDepend TimeGeneral_keys;
 
     //General
@@ -206,9 +225,9 @@ void ReshadeToggler::MenusInINI()
             // Check if the key starts with MenuToggleSpecificFile
             if (strncmp(key.pItem, togglePrefix01, strlen(togglePrefix01)) == 0)
             {
-                itemShaderToToggle = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
-                g_MenuToggleFile.emplace(itemShaderToToggle);
-                g_Logger->info("MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemShaderToToggle);
+                itemMenuShaderToToggle = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
+                g_MenuToggleFile.emplace(itemMenuShaderToToggle);
+                g_Logger->info("MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemMenuShaderToToggle);
 
                 // Construct the corresponding key for the state
                 std::string stateKeyName = togglePrefix02 + std::to_string(m_SpecificMenu.size());
@@ -218,15 +237,15 @@ void ReshadeToggler::MenusInINI()
                 g_MenuToggleState.emplace(itemMenuStateValue);
 
                 // Populate the technique info
-                TechniqueInfo info;
-                info.filename = itemShaderToToggle;
-                info.state = itemMenuStateValue;
-                techniqueInfoList.push_back(info);
-                g_Logger->info("Populated TechniqueInfo: {} - {}", itemShaderToToggle, itemMenuStateValue);
+                TechniqueInfo MenuInfo;
+                MenuInfo.filename = itemMenuShaderToToggle;
+                MenuInfo.state = itemMenuStateValue;
+                techniqueMenuInfoList.push_back(MenuInfo);
+                g_Logger->info("Populated TechniqueMenuInfo: {} - {}", itemMenuShaderToToggle, itemMenuStateValue);
             }
         }
     }
-    
+
     DEBUG_LOG(g_Logger, "\n", nullptr);
 
 
@@ -263,40 +282,32 @@ void ReshadeToggler::MenusInINI()
         if (strcmp(key.pItem, "TimeToggleOption") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0)
         {
             m_SpecificTime.push_back(key.pItem);
-            const char* TimeItemgeneral = m_SpecificTime.back().c_str();
+            const char* timeItemGeneral = m_SpecificTime.back().c_str();
 
-            // Check if the key starts with TimeToggleSpecificFile
             if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
             {
-                itemValueTimeGeneral01 = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
-                g_TimeToggleFile.emplace(itemValueTimeGeneral01);
-                g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", TimeItemgeneral, itemValueTimeGeneral01);
-            }
+                itemTimeShaderToToggle = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
+                g_TimeToggleFile.emplace(itemTimeShaderToToggle);
+                g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
 
-            // Check if the key starts with TimeToggleSpecificState
-            else if (strncmp(key.pItem, togglePrefix04, strlen(togglePrefix04)) == 0)
-            {
-                itemValueTimeGeneral02 = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
-                g_TimeToggleState.emplace(itemValueTimeGeneral02);
-                g_Logger->info("TimeToggleSpecificState:  {} - Value: {}", TimeItemgeneral, itemValueTimeGeneral02);
+                // Construct the corresponding key for the state
+                std::string stateKeyName = togglePrefix04 + std::to_string(m_SpecificTime.size());
+
+                // Retrieve the state using the constructed key
+                itemTimeStateValue = ini.GetValue(sectionTimeGeneral, stateKeyName.c_str(), nullptr);
+                g_TimeToggleState.emplace(itemTimeStateValue);
+
+                // Populate the technique info
+                TechniqueInfo TimeInfo;
+                TimeInfo.filename = itemTimeShaderToToggle;
+                TimeInfo.state = itemTimeStateValue;
+                techniqueTimeInfoList.push_back(TimeInfo);
+                g_Logger->info("Populated TechniqueTimeInfo: {} - {}", itemTimeShaderToToggle, itemTimeStateValue);
             }
         }
     }
 
     DEBUG_LOG(g_Logger, "\n", nullptr);
-}
-
-// Load Reshade and register events
-void ReshadeToggler::Load()
-{
-    if (reshade::register_addon(g_hModule))
-    {
-        g_Logger->info("Registered addon");
-        register_addon_events();
-    }
-    else {
-        g_Logger->info("ReShade not present.");
-    }
 }
 
 // Entry point for DLL
@@ -319,13 +330,14 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD fdwReason, LPVOID)
 SKSEPluginLoad(const SKSE::LoadInterface* skse)
 {
     SKSE::Init(skse);
+
     ReshadeToggler reshadeToggler;
     reshadeToggler.SetupLog();
-    reshadeToggler.MenusInINI();
+    reshadeToggler.LoadINI();
     reshadeToggler.Load();
     g_Logger->info("Loaded plugin");
     auto& eventProcessorMenu = EventProcessorMenu::GetSingleton();
     RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
-
+    
     return true;
 }
