@@ -327,8 +327,8 @@ void ReshadeToggler::LoadINI()
                 // Construct the corresponding key for the the start and stop times
                 std::string startTimeKey = togglePrefix05 + std::to_string(m_SpecificTime.size());
                 std::string endTimeKey = togglePrefix06 + std::to_string(m_SpecificTime.size());
-                itemTimeStartHour = ini.GetDoubleValue(sectionGeneral, startTimeKey.c_str());
-                itemTimeStopHour = ini.GetDoubleValue(sectionGeneral, endTimeKey.c_str());
+                itemTimeStartHour = ini.GetDoubleValue(sectionTimeGeneral, startTimeKey.c_str());
+                itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
                 // Er liest das ganze als 0.0 ein, obwohl 8.00 und 16.00 als Werte gegeben sind. Warum? Idk
                 g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
 
