@@ -329,7 +329,6 @@ void ReshadeToggler::LoadINI()
                 std::string endTimeKey = togglePrefix06 + std::to_string(m_SpecificTime.size());
                 itemTimeStartHour = ini.GetDoubleValue(sectionTimeGeneral, startTimeKey.c_str());
                 itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
-                // Er liest das ganze als 0.0 ein, obwohl 8.00 und 16.00 als Werte gegeben sind. Warum? Idk
                 g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
 
 
@@ -364,10 +363,10 @@ RE::BSEventNotifyControl ReshadeToggler::ProcessTimeBasedToggling(const RE::Cale
         {
             if (IsTimeWithinRange(currentTime, info.startTime, info.stopTime))
             {
-                return false; // If any disabled menu is open, disable Reshade
+                return false;
             }
         }
-        return true; // If no disabled menus are open, enable Reshade
+        return true; 
     }();
     
     if (s_pRuntime != nullptr)
