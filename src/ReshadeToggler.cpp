@@ -347,7 +347,7 @@ void ReshadeToggler::LoadINI()
     DEBUG_LOG(g_Logger, "\n", nullptr);
 }
 
-RE::BSEventNotifyControl ReshadeToggler::ProcessTimeBasedToggling(const RE::Calendar* time, double currentTime)
+RE::BSEventNotifyControl ReshadeToggler::ProcessTimeBasedToggling()
 {
     if (!EnableTime)
     {
@@ -355,7 +355,16 @@ RE::BSEventNotifyControl ReshadeToggler::ProcessTimeBasedToggling(const RE::Cale
         return RE::BSEventNotifyControl::kContinue;
     }
 
-    currentTime = time->GetHour();
+    g_Logger->info("Started ProcessTimeBasedToggling");
+
+ if (const auto time{ RE::Calendar::GetSingleton() }) 
+    {
+
+    g_Logger->info("singleton");
+
+    double currentTime = { time->GetHour() };
+
+    g_Logger->info("currentTime: {} ", currentTime);
 
     bool enableReshade = [this, currentTime]()
     {
@@ -380,9 +389,9 @@ RE::BSEventNotifyControl ReshadeToggler::ProcessTimeBasedToggling(const RE::Cale
             ReshadeToggler::ApplySpecificReshadeStates(enableReshade, Categories::Time);
         }
     }
-
+ }
     return RE::BSEventNotifyControl::kContinue;
-     
+
 }
 
 // Entry point for DLL
@@ -409,6 +418,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
     ReshadeToggler reshadeToggler;
     reshadeToggler.SetupLog();
     reshadeToggler.LoadINI();
+    reshadeToggler.ProcessTimeBasedToggling();
     reshadeToggler.Load();
     g_Logger->info("Loaded plugin");
     auto& eventProcessorMenu = EventProcessorMenu::GetSingleton();

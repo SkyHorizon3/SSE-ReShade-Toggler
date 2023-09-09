@@ -76,7 +76,7 @@ private:
     std::unordered_set<std::string> m_OpenMenus;
 };
 
-class ReshadeToggler
+class ReshadeToggler : public Singleton<ReshadeToggler>
 {
 public:
 
@@ -84,7 +84,7 @@ public:
     void Load();
     void LoadINI();
 
-    RE::BSEventNotifyControl ProcessTimeBasedToggling(const RE::Calendar* time, double currentTime);
+    RE::BSEventNotifyControl ProcessTimeBasedToggling();
 
     static void ApplyReshadeState(bool enableReshade, const std::string& toggleState);
     static void ApplySpecificReshadeStates(bool enableReshade, Categories ProcessState);
