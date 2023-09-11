@@ -84,6 +84,8 @@ public:
     void Load();
     void LoadINI();
 
+    void MessageListener(SKSE::MessagingInterface::Message* message);
+
     RE::BSEventNotifyControl ProcessTimeBasedToggling();
 
     static void ApplyReshadeState(bool enableReshade, const std::string& toggleState);
