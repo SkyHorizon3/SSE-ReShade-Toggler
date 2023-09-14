@@ -2,10 +2,13 @@
 
 #include "RE/Skyrim.h"
 #include "SKSE/SKSE.h"
+#include "Reshade/reshade.hpp"
 
 #include <unordered_set>
 #include <chrono>
 #include <memory>
+#include <Windows.h>
+#include <cstdint>
 
 using namespace std::literals;
 
