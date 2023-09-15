@@ -61,6 +61,13 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 
 RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 {
+    std::lock_guard<std::mutex> lock(timeMutex);
+
+    auto currentTime = std::chrono::steady_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(latestTime - lastTimeCalled);
+
+if (elapsedTime >= std::chrono::seconds(TimeUpdateIntervall))
+{
     if (!EnableTime)
     {
         g_Logger->info("Time-based toggling is disabled!");
@@ -69,13 +76,12 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 
     g_Logger->info("Started ProcessTimeBasedToggling");
 
+   // std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervall));
+
     const auto time = RE::Calendar::GetSingleton();
 
     double currentTime = time->GetHour();
     DEBUG_LOG(g_Logger, "currentTime: {} ", currentTime);
-
-    g_Logger->info("singleton");
-
 
     bool enableReshade = [this, currentTime]()
         {
@@ -100,6 +106,9 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
             ReshadeIntegration::ApplySpecificReshadeStates(enableReshade, Categories::Time);
         }
     }
+
+    lastTimeCalled = latestTime;
+}
 
     return RE::BSEventNotifyControl::kContinue;
 }

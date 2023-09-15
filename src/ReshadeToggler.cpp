@@ -152,7 +152,9 @@ void ReshadeToggler::LoadINI()
         ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
         ToggleAllStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleAllState");
 
-        g_Logger->info("General TimeToggleOption:  {} - TimeToggleAllState: {}", ToggleStateTime, ToggleAllStateTime);
+        TimeUpdateIntervall = ini.GetDoubleValue(sectionTimeGeneral, "TimeUpdateInterval");
+
+        g_Logger->info("General TimeToggleOption:  {} - TimeToggleAllState: {} - TimeUpdateIntervall: {}", ToggleStateTime, ToggleAllStateTime, TimeUpdateIntervall);
 
         ini.GetAllKeys(sectionTimeGeneral, TimeGeneral_keys);
         m_SpecificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
@@ -258,6 +260,16 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
     }
 }
 
+void TimeThread()
+{
+    while (true)
+    {
+        // Call ProcessTimeBasedToggling every 5 seconds
+        std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervall));
+        Processor::GetSingleton().ProcessTimeBasedToggling();
+    }
+}
+
 void ReshadeToggler::Setup()
 {
     SetupLog();
@@ -269,6 +281,9 @@ void ReshadeToggler::Setup()
     g_Logger->info("Loaded plugin");
     auto& eventProcessorMenu = Processor::GetSingleton();
     RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
+
+
+    std::thread(TimeThread).detach();
 }
 
 int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)

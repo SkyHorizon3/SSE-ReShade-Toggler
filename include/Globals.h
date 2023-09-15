@@ -50,3 +50,9 @@ inline const char* itemTimeShaderToToggle;
 inline const char* itemTimeStateValue;
 inline double itemTimeStartHour;
 inline double itemTimeStopHour;
+
+inline long TimeUpdateIntervall;
+
+inline std::chrono::steady_clock::time_point lastTimeCalled;
+inline std::chrono::steady_clock::time_point latestTime;
+inline std::mutex timeMutex;
