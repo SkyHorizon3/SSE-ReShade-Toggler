@@ -51,7 +51,7 @@ inline const char* itemTimeStateValue;
 inline double itemTimeStartHour;
 inline double itemTimeStopHour;
 
-inline long TimeUpdateIntervall;
+inline uint32_t TimeUpdateIntervall;
 
 inline std::chrono::steady_clock::time_point lastTimeCalled;
 inline std::chrono::steady_clock::time_point latestTime;

@@ -152,7 +152,7 @@ void ReshadeToggler::LoadINI()
         ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
         ToggleAllStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleAllState");
 
-        TimeUpdateIntervall = ini.GetDoubleValue(sectionTimeGeneral, "TimeUpdateInterval");
+        TimeUpdateIntervall = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
 
         g_Logger->info("General TimeToggleOption:  {} - TimeToggleAllState: {} - TimeUpdateIntervall: {}", ToggleStateTime, ToggleAllStateTime, TimeUpdateIntervall);
 
@@ -208,6 +208,15 @@ void ReshadeToggler::LoadINI()
     }
 }
 
+void TimeThread()
+{
+    while (true)
+    {
+        // Call ProcessTimeBasedToggling every 5 seconds
+        std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervall));
+        Processor::GetSingleton().ProcessTimeBasedToggling();
+    }
+}
 
 void MessageListener(SKSE::MessagingInterface::Message* message)
 {
@@ -235,10 +244,10 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
         // plugin state.
         logger::info("kPostLoadGame: sent after an attempt to load a saved game has finished");
         processor.ProcessTimeBasedToggling();
+        std::thread(TimeThread).detach();
         break;
     case SKSE::MessagingInterface::kSaveGame:
         logger::info("kSaveGame");
-        processor.ProcessTimeBasedToggling();
         break;
     case SKSE::MessagingInterface::kDeleteGame:
         // message->dataLen: length of file path, data: char* file path of .ess savegame file
@@ -260,15 +269,6 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
     }
 }
 
-void TimeThread()
-{
-    while (true)
-    {
-        // Call ProcessTimeBasedToggling every 5 seconds
-        std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervall));
-        Processor::GetSingleton().ProcessTimeBasedToggling();
-    }
-}
 
 void ReshadeToggler::Setup()
 {
@@ -281,9 +281,6 @@ void ReshadeToggler::Setup()
     g_Logger->info("Loaded plugin");
     auto& eventProcessorMenu = Processor::GetSingleton();
     RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
-
-
-    std::thread(TimeThread).detach();
 }
 
 int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
@@ -294,6 +291,7 @@ int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
     }
     else if (fdwReason == DLL_PROCESS_DETACH)
     {
+        std::thread(TimeThread).join();
         unregister_addon_events();
         reshade::unregister_addon(hModule);
     }

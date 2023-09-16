@@ -63,11 +63,7 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 {
     std::lock_guard<std::mutex> lock(timeMutex);
 
-    auto currentTime = std::chrono::steady_clock::now();
-    auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(latestTime - lastTimeCalled);
 
-if (elapsedTime >= std::chrono::seconds(TimeUpdateIntervall))
-{
     if (!EnableTime)
     {
         g_Logger->info("Time-based toggling is disabled!");
@@ -106,10 +102,6 @@ if (elapsedTime >= std::chrono::seconds(TimeUpdateIntervall))
             ReshadeIntegration::ApplySpecificReshadeStates(enableReshade, Categories::Time);
         }
     }
-
-    lastTimeCalled = latestTime;
-}
-
     return RE::BSEventNotifyControl::kContinue;
 }
 
