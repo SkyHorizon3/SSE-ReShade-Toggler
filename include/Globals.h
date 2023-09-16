@@ -50,6 +50,9 @@ inline const char* itemTimeShaderToToggle;
 inline const char* itemTimeStateValue;
 inline double itemTimeStartHour;
 inline double itemTimeStopHour;
+inline double itemTimeStartHourAll;
+inline double itemTimeStopHourAll;
+
 
 inline uint32_t TimeUpdateIntervall;
 

@@ -58,8 +58,6 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 
     g_Logger->info("Started ProcessTimeBasedToggling");
 
-   // std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervall));
-
     const auto time = RE::Calendar::GetSingleton();
 
     double currentTime = time->GetHour();
@@ -81,7 +79,7 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
     {
         if (ToggleStateTime.find("All") != std::string::npos)
         {
-            ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleStateTime);
+            ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateTime);
         }
         else if (ToggleStateTime.find("Specific") != std::string::npos)
         {

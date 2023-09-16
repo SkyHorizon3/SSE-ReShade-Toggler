@@ -152,10 +152,21 @@ void ReshadeToggler::LoadINI()
         //Time
         ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
         ToggleAllStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleAllState");
-
         TimeUpdateIntervall = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
+        itemTimeStartHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStart");
+        itemTimeStopHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStop");
 
         g_Logger->info("General TimeToggleOption:  {} - TimeToggleAllState: {} - TimeUpdateIntervall: {}", ToggleStateTime, ToggleAllStateTime, TimeUpdateIntervall);
+
+        if (ToggleStateTime == "All") 
+        {
+        TechniqueInfo TimeInfo;
+        TimeInfo.state = ToggleAllStateTime;
+        TimeInfo.startTime = itemTimeStartHourAll;
+        TimeInfo.stopTime = itemTimeStopHourAll;
+        techniqueTimeInfoList.push_back(TimeInfo);
+        g_Logger->info("Set all effects to {} from {} - {}", ToggleAllStateTime, itemTimeStartHourAll, itemTimeStopHourAll);
+        }
 
         ini.GetAllKeys(sectionTimeGeneral, TimeGeneral_keys);
         m_SpecificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
@@ -192,7 +203,7 @@ void ReshadeToggler::LoadINI()
                     itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
                     g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
 
-
+                    if (ToggleStateTime == "Specific") {
                     // Populate the technique info
                     TechniqueInfo TimeInfo;
                     TimeInfo.filename = itemTimeShaderToToggle;
@@ -201,6 +212,7 @@ void ReshadeToggler::LoadINI()
                     TimeInfo.stopTime = itemTimeStopHour;
                     techniqueTimeInfoList.push_back(TimeInfo);
                     g_Logger->info("Set effect {} to {} from {} - {}", itemTimeShaderToToggle, itemTimeStateValue, itemTimeStartHour, itemTimeStopHour);
+                    }
                 }
             }
         }
