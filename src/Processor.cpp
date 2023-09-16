@@ -1,15 +1,8 @@
 #include "../include/Processor.h"
 #include "../include/ReshadeIntegration.h"
 
-RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* event, RE::BSTEventSource<RE::MenuOpenCloseEvent>* source)
+RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
-    
-    if (!EnableMenus)
-    {
-        g_Logger->info("EnableMenus is set to false, no menus will be processed."); // Skip execution if EnableMenus is false
-        return RE::BSEventNotifyControl::kContinue;
-    }
-
     const auto& menuName = event->menuName;
     auto& opening = event->opening;
 
@@ -62,13 +55,6 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 {
     std::lock_guard<std::mutex> lock(timeMutex);
-
-
-    if (!EnableTime)
-    {
-        g_Logger->info("Time-based toggling is disabled!");
-        return RE::BSEventNotifyControl::kContinue;
-    }
 
     g_Logger->info("Started ProcessTimeBasedToggling");
 

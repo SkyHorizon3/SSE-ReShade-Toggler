@@ -243,8 +243,11 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
         // while loading the saved game (eg. corrupted save) which may require you to reset some of your
         // plugin state.
         logger::info("kPostLoadGame: sent after an attempt to load a saved game has finished");
-        processor.ProcessTimeBasedToggling();
-        std::thread(TimeThread).detach();
+        if (EnableTime)
+        {
+            processor.ProcessTimeBasedToggling();
+            std::thread(TimeThread).detach();
+        }
         break;
     case SKSE::MessagingInterface::kSaveGame:
         logger::info("kSaveGame");
@@ -279,8 +282,16 @@ void ReshadeToggler::Setup()
 
     Load();
     g_Logger->info("Loaded plugin");
-    auto& eventProcessorMenu = Processor::GetSingleton();
-    RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
+
+    if (EnableMenus)
+    {
+        auto& eventProcessorMenu = Processor::GetSingleton();
+        RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
+    }
+    else
+    {
+        g_Logger->info("EnableMenus is set to false, no menus will be processed.");
+    }
 }
 
 int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
