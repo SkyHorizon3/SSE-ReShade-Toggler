@@ -34,7 +34,7 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
     {
         if (ToggleStateMenus.find("All") != std::string::npos)
         {
-            ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleStateMenus);
+            ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateMenus, ToggleStateMenus);
         }
         else if (ToggleStateMenus.find("Specific") != std::string::npos)
         {
@@ -79,7 +79,7 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
     {
         if (ToggleStateTime.find("All") != std::string::npos)
         {
-            ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateTime);
+            ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateTime, ToggleStateTime);
         }
         else if (ToggleStateTime.find("Specific") != std::string::npos)
         {

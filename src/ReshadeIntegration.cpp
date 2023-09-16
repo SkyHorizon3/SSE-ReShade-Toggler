@@ -44,9 +44,9 @@ void ReshadeIntegration::ApplySpecificReshadeStates(bool enableReshade, Categori
     }
 }
 
-void ReshadeIntegration::ApplyReshadeState(bool enableReshade, const std::string& toggleState)
+void ReshadeIntegration::ApplyReshadeState(bool enableReshade, const std::string& toggleState, const std::string& state)
 {
-    DEBUG_LOG(g_Logger, "{} is enabled! - EnableReshade: {}", toggleState, enableReshade);
+    DEBUG_LOG(g_Logger, "{} is enabled! - EnableReshade: {}", state, enableReshade);
 
     if (toggleState == "off")
     {
