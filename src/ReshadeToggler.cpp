@@ -187,7 +187,6 @@ void ReshadeToggler::LoadINI()
                 {
                     itemTimeShaderToToggle = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
                     g_TimeToggleFile.emplace(itemTimeShaderToToggle);
-                    g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
 
                     // Construct the corresponding key for the state
                     std::string stateKeyName = togglePrefix04 + std::to_string(m_SpecificTime.size());
@@ -201,9 +200,12 @@ void ReshadeToggler::LoadINI()
                     std::string endTimeKey = togglePrefix06 + std::to_string(m_SpecificTime.size());
                     itemTimeStartHour = ini.GetDoubleValue(sectionTimeGeneral, startTimeKey.c_str());
                     itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
-                    g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
 
                     if (ToggleStateTime == "Specific") {
+
+                    g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
+                    g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
+
                     // Populate the technique info
                     TechniqueInfo TimeInfo;
                     TimeInfo.filename = itemTimeShaderToToggle;
