@@ -81,6 +81,7 @@ void ReshadeToggler::LoadINI()
         EnableInterior = ini.GetBoolValue(sectionGeneral, "EnableInterior");
         EnableWeather = ini.GetBoolValue(sectionGeneral, "EnableWeather");
 
+
         g_Logger->info("{}: EnableMenus: {} - EnableTime: {} - EnableInterior: {} - EnableWeather: {}", sectionGeneral, EnableMenus, EnableTime, EnableInterior, EnableWeather);
 
         DEBUG_LOG(g_Logger, "\n", nullptr);
@@ -277,6 +278,15 @@ void ReshadeToggler::Setup()
 {
     SetupLog();
     LoadINI();
+
+    // Check if all options are false, and unregister the addon if true
+    if (!EnableMenus && !EnableTime && !EnableInterior && !EnableWeather)
+    {
+        g_Logger->info("All options are set to false. Detaching plugin.");
+        reshade::unregister_addon(g_hModule);
+        return;
+    }
+
 
     SKSE::GetMessagingInterface()->RegisterListener(MessageListener);
 
