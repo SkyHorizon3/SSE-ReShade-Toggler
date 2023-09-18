@@ -6,6 +6,7 @@
 namespace logger = SKSE::log;
 
 reshade::api::effect_runtime* s_pRuntime = nullptr;
+
 // Callback when Reshade begins effects
 static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
 {
@@ -150,7 +151,7 @@ void ReshadeToggler::LoadINI()
 
 
 
-        
+        //Time
         ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
         TimeUpdateIntervall = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
 
@@ -171,11 +172,9 @@ void ReshadeToggler::LoadINI()
             g_Logger->info("Set all effects to {} from {} - {}", ToggleAllStateTime, itemTimeStartHourAll, itemTimeStopHourAll);
         }
 
-
         // Specific Time
         if (ToggleStateTime == "Specific")
         {
-            DEBUG_LOG(g_Logger, "SpecificTime", nullptr);
             ini.GetAllKeys(sectionTimeGeneral, TimeGeneral_keys);
             m_SpecificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
 
@@ -186,9 +185,12 @@ void ReshadeToggler::LoadINI()
 
             for (const auto& key : TimeGeneral_keys)
             {
-                if (strcmp(key.pItem, "TimeToggleOption") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0)
+                if (strcmp(key.pItem, "TimeToggleOption") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStart") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStop") != 0)
                 {
                     m_SpecificTime.push_back(key.pItem);
+
+                   // DEBUG_LOG(g_Logger, "Size of m_SpecificTime: {} ", m_SpecificTime.size());
+
                     const char* timeItemGeneral = m_SpecificTime.back().c_str();
 
                     if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
@@ -243,6 +245,8 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 {
     auto& processor = Processor::GetSingleton();
     switch (message->type) {
+
+        /*
         // Descriptions are taken from the original skse64 library
         // See:
         // https://github.com/ianpatt/skse64/blob/09f520a2433747f33ae7d7c15b1164ca198932c3/skse64/PluginAPI.h#L193-L212
@@ -258,18 +262,24 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
         // message->dataLen: length of file path, data: char* file path of .ess savegame file
         logger::info("kPreLoadGame: sent immediately before savegame is read");
         break;
+        */
+
     case SKSE::MessagingInterface::kPostLoadGame:
         // You will probably want to handle this event if your plugin uses a Preload callback
         // as there is a chance that after that callback is invoked the game will encounter an error
         // while loading the saved game (eg. corrupted save) which may require you to reset some of your
         // plugin state.
-        logger::info("kPostLoadGame: sent after an attempt to load a saved game has finished");
+
+        //logger::info("kPostLoadGame: sent after an attempt to load a saved game has finished");
+
         if (EnableTime)
         {
             processor.ProcessTimeBasedToggling();
             std::thread(TimeThread).detach();
         }
         break;
+
+        /*
     case SKSE::MessagingInterface::kSaveGame:
         logger::info("kSaveGame");
         break;
@@ -287,6 +297,8 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
     case SKSE::MessagingInterface::kDataLoaded:
         logger::info("kDataLoaded: sent after the data handler has loaded all its forms");
         break;
+        */
+
     default:
         logger::info("Unknown system message of type: {}", message->type);
         break;
@@ -307,11 +319,15 @@ void ReshadeToggler::Setup()
         return;
     }
 
-
     SKSE::GetMessagingInterface()->RegisterListener(MessageListener);
 
     Load();
     g_Logger->info("Loaded plugin");
+
+    if (!EnableTime)
+    {
+        g_Logger->info("EnableTime is set to false, time-based toggling won't be processed.");
+    }
 
     if (EnableMenus)
     {
@@ -332,7 +348,10 @@ int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
     }
     else if (fdwReason == DLL_PROCESS_DETACH)
     {
+        if (EnableTime)
+        {
         std::thread(TimeThread).join();
+        }
         unregister_addon_events();
         reshade::unregister_addon(hModule);
     }
