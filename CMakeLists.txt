@@ -3,7 +3,29 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Set your project name. This will be the name of your SKSE .dll file.
-project(ReshadeToggler VERSION 1.0.0 LANGUAGES CXX)
+project(ReShadeToggler VERSION 2.0.0 LANGUAGES CXX)
+
+set(headers 
+        include/Reshade/reshade.hpp
+        include/Reshade/reshade_api.hpp
+        include/Reshade/reshade_api_device.hpp
+        include/Reshade/reshade_api_format.hpp
+        include/Reshade/reshade_api_pipeline.hpp
+        include/Reshade/reshade_api_resource.hpp
+        include/Reshade/reshade_events.hpp
+        include/Reshade/reshade_overlay.hpp
+        include/ReShadeToggler.h
+        include/Processor.h
+        include/ReshadeIntegration.h
+        include/Globals.h
+)
+
+
+set(sources 
+            src/ReShadeToggler.cpp
+            src/Processor.cpp
+            src/ReshadeIntegration.cpp
+)
 
 # #
 # YOU DO NOT NEED TO EDIT ANYTHING BELOW HERE
@@ -32,9 +54,9 @@ endif()
 
 # Setup your SKSE plugin as an SKSE plugin!
 find_package(CommonLibSSE CONFIG REQUIRED)
-add_commonlibsse_plugin(${PROJECT_NAME} SOURCES src/ReshadeToggler.cpp) # <--- specifies plugin.cpp
+add_commonlibsse_plugin(${PROJECT_NAME} SOURCES ${headers} ${sources}) # <--- specifies plugin.cpp
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23) # <--- use C++23 standard
-target_precompile_headers(${PROJECT_NAME} PRIVATE src/PCH.h) # <--- PCH.h is required!
+target_precompile_headers(${PROJECT_NAME} PRIVATE include/PCH.h) # <--- PCH.h is required!
 
 # When your SKSE .dll is compiled, this will automatically copy the .dll into your mods folder.
 # Only works if you configure DEPLOY_ROOT above (or set the SKYRIM_MODS_FOLDER environment variable)
