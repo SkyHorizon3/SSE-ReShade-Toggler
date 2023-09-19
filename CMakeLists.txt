@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Set your project name. This will be the name of your SKSE .dll file.
-project(ReShadeToggler VERSION 1.1.0 LANGUAGES CXX)
+project(ReShadeToggler VERSION 2.0.0 LANGUAGES CXX)
 
 set(headers 
         include/Reshade/reshade.hpp
