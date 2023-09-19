@@ -34,7 +34,7 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
     {
         if (ToggleStateMenus.find("All") != std::string::npos)
         {
-            ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateMenus, ToggleStateMenus);
+            ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateMenus);
         }
         else if (ToggleStateMenus.find("Specific") != std::string::npos)
         {
@@ -54,9 +54,10 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 
 RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 {
+
     std::lock_guard<std::mutex> lock(timeMutex);
 
-    g_Logger->info("Started ProcessTimeBasedToggling");
+    DEBUG_LOG(g_Logger, "Started ProcessTimeBasedToggling", nullptr);
 
     const auto time = RE::Calendar::GetSingleton();
 
@@ -79,13 +80,14 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
     {
         if (ToggleStateTime.find("All") != std::string::npos)
         {
-            ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateTime, ToggleStateTime);
+            ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateTime);
         }
         else if (ToggleStateTime.find("Specific") != std::string::npos)
         {
             ReshadeIntegration::ApplySpecificReshadeStates(enableReshade, Categories::Time);
         }
     }
+
     return RE::BSEventNotifyControl::kContinue;
 }
 

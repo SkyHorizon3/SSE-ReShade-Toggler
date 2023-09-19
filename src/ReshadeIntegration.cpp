@@ -5,7 +5,7 @@ void ReshadeIntegration::ApplyTechniqueState(bool enableReshade, const Technique
 {
     s_pRuntime->enumerate_techniques(info.filename.c_str(), [&enableReshade, &info](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
     {
-        g_Logger->info("State: {} for: {}", info.state.c_str(), info.filename.c_str());
+        DEBUG_LOG(g_Logger, "State: {} for: {}", info.state.c_str(), info.filename.c_str());
         if (info.state == "off")
         {
             runtime->set_technique_state(technique, enableReshade);
@@ -44,9 +44,9 @@ void ReshadeIntegration::ApplySpecificReshadeStates(bool enableReshade, Categori
     }
 }
 
-void ReshadeIntegration::ApplyReshadeState(bool enableReshade, const std::string& toggleState, const std::string& state)
+void ReshadeIntegration::ApplyReshadeState(bool enableReshade, const std::string& toggleState)
 {
-    DEBUG_LOG(g_Logger, "{} is enabled! - EnableReshade: {}", state, enableReshade);
+    DEBUG_LOG(g_Logger, "All is enabled! - EnableReshade: {}", enableReshade);
 
     if (toggleState == "off")
     {
