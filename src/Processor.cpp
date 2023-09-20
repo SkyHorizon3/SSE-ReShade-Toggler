@@ -91,6 +91,7 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
     return RE::BSEventNotifyControl::kContinue;
 }
 
+
 bool Processor::IsTimeWithinRange(double currentTime, double startTime, double endTime)
 {
     if (currentTime >= startTime && currentTime <= endTime)

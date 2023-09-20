@@ -4,6 +4,7 @@
     "version-string": "2.0.0",
   "dependencies": [
     "commonlibsse-ng",
-    "simpleini"
+    "simpleini",
+    "imgui"
   ]
 }

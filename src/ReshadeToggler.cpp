@@ -2,6 +2,7 @@
 #include "../include/Processor.h"
 #include "../include/ReshadeToggler.h"
 #include "../include/Globals.h"
+#include "../include/Menu.h"
 
 namespace logger = SKSE::log;
 
@@ -17,11 +18,13 @@ static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
 void register_addon_events()
 {
     reshade::register_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
+    reshade::register_overlay("ReshadeTogglerSettings",Menu::DrawSettingsOverlayCallback);
 }
 
 void unregister_addon_events()
 {
     reshade::unregister_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
+    //reshade::unregister_overlay("ReshadeTogglerSettings", Menu::DrawSettingsOverlayCallback);
 }
 
 

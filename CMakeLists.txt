@@ -14,17 +14,19 @@ set(headers
         include/Reshade/reshade_api_resource.hpp
         include/Reshade/reshade_events.hpp
         include/Reshade/reshade_overlay.hpp
+        include/Menu.h
         include/ReShadeToggler.h
         include/Processor.h
         include/ReshadeIntegration.h
         include/Globals.h
+        include/ImGui/imgui.h
 )
 
-
 set(sources 
-            src/ReShadeToggler.cpp
-            src/Processor.cpp
-            src/ReshadeIntegration.cpp
+    src/ReShadeToggler.cpp
+    src/Processor.cpp
+    src/ReshadeIntegration.cpp
+    src/Menu.cpp
 )
 
 # #
