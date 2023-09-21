@@ -2,14 +2,12 @@
 
 #include "RE/Skyrim.h"
 #include "SKSE/SKSE.h"
-#include "Reshade/reshade.hpp"
 
 #include <unordered_set>
 #include <chrono>
 #include <memory>
 #include <Windows.h>
 #include <cstdint>
-#include "ImGui/imgui.h"
 
 
 using namespace std::literals;
@@ -19,3 +17,9 @@ using namespace std::literals;
 #else
 	#define DEBUG_LOG(logger, msg, ...)
 #endif
+
+#include "Plugin.h"
+
+#define IMGUI_DISABLE_INCLUDE_IMCONFIG_H
+#include <ImGui/imgui.h>
+#include <reshade/reshade.hpp>

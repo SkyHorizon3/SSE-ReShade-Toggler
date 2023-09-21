@@ -6,7 +6,14 @@
 
 namespace logger = SKSE::log;
 
+
+#define DLLEXPORT __declspec(dllexport)
+extern "C" DLLEXPORT const char* NAME = "ReShadeToggler";
+extern "C" DLLEXPORT const char* DESCRIPTION = "";
+
+
 reshade::api::effect_runtime* s_pRuntime = nullptr;
+
 
 // Callback when Reshade begins effects
 static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
@@ -14,17 +21,23 @@ static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
     s_pRuntime = runtime;
 }
 
+static void DrawMenu(reshade::api::effect_runtime*)
+{
+    Menu::GetSingleton()->SettingsMenu();
+}
+
+
 // Register and unregister addon events
 void register_addon_events()
 {
     reshade::register_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
-    reshade::register_overlay("ReshadeTogglerSettings",Menu::DrawSettingsOverlayCallback);
+    reshade::register_overlay(nullptr, &DrawMenu);
 }
 
 void unregister_addon_events()
 {
     reshade::unregister_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
-    //reshade::unregister_overlay("ReshadeTogglerSettings", Menu::DrawSettingsOverlayCallback);
+    reshade::unregister_overlay(nullptr, &DrawMenu);
 }
 
 
@@ -306,7 +319,6 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
     }
 }
 
-
 void ReshadeToggler::Setup()
 {
     SetupLog();
@@ -366,5 +378,25 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
     ReshadeToggler plugin;
     plugin.Setup();
 
+    return true;
+}
+
+
+
+extern "C" DLLEXPORT const auto SKSEPlugin_Version = []() noexcept {
+    SKSE::PluginVersionData v;
+    v.PluginName(Plugin::NAME.data());
+    v.PluginVersion(Plugin::VERSION);
+    v.UsesAddressLibrary(true);
+    v.HasNoStructUse();
+    return v;
+}();
+
+
+extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface*, SKSE::PluginInfo * pluginInfo)
+{
+    pluginInfo->name = SKSEPlugin_Version.pluginName;
+    pluginInfo->infoVersion = SKSE::PluginInfo::kVersion;
+    pluginInfo->version = SKSEPlugin_Version.pluginVersion;
     return true;
 }
