@@ -80,7 +80,6 @@ void ReshadeToggler::LoadINI()
         ini.SetUnicode();
         ini.LoadFile(L"Data\\SKSE\\Plugins\\ReShadeToggler.ini");
 
-
         const char* sectionGeneral = "General";
         const char* sectionMenusGeneral = "MenusGeneral";
         const char* sectionMenusProcess = "MenusProcess";
@@ -111,7 +110,7 @@ void ReshadeToggler::LoadINI()
         g_Logger->info("General MenuToggleOption:  {} - MenuToggleAllState: {}", ToggleStateMenus, ToggleAllStateMenus);
 
         ini.GetAllKeys(sectionMenusGeneral, MenusGeneral_keys);
-        m_SpecificMenu.reserve(MenusGeneral_keys.size()); // Reserve space for vector
+        g_SpecificMenu.reserve(MenusGeneral_keys.size()); // Reserve space for vector
 
         const char* togglePrefix01 = "MenuToggleSpecificFile";
         const char* togglePrefix02 = "MenuToggleSpecificState";
@@ -120,8 +119,8 @@ void ReshadeToggler::LoadINI()
         {
             if (strcmp(key.pItem, "MenuToggleOption") != 0 && strcmp(key.pItem, "MenuToggleAllState") != 0)
             {
-                m_SpecificMenu.push_back(key.pItem);
-                const char* menuItemgeneral = m_SpecificMenu.back().c_str();
+                g_SpecificMenu.push_back(key.pItem);
+                const char* menuItemgeneral = g_SpecificMenu.back().c_str();
 
                 // Check if the key starts with MenuToggleSpecificFile
                 if (strncmp(key.pItem, togglePrefix01, strlen(togglePrefix01)) == 0)
@@ -131,7 +130,7 @@ void ReshadeToggler::LoadINI()
                     g_Logger->info("MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemMenuShaderToToggle);
 
                     // Construct the corresponding key for the state
-                    std::string stateKeyName = togglePrefix02 + std::to_string(m_SpecificMenu.size());
+                    std::string stateKeyName = togglePrefix02 + std::to_string(g_SpecificMenu.size());
 
                     // Retrieve the state using the constructed key
                     itemMenuStateValue = ini.GetValue(sectionMenusGeneral, stateKeyName.c_str(), nullptr);
@@ -152,12 +151,12 @@ void ReshadeToggler::LoadINI()
 
         //MenusProcess
         ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
-        m_INImenus.reserve(MenusProcess_keys.size()); // Reserve space for vector
+        g_INImenus.reserve(MenusProcess_keys.size()); // Reserve space for vector
 
         for (const auto& key : MenusProcess_keys)
         {
-            m_INImenus.push_back(key.pItem);
-            const char* menuItem = m_INImenus.back().c_str();
+            g_INImenus.push_back(key.pItem);
+            const char* menuItem = g_INImenus.back().c_str();
             const char* itemValue = ini.GetValue(sectionMenusProcess, key.pItem, nullptr);
             g_MenuValue.emplace(itemValue);
             g_Logger->info("Menu:  {} - Value: {}", menuItem, itemValue);
@@ -192,7 +191,7 @@ void ReshadeToggler::LoadINI()
         if (ToggleStateTime == "Specific")
         {
             ini.GetAllKeys(sectionTimeGeneral, TimeGeneral_keys);
-            m_SpecificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
+            g_SpecificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
 
             const char* togglePrefix03 = "TimeToggleSpecificFile";
             const char* togglePrefix04 = "TimeToggleSpecificState";
@@ -203,11 +202,11 @@ void ReshadeToggler::LoadINI()
             {
                 if (strcmp(key.pItem, "TimeToggleOption") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStart") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStop") != 0)
                 {
-                    m_SpecificTime.push_back(key.pItem);
+                    g_SpecificTime.push_back(key.pItem);
 
                    // DEBUG_LOG(g_Logger, "Size of m_SpecificTime: {} ", m_SpecificTime.size());
 
-                    const char* timeItemGeneral = m_SpecificTime.back().c_str();
+                    const char* timeItemGeneral = g_SpecificTime.back().c_str();
 
                     if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
                     {
@@ -216,15 +215,15 @@ void ReshadeToggler::LoadINI()
                         g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
 
                         // Construct the corresponding key for the state
-                        std::string stateKeyName = togglePrefix04 + std::to_string(m_SpecificTime.size());
+                        std::string stateKeyName = togglePrefix04 + std::to_string(g_SpecificTime.size());
 
                         // Retrieve the state using the constructed key
                         itemTimeStateValue = ini.GetValue(sectionTimeGeneral, stateKeyName.c_str(), nullptr);
                         g_TimeToggleState.emplace(itemTimeStateValue);
 
                         // Construct the corresponding key for the the start and stop times
-                        std::string startTimeKey = togglePrefix05 + std::to_string(m_SpecificTime.size());
-                        std::string endTimeKey = togglePrefix06 + std::to_string(m_SpecificTime.size());
+                        std::string startTimeKey = togglePrefix05 + std::to_string(g_SpecificTime.size());
+                        std::string endTimeKey = togglePrefix06 + std::to_string(g_SpecificTime.size());
                         itemTimeStartHour = ini.GetDoubleValue(sectionTimeGeneral, startTimeKey.c_str());
                         itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
                         g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);

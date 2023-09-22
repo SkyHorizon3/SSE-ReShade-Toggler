@@ -10,4 +10,9 @@ public:
 	}
 
 	void SettingsMenu();
+
+private:
+	void RenderInfoPage();
+	void RenderMenusPage();
+	void RenderTimePage();
 };

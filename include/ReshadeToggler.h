@@ -7,13 +7,15 @@
 class ReshadeToggler
 {
 public:
+
+    static ReshadeToggler GetSingleton()
+    {
+        ReshadeToggler toggler;
+        return toggler;
+    }
+
     void Setup();
     void SetupLog();
     void Load();
     void LoadINI();
-
-private:
-    std::vector<std::string> m_SpecificMenu;
-    std::vector<std::string> m_SpecificTime;
-    std::vector<std::string> m_INImenus;
 };

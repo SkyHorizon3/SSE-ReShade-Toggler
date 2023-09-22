@@ -31,6 +31,11 @@ inline bool EnableTime = true;
 inline bool EnableInterior = true;
 inline bool EnableWeather = true;
 
+
+inline std::vector<std::string> g_SpecificMenu;
+inline std::vector<std::string> g_SpecificTime;
+inline std::vector<std::string> g_INImenus;
+
 inline std::unordered_set<std::string> g_MenuValue;
 inline std::unordered_set<std::string> g_MenuToggleFile;
 inline std::unordered_set<std::string> g_MenuToggleState;
