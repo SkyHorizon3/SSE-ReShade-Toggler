@@ -153,12 +153,18 @@ void ReshadeToggler::LoadINI()
         ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
         g_INImenus.reserve(MenusProcess_keys.size()); // Reserve space for vector
 
+        Menus menus;
         for (const auto& key : MenusProcess_keys)
         {
             g_INImenus.push_back(key.pItem);
             const char* menuItem = g_INImenus.back().c_str();
             const char* itemValue = ini.GetValue(sectionMenusProcess, key.pItem, nullptr);
             g_MenuValue.emplace(itemValue);
+
+            menus.menuIndex = menuItem;
+            menus.menuName = itemValue;
+            menuList.push_back(menus);
+
             g_Logger->info("Menu:  {} - Value: {}", menuItem, itemValue);
         }
 

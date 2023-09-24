@@ -36,12 +36,24 @@ void Menu::RenderInfoPage()
 
 void Menu::RenderMenusPage()
 {
-	for (int i = 0; i < g_INImenus.size(); ++i)
+	if (!menuList.empty())
 	{
-		ImGui::Text("%s: %s", g_INImenus.at(i).c_str());
+		for (auto& menu : menuList)
+		{
+			ImGui::Text("%s: %s", menu.menuIndex.c_str(), menu.menuName.c_str());
+		}
 	}
 }
 
 void Menu::RenderTimePage()
-{}
+{
+	if (!techniqueTimeInfoList.empty())
+	{
+		for (auto& timeInfo : techniqueTimeInfoList)
+		{
+			ImGui::Text("Effect: %s - ToggleState:", timeInfo.filename.c_str(), timeInfo.state.c_str());
+			ImGui::Text("StartTime: %.2f StopTime: %.2f", timeInfo.startTime, timeInfo.stopTime);
+		}
+	}
+}
 
