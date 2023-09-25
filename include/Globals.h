@@ -8,24 +8,24 @@
 
 struct TechniqueInfo
 {
-    std::string filename = "?";
-    std::string state = "?";
-    double startTime = 0.0;
-    double stopTime = 0.0;
+	std::string filename = "";
+	std::string state = "";
+	double startTime = 0.0;
+	double stopTime = 0.0;
 };
 
 struct Menus
 {
-    std::string menuIndex = "?";
-    std::string menuName = "?";
+	std::string menuIndex = "";
+	std::string menuName = "";
 };
 
 enum class Categories
 {
-    Menu,
-    Time,
-    Weather,
-    Interior
+	Menu,
+	Time,
+	Weather,
+	Interior
 };
 
 inline HMODULE g_hModule = nullptr;

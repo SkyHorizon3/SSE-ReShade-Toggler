@@ -18,449 +18,450 @@ reshade::api::effect_runtime* s_pRuntime = nullptr;
 // Callback when Reshade begins effects
 static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
 {
-    s_pRuntime = runtime;
+	s_pRuntime = runtime;
 }
 
 static void DrawMenu(reshade::api::effect_runtime*)
 {
-    Menu::GetSingleton()->SettingsMenu();
+	Menu::GetSingleton()->SettingsMenu();
 }
 
 
 // Register and unregister addon events
 void register_addon_events()
 {
-    reshade::register_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
-    reshade::register_overlay(nullptr, &DrawMenu);
+	reshade::register_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
+	reshade::register_overlay(nullptr, &DrawMenu);
 }
 
 void unregister_addon_events()
 {
-    reshade::unregister_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
-    reshade::unregister_overlay(nullptr, &DrawMenu);
+	reshade::unregister_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
+	reshade::unregister_overlay(nullptr, &DrawMenu);
 }
 
 
 // Setup logger for plugin
 void ReshadeToggler::SetupLog()
 {
-    auto logsFolder = SKSE::log::log_directory();
-    if (!logsFolder)
-    {
-        SKSE::stl::report_and_fail("SKSE log_directory not provided, logs disabled.");
-    }
+	auto logsFolder = SKSE::log::log_directory();
+	if (!logsFolder)
+	{
+		SKSE::stl::report_and_fail("SKSE log_directory not provided, logs disabled.");
+	}
 
-    auto pluginName = SKSE::PluginDeclaration::GetSingleton()->GetName();
-    auto logFilePath = *logsFolder / std::format("{}.log", pluginName);
+	auto pluginName = SKSE::PluginDeclaration::GetSingleton()->GetName();
+	auto logFilePath = *logsFolder / std::format("{}.log", pluginName);
 
-    auto fileLoggerPtr = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFilePath.string(), true);
-    g_Logger = std::make_shared<spdlog::logger>("log", std::move(fileLoggerPtr));
-    spdlog::set_default_logger(g_Logger);
-    spdlog::set_level(spdlog::level::trace);
-    spdlog::flush_on(spdlog::level::trace);
+	auto fileLoggerPtr = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFilePath.string(), true);
+	g_Logger = std::make_shared<spdlog::logger>("log", std::move(fileLoggerPtr));
+	spdlog::set_default_logger(g_Logger);
+	spdlog::set_level(spdlog::level::trace);
+	spdlog::flush_on(spdlog::level::trace);
 }
 
 // Load Reshade and register events
 void ReshadeToggler::Load()
 {
-    if (reshade::register_addon(g_hModule))
-    {
-        g_Logger->info("Registered addon");
-        register_addon_events();
-    }
-    else {
-        g_Logger->info("ReShade not present.");
-    }
+	if (reshade::register_addon(g_hModule))
+	{
+		g_Logger->info("Registered addon");
+		register_addon_events();
+	}
+	else {
+		g_Logger->info("ReShade not present.");
+	}
 }
 
 void ReshadeToggler::LoadINI()
 {
-    {
-        ReshadeIntegration::EnumerateEffects();
+	ReshadeIntegration::EnumerateEffects();
 
-        CSimpleIniA ini;
-        ini.SetUnicode();
-        ini.LoadFile(L"Data\\SKSE\\Plugins\\ReShadeToggler.ini");
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	ini.LoadFile(L"Data\\SKSE\\Plugins\\ReShadeToggler.ini");
 
-        const char* sectionGeneral = "General";
-        const char* sectionMenusGeneral = "MenusGeneral";
-        const char* sectionMenusProcess = "MenusProcess";
-        const char* sectionTimeGeneral = "Time";
-        const char* sectionInteriorGeneral = "Interior";
-        //const char* sectionWeatherGeneral = "Weather";
+	const char* sectionGeneral = "General";
+	const char* sectionMenusGeneral = "MenusGeneral";
+	const char* sectionMenusProcess = "MenusProcess";
+	const char* sectionTimeGeneral = "Time";
+	const char* sectionInteriorGeneral = "Interior";
+	//const char* sectionWeatherGeneral = "Weather";
 
-        CSimpleIniA::TNamesDepend MenusGeneral_keys;
-        CSimpleIniA::TNamesDepend MenusProcess_keys;
-        CSimpleIniA::TNamesDepend TimeGeneral_keys;
-        CSimpleIniA::TNamesDepend InteriorGeneral_keys;
+	CSimpleIniA::TNamesDepend MenusGeneral_keys;
+	CSimpleIniA::TNamesDepend MenusProcess_keys;
+	CSimpleIniA::TNamesDepend TimeGeneral_keys;
+	CSimpleIniA::TNamesDepend InteriorGeneral_keys;
 
-        //General
-        EnableMenus = ini.GetBoolValue(sectionGeneral, "EnableMenus");
-        EnableTime = ini.GetBoolValue(sectionGeneral, "EnableTime");
-        EnableInterior = ini.GetBoolValue(sectionGeneral, "EnableInterior");
-        EnableWeather = ini.GetBoolValue(sectionGeneral, "EnableWeather");
-
-
-        g_Logger->info("{}: EnableMenus: {} - EnableTime: {} - EnableInterior: {} - EnableWeather: {}", sectionGeneral, EnableMenus, EnableTime, EnableInterior, EnableWeather);
-
-        DEBUG_LOG(g_Logger, "\n", nullptr);
+	//General
+	EnableMenus = ini.GetBoolValue(sectionGeneral, "EnableMenus");
+	EnableTime = ini.GetBoolValue(sectionGeneral, "EnableTime");
+	EnableInterior = ini.GetBoolValue(sectionGeneral, "EnableInterior");
+	EnableWeather = ini.GetBoolValue(sectionGeneral, "EnableWeather");
 
 
-        // MenusGeneral
-        ToggleStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleOption");
-        ToggleAllStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleAllState");
+	g_Logger->info("{}: EnableMenus: {} - EnableTime: {} - EnableInterior: {} - EnableWeather: {}", sectionGeneral, EnableMenus, EnableTime, EnableInterior, EnableWeather);
 
-        g_Logger->info("General MenuToggleOption:  {} - MenuToggleAllState: {}", ToggleStateMenus, ToggleAllStateMenus);
+	DEBUG_LOG(g_Logger, "\n", nullptr);
 
-        ini.GetAllKeys(sectionMenusGeneral, MenusGeneral_keys);
-        g_SpecificMenu.reserve(MenusGeneral_keys.size()); // Reserve space for vector
+#pragma region Menus
 
-        const char* togglePrefix01 = "MenuToggleSpecificFile";
-        const char* togglePrefix02 = "MenuToggleSpecificState";
+	// MenusGeneral
+	ToggleStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleOption");
+	ToggleAllStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleAllState");
 
-        for (const auto& key : MenusGeneral_keys)
-        {
-            if (strcmp(key.pItem, "MenuToggleOption") != 0 && strcmp(key.pItem, "MenuToggleAllState") != 0)
-            {
-                g_SpecificMenu.push_back(key.pItem);
-                const char* menuItemgeneral = g_SpecificMenu.back().c_str();
+	g_Logger->info("General MenuToggleOption:  {} - MenuToggleAllState: {}", ToggleStateMenus, ToggleAllStateMenus);
 
-                // Check if the key starts with MenuToggleSpecificFile
-                if (strncmp(key.pItem, togglePrefix01, strlen(togglePrefix01)) == 0)
-                {
-                    itemMenuShaderToToggle = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
-                    g_MenuToggleFile.emplace(itemMenuShaderToToggle);
-                    g_Logger->info("MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemMenuShaderToToggle);
+	ini.GetAllKeys(sectionMenusGeneral, MenusGeneral_keys);
+	g_SpecificMenu.reserve(MenusGeneral_keys.size()); // Reserve space for vector
 
-                    // Construct the corresponding key for the state
-                    std::string stateKeyName = togglePrefix02 + std::to_string(g_SpecificMenu.size());
+	const char* togglePrefix01 = "MenuToggleSpecificFile";
+	const char* togglePrefix02 = "MenuToggleSpecificState";
 
-                    // Retrieve the state using the constructed key
-                    itemMenuStateValue = ini.GetValue(sectionMenusGeneral, stateKeyName.c_str(), nullptr);
-                    g_MenuToggleState.emplace(itemMenuStateValue);
+	for (const auto& key : MenusGeneral_keys)
+	{
+		if (strcmp(key.pItem, "MenuToggleOption") != 0 && strcmp(key.pItem, "MenuToggleAllState") != 0)
+		{
+			g_SpecificMenu.push_back(key.pItem);
+			const char* menuItemgeneral = g_SpecificMenu.back().c_str();
 
-                    // Populate the technique info
-                    TechniqueInfo MenuInfo;
-                    MenuInfo.filename = itemMenuShaderToToggle;
-                    MenuInfo.state = itemMenuStateValue;
-                    techniqueMenuInfoList.push_back(MenuInfo);
-                    g_Logger->info("Populated TechniqueMenuInfo: {} - {}", itemMenuShaderToToggle, itemMenuStateValue);
-                }
-            }
-        }
+			// Check if the key starts with MenuToggleSpecificFile
+			if (strncmp(key.pItem, togglePrefix01, strlen(togglePrefix01)) == 0)
+			{
+				itemMenuShaderToToggle = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
+				g_MenuToggleFile.emplace(itemMenuShaderToToggle);
+				g_Logger->info("MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemMenuShaderToToggle);
 
-        DEBUG_LOG(g_Logger, "\n", nullptr);
+				// Construct the corresponding key for the state
+				std::string stateKeyName = togglePrefix02 + std::to_string(g_SpecificMenu.size());
 
+				// Retrieve the state using the constructed key
+				itemMenuStateValue = ini.GetValue(sectionMenusGeneral, stateKeyName.c_str(), nullptr);
+				g_MenuToggleState.emplace(itemMenuStateValue);
 
-        //MenusProcess
-        ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
-        g_INImenus.reserve(MenusProcess_keys.size()); // Reserve space for vector
+				// Populate the technique info
+				TechniqueInfo MenuInfo;
+				MenuInfo.filename = itemMenuShaderToToggle;
+				MenuInfo.state = itemMenuStateValue;
+				techniqueMenuInfoList.push_back(MenuInfo);
+				g_Logger->info("Populated TechniqueMenuInfo: {} - {}", itemMenuShaderToToggle, itemMenuStateValue);
+			}
+		}
+	}
 
-        Menus menus;
-        for (const auto& key : MenusProcess_keys)
-        {
-            g_INImenus.push_back(key.pItem);
-            const char* menuItem = g_INImenus.back().c_str();
-            const char* itemValue = ini.GetValue(sectionMenusProcess, key.pItem, nullptr);
-            g_MenuValue.emplace(itemValue);
-
-            menus.menuIndex = menuItem;
-            menus.menuName = itemValue;
-            menuList.push_back(menus);
-
-            g_Logger->info("Menu:  {} - Value: {}", menuItem, itemValue);
-        }
-
-        DEBUG_LOG(g_Logger, "\n", nullptr);
+	DEBUG_LOG(g_Logger, "\n", nullptr);
 
 
+	//MenusProcess
+	ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
+	g_INImenus.reserve(MenusProcess_keys.size()); // Reserve space for vector
 
-        //Time
-        ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
-        TimeUpdateInterval = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
+	Menus menus;
+	for (const auto& key : MenusProcess_keys)
+	{
+		g_INImenus.push_back(key.pItem);
+		const char* menuItem = g_INImenus.back().c_str();
+		const char* itemValue = ini.GetValue(sectionMenusProcess, key.pItem, nullptr);
+		g_MenuValue.emplace(itemValue);
 
-        g_Logger->info("General TimeToggleOption:  {} - TimeUpdateIntervall: {}", ToggleStateTime, TimeUpdateInterval);
+		menus.menuIndex = menuItem;
+		menus.menuName = itemValue;
+		menuList.push_back(menus);
 
-        // All Time
-        if(ToggleStateTime == "All")
-        {
-            ToggleAllStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleAllState");
-            itemTimeStartHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStart");
-            itemTimeStopHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStop");
+		g_Logger->info("Menu:  {} - Value: {}", menuItem, itemValue);
+	}
 
-            TechniqueInfo TimeInfo;
-            TimeInfo.state = ToggleAllStateTime;
-            TimeInfo.startTime = itemTimeStartHourAll;
-            TimeInfo.stopTime = itemTimeStopHourAll;
-            techniqueTimeInfoList.push_back(TimeInfo);
-            g_Logger->info("Set all effects to {} from {} - {}", ToggleAllStateTime, itemTimeStartHourAll, itemTimeStopHourAll);
-        }
+	DEBUG_LOG(g_Logger, "\n", nullptr);
+#pragma endregion
 
-        // Specific Time
-        if (ToggleStateTime == "Specific")
-        {
-            ini.GetAllKeys(sectionTimeGeneral, TimeGeneral_keys);
-            g_SpecificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
+#pragma region Time
+	//Time
+	ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
+	TimeUpdateInterval = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
 
-            const char* togglePrefix03 = "TimeToggleSpecificFile";
-            const char* togglePrefix04 = "TimeToggleSpecificState";
-            const char* togglePrefix05 = "TimeToggleSpecificTimeStart";
-            const char* togglePrefix06 = "TimeToggleSpecificTimeStop";
+	g_Logger->info("General TimeToggleOption:  {} - TimeUpdateIntervall: {}", ToggleStateTime, TimeUpdateInterval);
 
-            for (const auto& key : TimeGeneral_keys)
-            {
-                if (strcmp(key.pItem, "TimeToggleOption") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStart") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStop") != 0)
-                {
-                    g_SpecificTime.push_back(key.pItem);
+	// All Time
+	if (ToggleStateTime == "All")
+	{
+		ToggleAllStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleAllState");
+		itemTimeStartHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStart");
+		itemTimeStopHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStop");
 
-                   // DEBUG_LOG(g_Logger, "Size of m_SpecificTime: {} ", m_SpecificTime.size());
+		TechniqueInfo TimeInfo;
+		TimeInfo.state = ToggleAllStateTime;
+		TimeInfo.startTime = itemTimeStartHourAll;
+		TimeInfo.stopTime = itemTimeStopHourAll;
+		techniqueTimeInfoList.push_back(TimeInfo);
+		g_Logger->info("Set all effects to {} from {} - {}", ToggleAllStateTime, itemTimeStartHourAll, itemTimeStopHourAll);
+	}
 
-                    const char* timeItemGeneral = g_SpecificTime.back().c_str();
+	// Specific Time
+	if (ToggleStateTime == "Specific")
+	{
+		ini.GetAllKeys(sectionTimeGeneral, TimeGeneral_keys);
+		g_SpecificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
 
-                    if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
-                    {
-                        itemTimeShaderToToggle = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
-                        g_TimeToggleFile.emplace(itemTimeShaderToToggle);
-                        g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
+		const char* togglePrefix03 = "TimeToggleSpecificFile";
+		const char* togglePrefix04 = "TimeToggleSpecificState";
+		const char* togglePrefix05 = "TimeToggleSpecificTimeStart";
+		const char* togglePrefix06 = "TimeToggleSpecificTimeStop";
 
-                        // Construct the corresponding key for the state
-                        std::string stateKeyName = togglePrefix04 + std::to_string(g_SpecificTime.size());
+		for (const auto& key : TimeGeneral_keys)
+		{
+			if (strcmp(key.pItem, "TimeToggleOption") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStart") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStop") != 0)
+			{
+				g_SpecificTime.push_back(key.pItem);
 
-                        // Retrieve the state using the constructed key
-                        itemTimeStateValue = ini.GetValue(sectionTimeGeneral, stateKeyName.c_str(), nullptr);
-                        g_TimeToggleState.emplace(itemTimeStateValue);
+				// DEBUG_LOG(g_Logger, "Size of m_SpecificTime: {} ", m_SpecificTime.size());
 
-                        // Construct the corresponding key for the the start and stop times
-                        std::string startTimeKey = togglePrefix05 + std::to_string(g_SpecificTime.size());
-                        std::string endTimeKey = togglePrefix06 + std::to_string(g_SpecificTime.size());
-                        itemTimeStartHour = ini.GetDoubleValue(sectionTimeGeneral, startTimeKey.c_str());
-                        itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
-                        g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
+				const char* timeItemGeneral = g_SpecificTime.back().c_str();
 
+				if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
+				{
+					itemTimeShaderToToggle = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
+					g_TimeToggleFile.emplace(itemTimeShaderToToggle);
+					g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
 
-                        // Populate the technique info
-                        TechniqueInfo TimeInfo;
-                        TimeInfo.filename = itemTimeShaderToToggle;
-                        TimeInfo.state = itemTimeStateValue;
-                        TimeInfo.startTime = itemTimeStartHour;
-                        TimeInfo.stopTime = itemTimeStopHour;
-                        techniqueTimeInfoList.push_back(TimeInfo);
-                        g_Logger->info("Set effect {} to {} from {} - {}", itemTimeShaderToToggle, itemTimeStateValue, itemTimeStartHour, itemTimeStopHour);
-                    }
-                }
-            }
-        }
+					// Construct the corresponding key for the state
+					std::string stateKeyName = togglePrefix04 + std::to_string(g_SpecificTime.size());
 
-        DEBUG_LOG(g_Logger, "\n", nullptr);
+					// Retrieve the state using the constructed key
+					itemTimeStateValue = ini.GetValue(sectionTimeGeneral, stateKeyName.c_str(), nullptr);
+					g_TimeToggleState.emplace(itemTimeStateValue);
+
+					// Construct the corresponding key for the the start and stop times
+					std::string startTimeKey = togglePrefix05 + std::to_string(g_SpecificTime.size());
+					std::string endTimeKey = togglePrefix06 + std::to_string(g_SpecificTime.size());
+					itemTimeStartHour = ini.GetDoubleValue(sectionTimeGeneral, startTimeKey.c_str());
+					itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
+					g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
 
 
-        //Interior
-        ToggleStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleOption");
-        ToggleAllStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleAllState");
+					// Populate the technique info
+					TechniqueInfo TimeInfo;
+					TimeInfo.filename = itemTimeShaderToToggle;
+					TimeInfo.state = itemTimeStateValue;
+					TimeInfo.startTime = itemTimeStartHour;
+					TimeInfo.stopTime = itemTimeStopHour;
+					techniqueTimeInfoList.push_back(TimeInfo);
+					g_Logger->info("Set effect {} to {} from {} - {}", itemTimeShaderToToggle, itemTimeStateValue, itemTimeStartHour, itemTimeStopHour);
+				}
+			}
+		}
+	}
 
-        g_Logger->info("General InteriorToggleOption:  {} - InteriorToggleAllState: {}", ToggleStateInterior, ToggleAllStateInterior);
+	DEBUG_LOG(g_Logger, "\n", nullptr);
+#pragma endregion 
 
-        ini.GetAllKeys(sectionInteriorGeneral, InteriorGeneral_keys);
-        g_SpecificInterior.reserve(InteriorGeneral_keys.size()); // Reserve space for vector
 
-        const char* togglePrefix07 = "InteriorToggleSpecificFile";
-        const char* togglePrefix08 = "InteriorToggleSpecificState";
+#pragma region Interior
+	//Interior
+	ToggleStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleOption");
+	ToggleAllStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleAllState");
 
-        for (const auto& key : InteriorGeneral_keys)
-        {
-            if (strcmp(key.pItem, "InteriorToggleOption") != 0 && strcmp(key.pItem, "InteriorToggleAllState") != 0)
-            {
-                g_SpecificInterior.push_back(key.pItem);
-                const char* interiorItemgeneral = g_SpecificInterior.back().c_str();
+	g_Logger->info("General InteriorToggleOption:  {} - InteriorToggleAllState: {}", ToggleStateInterior, ToggleAllStateInterior);
 
-                // Check if the key starts with InteriorToggleSpecificFile
-                if (strncmp(key.pItem, togglePrefix07, strlen(togglePrefix07)) == 0)
-                {
-                    itemInteriorShaderToToggle = ini.GetValue(sectionInteriorGeneral, key.pItem, nullptr);
-                    g_InteriorToggleFile.emplace(itemInteriorShaderToToggle);
-                    g_Logger->info("InteriorToggleSpecificFile:  {} - Value: {}", interiorItemgeneral, itemInteriorShaderToToggle);
+	ini.GetAllKeys(sectionInteriorGeneral, InteriorGeneral_keys);
+	g_SpecificInterior.reserve(InteriorGeneral_keys.size()); // Reserve space for vector
 
-                    // Construct the corresponding key for the state
-                    std::string stateKeyName = togglePrefix08 + std::to_string(g_SpecificInterior.size());
+	const char* togglePrefix07 = "InteriorToggleSpecificFile";
+	const char* togglePrefix08 = "InteriorToggleSpecificState";
 
-                    // Retrieve the state using the constructed key
-                    itemInteriorStateValue = ini.GetValue(sectionInteriorGeneral, stateKeyName.c_str(), nullptr);
-                    g_InteriorToggleState.emplace(itemInteriorStateValue);
+	for (const auto& key : InteriorGeneral_keys)
+	{
+		if (strcmp(key.pItem, "InteriorToggleOption") != 0 && strcmp(key.pItem, "InteriorToggleAllState") != 0)
+		{
+			g_SpecificInterior.push_back(key.pItem);
+			const char* interiorItemgeneral = g_SpecificInterior.back().c_str();
 
-                    // Populate the technique info
-                    TechniqueInfo InteriorInfo;
-                    InteriorInfo.filename = itemInteriorShaderToToggle;
-                    InteriorInfo.state = itemInteriorStateValue;
-                    techniqueInteriorInfoList.push_back(InteriorInfo);
-                    g_Logger->info("Populated TechniqueInteriorInfo: {} - {}", itemInteriorShaderToToggle, itemInteriorStateValue);
-                }
-            }
-        }
+			// Check if the key starts with InteriorToggleSpecificFile
+			if (strncmp(key.pItem, togglePrefix07, strlen(togglePrefix07)) == 0)
+			{
+				itemInteriorShaderToToggle = ini.GetValue(sectionInteriorGeneral, key.pItem, nullptr);
+				g_InteriorToggleFile.emplace(itemInteriorShaderToToggle);
+				g_Logger->info("InteriorToggleSpecificFile:  {} - Value: {}", interiorItemgeneral, itemInteriorShaderToToggle);
 
-        DEBUG_LOG(g_Logger, "\n", nullptr);
-    }
+				// Construct the corresponding key for the state
+				std::string stateKeyName = togglePrefix08 + std::to_string(g_SpecificInterior.size());
+
+				// Retrieve the state using the constructed key
+				itemInteriorStateValue = ini.GetValue(sectionInteriorGeneral, stateKeyName.c_str(), nullptr);
+				g_InteriorToggleState.emplace(itemInteriorStateValue);
+
+				// Populate the technique info
+				TechniqueInfo InteriorInfo;
+				InteriorInfo.filename = itemInteriorShaderToToggle;
+				InteriorInfo.state = itemInteriorStateValue;
+				techniqueInteriorInfoList.push_back(InteriorInfo);
+				g_Logger->info("Populated TechniqueInteriorInfo: {} - {}", itemInteriorShaderToToggle, itemInteriorStateValue);
+			}
+		}
+	}
+
+	DEBUG_LOG(g_Logger, "\n", nullptr);
+#pragma endregion
 }
 
 void TimeThread()
 {
-    while (true)
-    {
-        // Call ProcessTimeBasedToggling every x seconds
-        std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateInterval));
-        Processor::GetSingleton().ProcessTimeBasedToggling();
-    }
+	while (true)
+	{
+		// Call ProcessTimeBasedToggling every x seconds
+		std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateInterval));
+		Processor::GetSingleton().ProcessTimeBasedToggling();
+	}
 }
 
 void MessageListener(SKSE::MessagingInterface::Message* message)
 {
-    auto& processor = Processor::GetSingleton();
-    switch (message->type) {
+	auto& processor = Processor::GetSingleton();
+	switch (message->type) {
 
-      /*
-        // Descriptions are taken from the original skse64 library
-        // See:
-        // https://github.com/ianpatt/skse64/blob/09f520a2433747f33ae7d7c15b1164ca198932c3/skse64/PluginAPI.h#L193-L212
-    case SKSE::MessagingInterface::kPostLoad:
-        logger::info("kPostLoad: sent to registered plugins once all plugins have been loaded");
-        break;
-    case SKSE::MessagingInterface::kPostPostLoad:
-        logger::info(
-            "kPostPostLoad: sent right after kPostLoad to facilitate the correct dispatching/registering of "
-            "messages/listeners");
-        break;
-    case SKSE::MessagingInterface::kPreLoadGame:
-        // message->dataLen: length of file path, data: char* file path of .ess savegame file
-        logger::info("kPreLoadGame: sent immediately before savegame is read");
-        break;   
-    case SKSE::MessagingInterface::kPostLoadGame:
-        // You will probably want to handle this event if your plugin uses a Preload callback
-        // as there is a chance that after that callback is invoked the game will encounter an error
-        // while loading the saved game (eg. corrupted save) which may require you to reset some of your
-        // plugin state.
-        logger::info("kPostLoadGame: sent after an attempt to load a saved game has finished");
-        break;
-    case SKSE::MessagingInterface::kSaveGame:
-        logger::info("kSaveGame");
-        break;
-    case SKSE::MessagingInterface::kDeleteGame:
-        // message->dataLen: length of file path, data: char* file path of .ess savegame file
-        logger::info("kDeleteGame: sent right before deleting the .skse cosave and the .ess save");
-        break;
-    case SKSE::MessagingInterface::kInputLoaded:
-        logger::info("kInputLoaded: sent right after game input is loaded, right before the main menu initializes");
-        break;
-    case SKSE::MessagingInterface::kNewGame:
-        // message-data: CharGen TESQuest pointer (Note: I haven't confirmed the usefulness of this yet!)
-        logger::info("kNewGame: sent after a new game is created, before the game has loaded");
-        break;
-        */
+		/*
+		  // Descriptions are taken from the original skse64 library
+		  // See:
+		  // https://github.com/ianpatt/skse64/blob/09f520a2433747f33ae7d7c15b1164ca198932c3/skse64/PluginAPI.h#L193-L212
+	  case SKSE::MessagingInterface::kPostLoad:
+		  logger::info("kPostLoad: sent to registered plugins once all plugins have been loaded");
+		  break;
+	  case SKSE::MessagingInterface::kPostPostLoad:
+		  logger::info(
+			  "kPostPostLoad: sent right after kPostLoad to facilitate the correct dispatching/registering of "
+			  "messages/listeners");
+		  break;
+	  case SKSE::MessagingInterface::kPreLoadGame:
+		  // message->dataLen: length of file path, data: char* file path of .ess savegame file
+		  logger::info("kPreLoadGame: sent immediately before savegame is read");
+		  break;
+	  case SKSE::MessagingInterface::kPostLoadGame:
+		  // You will probably want to handle this event if your plugin uses a Preload callback
+		  // as there is a chance that after that callback is invoked the game will encounter an error
+		  // while loading the saved game (eg. corrupted save) which may require you to reset some of your
+		  // plugin state.
+		  logger::info("kPostLoadGame: sent after an attempt to load a saved game has finished");
+		  break;
+	  case SKSE::MessagingInterface::kSaveGame:
+		  logger::info("kSaveGame");
+		  break;
+	  case SKSE::MessagingInterface::kDeleteGame:
+		  // message->dataLen: length of file path, data: char* file path of .ess savegame file
+		  logger::info("kDeleteGame: sent right before deleting the .skse cosave and the .ess save");
+		  break;
+	  case SKSE::MessagingInterface::kInputLoaded:
+		  logger::info("kInputLoaded: sent right after game input is loaded, right before the main menu initializes");
+		  break;
+	  case SKSE::MessagingInterface::kNewGame:
+		  // message-data: CharGen TESQuest pointer (Note: I haven't confirmed the usefulness of this yet!)
+		  logger::info("kNewGame: sent after a new game is created, before the game has loaded");
+		  break;
+		  */
 
-    case SKSE::MessagingInterface::kDataLoaded:
-        DEBUG_LOG(g_Logger,"kDataLoaded: sent after the data handler has loaded all its forms", nullptr);
+	case SKSE::MessagingInterface::kDataLoaded:
+		DEBUG_LOG(g_Logger, "kDataLoaded: sent after the data handler has loaded all its forms", nullptr);
 
-        if (EnableTime)
-        {
-            processor.ProcessTimeBasedToggling();
-            std::thread(TimeThread).detach();
-        }
+		if (EnableTime)
+		{
+			processor.ProcessTimeBasedToggling();
+			std::thread(TimeThread).detach();
+		}
 
-        if (EnableInterior)
-        {
-            processor.ProcessInteriorBasedToggling();
-        }
-        break;
+		if (EnableInterior)
+		{
+			processor.ProcessInteriorBasedToggling();
+		}
+		break;
 
-        /*
-    default:
-        logger::info("Unknown system message of type: {}", message->type);
-        break;
-        */
-    }
+		/*
+	default:
+		logger::info("Unknown system message of type: {}", message->type);
+		break;
+		*/
+	}
 }
 
 void ReshadeToggler::Setup()
 {
-    SetupLog();
-    LoadINI();
+	SetupLog();
+	LoadINI();
 
-    // Check if all options are false, and unregister the addon if true
-    if (!EnableMenus && !EnableTime && !EnableInterior && !EnableWeather)
-    {
-        g_Logger->info("All options are set to false. Detaching plugin.");
-        reshade::unregister_addon(g_hModule);
-        return;
-    }
+	// Check if all options are false, and unregister the addon if true
+	if (!EnableMenus && !EnableTime && !EnableInterior && !EnableWeather)
+	{
+		g_Logger->info("All options are set to false. Detaching plugin.");
+		reshade::unregister_addon(g_hModule);
+		return;
+	}
 
-    SKSE::GetMessagingInterface()->RegisterListener(MessageListener);
+	SKSE::GetMessagingInterface()->RegisterListener(MessageListener);
 
-    Load();
-    g_Logger->info("Loaded plugin");
+	Load();
+	g_Logger->info("Loaded plugin");
 
-    if (!EnableTime)
-    {
-        g_Logger->info("EnableTime is set to false, time-based toggling won't be processed.");
-    }
+	if (!EnableTime)
+	{
+		g_Logger->info("EnableTime is set to false, time-based toggling won't be processed.");
+	}
 
-    if (!EnableInterior)
-    {
-        g_Logger->info("EnableInterior is set to false, interior-based toggling won't be processed.");
-    }
+	if (!EnableInterior)
+	{
+		g_Logger->info("EnableInterior is set to false, interior-based toggling won't be processed.");
+	}
 
-    if (EnableMenus)
-    {
-        auto& eventProcessorMenu = Processor::GetSingleton();
-        RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
-    }
-    else
-    {
-        g_Logger->info("EnableMenus is set to false, no menus will be processed.");
-    }
+	if (EnableMenus)
+	{
+		auto& eventProcessorMenu = Processor::GetSingleton();
+		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
+	}
+	else
+	{
+		g_Logger->info("EnableMenus is set to false, no menus will be processed.");
+	}
 }
 
 int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
 {
-    if (fdwReason == DLL_PROCESS_ATTACH)
-    {
-        g_hModule = hModule;
-    }
-    else if (fdwReason == DLL_PROCESS_DETACH)
-    {
-        if (EnableTime)
-        {
-        std::thread(TimeThread).join();
-        }
-        unregister_addon_events();
-        reshade::unregister_addon(hModule);
-    }
+	if (fdwReason == DLL_PROCESS_ATTACH)
+	{
+		g_hModule = hModule;
+	}
+	else if (fdwReason == DLL_PROCESS_DETACH)
+	{
+		if (EnableTime)
+		{
+			std::thread(TimeThread).join();
+		}
+		unregister_addon_events();
+		reshade::unregister_addon(hModule);
+	}
 
-    return 1;
+	return 1;
 }
 
 SKSEPluginLoad(const SKSE::LoadInterface* skse)
 {
-    SKSE::Init(skse);
-    ReshadeToggler plugin;
-    plugin.Setup();
+	SKSE::Init(skse);
+	ReshadeToggler plugin;
+	plugin.Setup();
 
-    return true;
+	return true;
 }
-
 
 
 extern "C" DLLEXPORT const auto SKSEPlugin_Version = []() noexcept {
-    SKSE::PluginVersionData v;
-    v.PluginName(Plugin::NAME.data());
-    v.PluginVersion(Plugin::VERSION);
-    v.UsesAddressLibrary(true);
-    v.HasNoStructUse();
-    return v;
-}();
+	SKSE::PluginVersionData v;
+	v.PluginName(Plugin::NAME.data());
+	v.PluginVersion(Plugin::VERSION);
+	v.UsesAddressLibrary(true);
+	v.HasNoStructUse();
+	return v;
+	}();
 
 
-extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface*, SKSE::PluginInfo * pluginInfo)
-{
-    pluginInfo->name = SKSEPlugin_Version.pluginName;
-    pluginInfo->infoVersion = SKSE::PluginInfo::kVersion;
-    pluginInfo->version = SKSEPlugin_Version.pluginVersion;
-    return true;
-}
+	extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface*, SKSE::PluginInfo * pluginInfo)
+	{
+		pluginInfo->name = SKSEPlugin_Version.pluginName;
+		pluginInfo->infoVersion = SKSE::PluginInfo::kVersion;
+		pluginInfo->version = SKSEPlugin_Version.pluginVersion;
+		return true;
+	}
