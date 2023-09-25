@@ -77,8 +77,22 @@ inline double itemTimeStopHour;
 inline double itemTimeStartHourAll;
 inline double itemTimeStopHourAll;
 
+inline uint32_t TimeUpdateInterval;
 
-inline uint32_t TimeUpdateIntervall;
+
+//Interior
+inline std::unordered_set<std::string> g_InteriorToggleFile;
+inline std::unordered_set<std::string> g_InteriorToggleState;
+
+inline std::vector<TechniqueInfo> techniqueInteriorInfoList;
+inline std::vector<std::string> g_SpecificInterior;
+
+inline std::string ToggleStateInterior;
+inline std::string ToggleAllStateInterior;
+
+inline const char* itemInteriorShaderToToggle;
+inline const char* itemInteriorStateValue;
+
 
 // Thread
 inline std::chrono::steady_clock::time_point lastTimeCalled;

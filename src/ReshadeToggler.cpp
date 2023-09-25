@@ -86,12 +86,13 @@ void ReshadeToggler::LoadINI()
         const char* sectionMenusGeneral = "MenusGeneral";
         const char* sectionMenusProcess = "MenusProcess";
         const char* sectionTimeGeneral = "Time";
-        //const char* sectionInteriorGeneral = "Interior";
+        const char* sectionInteriorGeneral = "Interior";
         //const char* sectionWeatherGeneral = "Weather";
 
         CSimpleIniA::TNamesDepend MenusGeneral_keys;
         CSimpleIniA::TNamesDepend MenusProcess_keys;
         CSimpleIniA::TNamesDepend TimeGeneral_keys;
+        CSimpleIniA::TNamesDepend InteriorGeneral_keys;
 
         //General
         EnableMenus = ini.GetBoolValue(sectionGeneral, "EnableMenus");
@@ -176,9 +177,9 @@ void ReshadeToggler::LoadINI()
 
         //Time
         ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
-        TimeUpdateIntervall = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
+        TimeUpdateInterval = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
 
-        g_Logger->info("General TimeToggleOption:  {} - TimeUpdateIntervall: {}", ToggleStateTime, TimeUpdateIntervall);
+        g_Logger->info("General TimeToggleOption:  {} - TimeUpdateIntervall: {}", ToggleStateTime, TimeUpdateInterval);
 
         // All Time
         if(ToggleStateTime == "All")
@@ -251,6 +252,52 @@ void ReshadeToggler::LoadINI()
         }
 
         DEBUG_LOG(g_Logger, "\n", nullptr);
+
+
+        //Interior
+        ToggleStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleOption");
+        ToggleAllStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleAllState");
+
+        g_Logger->info("General InteriorToggleOption:  {} - InteriorToggleAllState: {}", ToggleStateInterior, ToggleAllStateInterior);
+
+        ini.GetAllKeys(sectionInteriorGeneral, InteriorGeneral_keys);
+        g_SpecificInterior.reserve(InteriorGeneral_keys.size()); // Reserve space for vector
+
+        const char* togglePrefix07 = "InteriorToggleSpecificFile";
+        const char* togglePrefix08 = "InteriorToggleSpecificState";
+
+        for (const auto& key : InteriorGeneral_keys)
+        {
+            if (strcmp(key.pItem, "InteriorToggleOption") != 0 && strcmp(key.pItem, "InteriorToggleAllState") != 0)
+            {
+                g_SpecificInterior.push_back(key.pItem);
+                const char* interiorItemgeneral = g_SpecificInterior.back().c_str();
+
+                // Check if the key starts with InteriorToggleSpecificFile
+                if (strncmp(key.pItem, togglePrefix07, strlen(togglePrefix07)) == 0)
+                {
+                    itemInteriorShaderToToggle = ini.GetValue(sectionInteriorGeneral, key.pItem, nullptr);
+                    g_InteriorToggleFile.emplace(itemInteriorShaderToToggle);
+                    g_Logger->info("InteriorToggleSpecificFile:  {} - Value: {}", interiorItemgeneral, itemInteriorShaderToToggle);
+
+                    // Construct the corresponding key for the state
+                    std::string stateKeyName = togglePrefix08 + std::to_string(g_SpecificInterior.size());
+
+                    // Retrieve the state using the constructed key
+                    itemInteriorStateValue = ini.GetValue(sectionInteriorGeneral, stateKeyName.c_str(), nullptr);
+                    g_InteriorToggleState.emplace(itemInteriorStateValue);
+
+                    // Populate the technique info
+                    TechniqueInfo InteriorInfo;
+                    InteriorInfo.filename = itemInteriorShaderToToggle;
+                    InteriorInfo.state = itemInteriorStateValue;
+                    techniqueInteriorInfoList.push_back(InteriorInfo);
+                    g_Logger->info("Populated TechniqueInteriorInfo: {} - {}", itemInteriorShaderToToggle, itemInteriorStateValue);
+                }
+            }
+        }
+
+        DEBUG_LOG(g_Logger, "\n", nullptr);
     }
 }
 
@@ -258,8 +305,8 @@ void TimeThread()
 {
     while (true)
     {
-        // Call ProcessTimeBasedToggling every 5 seconds
-        std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervall));
+        // Call ProcessTimeBasedToggling every x seconds
+        std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateInterval));
         Processor::GetSingleton().ProcessTimeBasedToggling();
     }
 }
@@ -316,6 +363,11 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
             processor.ProcessTimeBasedToggling();
             std::thread(TimeThread).detach();
         }
+
+        if (EnableInterior)
+        {
+            processor.ProcessInteriorBasedToggling();
+        }
         break;
 
         /*
@@ -347,6 +399,11 @@ void ReshadeToggler::Setup()
     if (!EnableTime)
     {
         g_Logger->info("EnableTime is set to false, time-based toggling won't be processed.");
+    }
+
+    if (!EnableInterior)
+    {
+        g_Logger->info("EnableInterior is set to false, interior-based toggling won't be processed.");
     }
 
     if (EnableMenus)

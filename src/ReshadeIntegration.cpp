@@ -39,6 +39,12 @@ void ReshadeIntegration::ApplySpecificReshadeStates(bool enableReshade, Categori
             ApplyTechniqueState(enableReshade, info);
         }
         break;
+    case Categories::Interior:
+        for (const TechniqueInfo& info : techniqueInteriorInfoList)
+        {
+            ApplyTechniqueState(enableReshade, info);
+        }
+        break;
     default:
         g_Logger->info("Invalid option");
     }

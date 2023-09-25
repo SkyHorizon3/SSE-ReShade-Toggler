@@ -14,9 +14,10 @@ public:
 	
 	RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* event, RE::BSTEventSource<RE::MenuOpenCloseEvent>* source) override;
 	RE::BSEventNotifyControl ProcessTimeBasedToggling();
-
+	RE::BSEventNotifyControl ProcessInteriorBasedToggling();
 
 	bool IsTimeWithinRange(double currentTime, double startTime, double endTime);
+	bool IsInInterior(double currentTime, double startTime, double endTime);
 
 
 private:

@@ -103,3 +103,50 @@ bool Processor::IsTimeWithinRange(double currentTime, double startTime, double e
         return false;
     }
 }
+
+
+
+
+RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling()
+{
+
+  if (const auto player = RE::PlayerCharacter::GetSingleton())
+  {
+      DEBUG_LOG(g_Logger, "Got player Singleton: {} ", player->GetName());
+      
+    if(const auto cell = player->GetParentCell())
+    {
+        DEBUG_LOG(g_Logger, "Got player Parent Cell: {}", cell->GetName());
+
+        bool enableReshade = [this, cell]()
+        {
+            if (cell->IsInteriorCell())
+            {
+                DEBUG_LOG(g_Logger, "Player is in interior cell {}", cell->GetName());
+                return false;
+            }
+            else
+            {
+                DEBUG_LOG(g_Logger, "Player is in exterior cell", nullptr);
+                return true;
+            }
+
+        }();
+
+        if (s_pRuntime != nullptr)
+        {
+            if (ToggleStateInterior.find("All") != std::string::npos)
+            {
+                ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateInterior);
+            }
+            else if (ToggleStateInterior.find("Specific") != std::string::npos)
+            {
+                ReshadeIntegration::ApplySpecificReshadeStates(enableReshade, Categories::Interior);
+            }
+        }
+    }
+
+  }
+
+       return RE::BSEventNotifyControl::kContinue;
+}
