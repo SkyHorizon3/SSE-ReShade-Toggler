@@ -76,6 +76,8 @@ void ReshadeToggler::Load()
 void ReshadeToggler::LoadINI()
 {
     {
+        ReshadeIntegration::EnumerateEffects();
+
         CSimpleIniA ini;
         ini.SetUnicode();
         ini.LoadFile(L"Data\\SKSE\\Plugins\\ReShadeToggler.ini");

@@ -58,3 +58,15 @@ void ReshadeIntegration::ApplyReshadeState(bool enableReshade, const std::string
     }
 }
 
+void ReshadeIntegration::EnumerateEffects()
+{
+    const std::filesystem::path shadersDirectory = L"reshade-shaders\\Shaders";  
+
+    for (const auto& entry : std::filesystem::recursive_directory_iterator(shadersDirectory))
+    {
+        if (entry.is_regular_file() && entry.path().filename().extension() == ".fx")
+        {
+            g_Effects.push_back(entry.path().filename().string());
+        }
+    }
+}

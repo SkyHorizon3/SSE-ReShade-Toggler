@@ -28,4 +28,5 @@ public:
 	static void ApplyTechniqueState(bool enableReshade, const TechniqueInfo& info);
 	static void ApplySpecificReshadeStates(bool enableReshade, Categories ProcessState);
 	static void ApplyReshadeState(bool enableReshade, const std::string& toggleState);
+    static void EnumerateEffects();
 };

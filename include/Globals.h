@@ -32,6 +32,9 @@ inline HMODULE g_hModule = nullptr;
 extern reshade::api::effect_runtime* s_pRuntime;
 inline std::shared_ptr<spdlog::logger> g_Logger;
 
+inline std::vector<std::string> g_Effects;
+inline std::vector<std::string> g_State = { "on", "off" };
+
 // General
 inline bool EnableMenus = true;
 inline bool EnableTime = true;

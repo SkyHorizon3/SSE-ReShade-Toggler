@@ -12,6 +12,9 @@ public:
 	void SettingsMenu();
 
 private:
+	bool CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags);
+
+
 	void RenderInfoPage();
 	void RenderMenusPage();
 	void RenderTimePage();
