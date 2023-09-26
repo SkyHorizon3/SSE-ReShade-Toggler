@@ -17,8 +17,6 @@ public:
 	RE::BSEventNotifyControl ProcessInteriorBasedToggling();
 
 	bool IsTimeWithinRange(double currentTime, double startTime, double endTime);
-	bool IsInInterior(double currentTime, double startTime, double endTime);
-
 
 private:
 	Processor() = default;

@@ -55,7 +55,7 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 {
 
-    std::lock_guard<std::mutex> lock(timeMutex);
+    std::lock_guard<std::mutex> lock(timeMutexTime);
 
     DEBUG_LOG(g_Logger, "Started ProcessTimeBasedToggling", nullptr);
 
@@ -109,15 +109,14 @@ bool Processor::IsTimeWithinRange(double currentTime, double startTime, double e
 
 RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling()
 {
+    std::lock_guard<std::mutex> lock(timeMutexInterior);
 
-  if (const auto player = RE::PlayerCharacter::GetSingleton())
-  {
-      DEBUG_LOG(g_Logger, "Got player Singleton: {} ", player->GetName());
+    const auto player = RE::PlayerCharacter::GetSingleton();
+  
+    DEBUG_LOG(g_Logger, "Got player Singleton: {} ", player->GetName());
       
     if(const auto cell = player->GetParentCell())
     {
-        DEBUG_LOG(g_Logger, "Got player Parent Cell: {}", cell->GetName());
-
         bool enableReshade = [this, cell]()
         {
             if (cell->IsInteriorCell())
@@ -145,8 +144,5 @@ RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling()
             }
         }
     }
-
-  }
-
        return RE::BSEventNotifyControl::kContinue;
 }

@@ -77,7 +77,7 @@ inline double itemTimeStopHour;
 inline double itemTimeStartHourAll;
 inline double itemTimeStopHourAll;
 
-inline uint32_t TimeUpdateInterval;
+inline uint32_t TimeUpdateIntervalTime;
 
 
 //Interior
@@ -93,8 +93,8 @@ inline std::string ToggleAllStateInterior;
 inline const char* itemInteriorShaderToToggle;
 inline const char* itemInteriorStateValue;
 
+inline uint32_t TimeUpdateIntervalInterior;
 
 // Thread
-inline std::chrono::steady_clock::time_point lastTimeCalled;
-inline std::chrono::steady_clock::time_point latestTime;
-inline std::mutex timeMutex;
+inline std::mutex timeMutexTime;
+inline std::mutex timeMutexInterior;

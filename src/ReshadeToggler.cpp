@@ -177,9 +177,9 @@ void ReshadeToggler::LoadINI()
 #pragma region Time
 	//Time
 	ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
-	TimeUpdateInterval = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
+	TimeUpdateIntervalTime = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
 
-	g_Logger->info("General TimeToggleOption:  {} - TimeUpdateIntervall: {}", ToggleStateTime, TimeUpdateInterval);
+	g_Logger->info("General TimeToggleOption:  {} - TimeUpdateIntervall: {}", ToggleStateTime, TimeUpdateIntervalTime);
 
 	// All Time
 	if (ToggleStateTime == "All")
@@ -259,8 +259,9 @@ void ReshadeToggler::LoadINI()
 	//Interior
 	ToggleStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleOption");
 	ToggleAllStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleAllState");
+	TimeUpdateIntervalInterior = ini.GetLongValue(sectionInteriorGeneral, "InteriorUpdateInterval");
 
-	g_Logger->info("General InteriorToggleOption:  {} - InteriorToggleAllState: {}", ToggleStateInterior, ToggleAllStateInterior);
+	g_Logger->info("General InteriorToggleOption:  {} - InteriorToggleAllState: {} - InteriorUpdateIntervall: {}", ToggleStateInterior, ToggleAllStateInterior, TimeUpdateIntervalInterior);
 
 	ini.GetAllKeys(sectionInteriorGeneral, InteriorGeneral_keys);
 	g_SpecificInterior.reserve(InteriorGeneral_keys.size()); // Reserve space for vector
@@ -305,12 +306,25 @@ void ReshadeToggler::LoadINI()
 
 void TimeThread()
 {
-	while (true)
+	if (EnableTime)
 	{
-		// Call ProcessTimeBasedToggling every x seconds
-		std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateInterval));
-		Processor::GetSingleton().ProcessTimeBasedToggling();
+		while (true)
+		{
+			// Call ProcessTimeBasedToggling every x seconds
+			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalTime));
+			Processor::GetSingleton().ProcessTimeBasedToggling();
+		}
 	}
+
+	if (EnableInterior)
+	{
+		while (true)
+		{
+			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalInterior));
+			Processor::GetSingleton().ProcessInteriorBasedToggling();
+		}
+	}
+
 }
 
 void MessageListener(SKSE::MessagingInterface::Message* message)
@@ -339,7 +353,7 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 		  // as there is a chance that after that callback is invoked the game will encounter an error
 		  // while loading the saved game (eg. corrupted save) which may require you to reset some of your
 		  // plugin state.
-		  logger::info("kPostLoadGame: sent after an attempt to load a saved game has finished");
+		  logger::info("kPostLoadGame: sent after an attempt to load a saved game has finished");	 
 		  break;
 	  case SKSE::MessagingInterface::kSaveGame:
 		  logger::info("kSaveGame");
@@ -369,9 +383,17 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 		if (EnableInterior)
 		{
 			processor.ProcessInteriorBasedToggling();
+			std::thread(TimeThread).detach();
+		}
+
+		break;
+		/*
+		if (EnableInterior)
+		{
+			processor.ProcessInteriorBasedToggling();
 		}
 		break;
-
+		*/
 		/*
 	default:
 		logger::info("Unknown system message of type: {}", message->type);
@@ -428,6 +450,10 @@ int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
 	else if (fdwReason == DLL_PROCESS_DETACH)
 	{
 		if (EnableTime)
+		{
+			std::thread(TimeThread).join();
+		}
+		if (EnableInterior)
 		{
 			std::thread(TimeThread).join();
 		}
