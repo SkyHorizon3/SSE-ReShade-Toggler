@@ -471,7 +471,7 @@ int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
 		}
 		if (EnableInterior)
 		{
-			std::thread(TimeThread).join();
+			std::thread(InteriorThread).join();
 		}
 		unregister_addon_events();
 		reshade::unregister_addon(hModule);
