@@ -308,23 +308,39 @@ void TimeThread()
 {
 	if (EnableTime)
 	{
-		while (true)
+		g_Logger->info("Attaching TimeThread");
+		while (EnableTime)
 		{
 			// Call ProcessTimeBasedToggling every x seconds
 			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalTime));
 			Processor::GetSingleton().ProcessTimeBasedToggling();
+
+			if (!EnableTime)
+			{
+				std::thread(TimeThread).join();
+				g_Logger->info("Detaching TimeThread");
+			}
 		}
 	}
+}
 
+void InteriorThread()
+{
 	if (EnableInterior)
 	{
-		while (true)
+		g_Logger->info("Attaching InteriorThread");
+		while (EnableInterior)
 		{
 			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalInterior));
 			Processor::GetSingleton().ProcessInteriorBasedToggling();
+
+			if (!EnableInterior)
+			{
+				std::thread(InteriorThread).join();
+				g_Logger->info("Detaching InteriorThread");
+			}
 		}
 	}
-
 }
 
 void MessageListener(SKSE::MessagingInterface::Message* message)
@@ -353,7 +369,7 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 		  // as there is a chance that after that callback is invoked the game will encounter an error
 		  // while loading the saved game (eg. corrupted save) which may require you to reset some of your
 		  // plugin state.
-		  logger::info("kPostLoadGame: sent after an attempt to load a saved game has finished");	 
+		  logger::info("kPostLoadGame: sent after an attempt to load a saved game has finished");
 		  break;
 	  case SKSE::MessagingInterface::kSaveGame:
 		  logger::info("kSaveGame");
@@ -373,7 +389,7 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 
 	case SKSE::MessagingInterface::kDataLoaded:
 		DEBUG_LOG(g_Logger, "kDataLoaded: sent after the data handler has loaded all its forms", nullptr);
-
+		loaded = true;
 		if (EnableTime)
 		{
 			processor.ProcessTimeBasedToggling();
@@ -383,7 +399,7 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 		if (EnableInterior)
 		{
 			processor.ProcessInteriorBasedToggling();
-			std::thread(TimeThread).detach();
+			std::thread(InteriorThread).detach();
 		}
 
 		break;
@@ -481,13 +497,14 @@ extern "C" DLLEXPORT const auto SKSEPlugin_Version = []() noexcept {
 	v.UsesAddressLibrary(true);
 	v.HasNoStructUse();
 	return v;
-	}();
-
-
-	extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface*, SKSE::PluginInfo * pluginInfo)
-	{
-		pluginInfo->name = SKSEPlugin_Version.pluginName;
-		pluginInfo->infoVersion = SKSE::PluginInfo::kVersion;
-		pluginInfo->version = SKSEPlugin_Version.pluginVersion;
-		return true;
 	}
+();
+
+
+extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface*, SKSE::PluginInfo * pluginInfo)
+{
+	pluginInfo->name = SKSEPlugin_Version.pluginName;
+	pluginInfo->infoVersion = SKSE::PluginInfo::kVersion;
+	pluginInfo->version = SKSEPlugin_Version.pluginVersion;
+	return true;
+}

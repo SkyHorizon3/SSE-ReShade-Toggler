@@ -21,4 +21,8 @@ private:
 
 	double minTime = 0.0;
 	double maxTime = 23.59;
+
+	// This is a hack
+	bool wasTimeBefore = false;
+	bool wasInteriorBefore = false;
 };

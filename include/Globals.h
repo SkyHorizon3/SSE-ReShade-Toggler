@@ -35,6 +35,8 @@ inline std::shared_ptr<spdlog::logger> g_Logger;
 inline std::vector<std::string> g_Effects;
 inline std::vector<std::string> g_State = { "on", "off" };
 
+inline bool loaded = false;
+
 // General
 inline bool EnableMenus = true;
 inline bool EnableTime = true;
@@ -97,4 +99,5 @@ inline uint32_t TimeUpdateIntervalInterior;
 
 // Thread
 inline std::mutex timeMutexTime;
+inline std::mutex vectorMutexTime;
 inline std::mutex timeMutexInterior;
