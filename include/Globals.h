@@ -33,7 +33,48 @@ extern reshade::api::effect_runtime* s_pRuntime;
 inline std::shared_ptr<spdlog::logger> g_Logger;
 
 inline std::vector<std::string> g_Effects;
-inline std::vector<std::string> g_State = { "on", "off" };
+inline std::vector<std::string> g_EffectState = { "on", "off" };
+inline std::vector<std::string> g_ToggleState = { "All", "Specific" };
+
+// Hard coding probably isn't a good idea... idgaf rn tho, migh fix later
+// TODO: Don't Hardcode
+inline std::vector<std::string> g_MenuNames = {
+	"Tutorial Menu",
+	"TweenMenu",
+	"BarterMenu",
+	"Book Menu",
+	"Console",
+	"Console Native UI Menu",
+	"ContainerMenu",
+	"Crafting Menu",
+	"Creation Club Menu",
+	"Credits Menu",
+	"Cursor Menu",
+	"Dialogue Menu",
+	"Fader Menu",
+	"FavoritesMenu",
+	"GiftMenu",
+	"HUD Menu",
+	"InventoryMenu",
+	"Journal Menu",
+	"Kinect Menu",
+	"LevelUp Menu",
+	"Loading Menu",
+	"LoadWaitSpinner",
+	"Lockpicking Menu",
+	"MagicMenu",
+	"Main Menu",
+	"MapMenu",
+	"MessageBoxMenu",
+	"Mist Menu",
+	"Mod Manager Menu",
+	"RaceSex Menu",
+	"SafeZoneMenu",
+	"Sleep/Wait Menu",
+	"StatsMenu",
+	"TitleSequence Menu",
+	"Training Menu"
+};
 
 inline bool loaded = false;
 
@@ -79,7 +120,7 @@ inline double itemTimeStopHour;
 inline double itemTimeStartHourAll;
 inline double itemTimeStopHourAll;
 
-inline uint32_t TimeUpdateIntervalTime;
+inline int TimeUpdateIntervalTime;
 
 
 //Interior
@@ -95,7 +136,7 @@ inline std::string ToggleAllStateInterior;
 inline const char* itemInteriorShaderToToggle;
 inline const char* itemInteriorStateValue;
 
-inline uint32_t TimeUpdateIntervalInterior;
+inline int TimeUpdateIntervalInterior;
 
 // Thread
 inline std::mutex timeMutexTime;
