@@ -180,12 +180,12 @@ void Menu::RenderMenusPage()
 	ImGui::SeparatorText("Menus");
 	if (!menuList.empty())
 	{
-		for (int i = 1; i < menuList.size(); i++)
+		for (int i = 0; i < menuList.size(); i++)
 		{
 			auto& iniMenus = menuList[i];
 
 			bool valueChanged = false;
-			std::string menuIndexComboID = "Menu" + std::to_string(i);
+			std::string menuIndexComboID = "Menu" + std::to_string(i + 1);
 			std::string menuNameComboID = "##" + std::to_string(i);
 			std::string removeID = "Remove Menu##" + std::to_string(i);
 
@@ -233,10 +233,10 @@ void Menu::RenderTimePage()
 	ImGui::SeparatorText("Toggle State");
 	CreateCombo("Time Toggle State", ToggleStateTime, g_ToggleState, ImGuiComboFlags_None);
 
-	ImGui::SeparatorText("Effects");
 	// Wtf happened to this function... holy crap this nesting!
 	if (ToggleStateTime.find("Specific") != std::string::npos)
 	{
+		ImGui::SeparatorText("Effects");
 		if (!techniqueTimeInfoList.empty())
 		{
 			for (int i = 0; i < techniqueTimeInfoList.size(); i++)
