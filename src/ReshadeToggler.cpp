@@ -86,12 +86,15 @@ void ReshadeToggler::LoadINI()
 	const char* sectionMenusProcess = "MenusProcess";
 	const char* sectionTimeGeneral = "Time";
 	const char* sectionInteriorGeneral = "Interior";
-	//const char* sectionWeatherGeneral = "Weather";
+	const char* sectionWeatherGeneral = "Weather";
+	const char* sectionWeatherProcess = "WeatherProcess";
 
 	CSimpleIniA::TNamesDepend MenusGeneral_keys;
 	CSimpleIniA::TNamesDepend MenusProcess_keys;
 	CSimpleIniA::TNamesDepend TimeGeneral_keys;
 	CSimpleIniA::TNamesDepend InteriorGeneral_keys;
+	CSimpleIniA::TNamesDepend WeatherGeneral_keys;
+	CSimpleIniA::TNamesDepend WeatherProcess_keys;
 
 	//General
 	EnableMenus = ini.GetBoolValue(sectionGeneral, "EnableMenus");
@@ -179,7 +182,7 @@ void ReshadeToggler::LoadINI()
 	ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
 	TimeUpdateIntervalTime = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
 
-	g_Logger->info("General TimeToggleOption:  {} - TimeUpdateIntervall: {}", ToggleStateTime, TimeUpdateIntervalTime);
+	g_Logger->info("General TimeToggleOption:  {} - TimeUpdateInterval: {}", ToggleStateTime, TimeUpdateIntervalTime);
 
 	// All Time
 	if (ToggleStateTime == "All")
@@ -260,7 +263,7 @@ void ReshadeToggler::LoadINI()
 	ToggleAllStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleAllState");
 	TimeUpdateIntervalInterior = ini.GetLongValue(sectionInteriorGeneral, "InteriorUpdateInterval");
 
-	g_Logger->info("General InteriorToggleOption:  {} - InteriorToggleAllState: {} - InteriorUpdateIntervall: {}", ToggleStateInterior, ToggleAllStateInterior, TimeUpdateIntervalInterior);
+	g_Logger->info("General InteriorToggleOption:  {} - InteriorToggleAllState: {} - InteriorUpdateInterval: {}", ToggleStateInterior, ToggleAllStateInterior, TimeUpdateIntervalInterior);
 
 	ini.GetAllKeys(sectionInteriorGeneral, InteriorGeneral_keys);
 	g_SpecificInterior.reserve(InteriorGeneral_keys.size()); // Reserve space for vector
@@ -301,6 +304,72 @@ void ReshadeToggler::LoadINI()
 
 	DEBUG_LOG(g_Logger, "\n", nullptr);
 #pragma endregion
+
+#pragma region Weather
+	//Weather
+	ToggleStateWeather = ini.GetValue(sectionWeatherGeneral, "WeatherToggleOption");
+	ToggleAllStateWeather = ini.GetValue(sectionWeatherGeneral, "WeatherToggleAllState");
+	TimeUpdateIntervalWeather = ini.GetLongValue(sectionWeatherGeneral, "WeatherUpdateInterval");
+
+	g_Logger->info("General WeatherToggleOption:  {} - WeatherToggleAllState: {} - WeatherUpdateInterval: {}", ToggleStateWeather, ToggleAllStateWeather, TimeUpdateIntervalWeather);
+
+	ini.GetAllKeys(sectionWeatherGeneral, WeatherGeneral_keys);
+	g_SpecificWeather.reserve(WeatherGeneral_keys.size());
+
+	const char* togglePrefix09 = "WeatherToggleSpecificFile";
+	const char* togglePrefix10 = "WeatherToggleSpecificState";
+
+	for (const auto& key : WeatherGeneral_keys)
+	{
+		if (strcmp(key.pItem, "WeatherToggleOption") != 0 && strcmp(key.pItem, "WeatherToggleAllState") != 0)
+		{
+			g_SpecificWeather.push_back(key.pItem);
+			const char* weatherItemgeneral = g_SpecificWeather.back().c_str();
+
+			if (strncmp(key.pItem, togglePrefix09, strlen(togglePrefix09)) == 0)
+			{
+				itemWeatherShaderToToggle = ini.GetValue(sectionWeatherGeneral, key.pItem, nullptr);
+				g_WeatherToggleFile.emplace(itemWeatherShaderToToggle);
+				g_Logger->info("WeatherToggleSpecificFile:  {} - Value: {}", weatherItemgeneral, itemWeatherShaderToToggle);
+
+				std::string stateKeyName = togglePrefix10 + std::to_string(g_SpecificWeather.size());
+
+				itemWeatherStateValue = ini.GetValue(sectionWeatherGeneral, stateKeyName.c_str(), nullptr);
+				g_WeatherToggleState.emplace(itemWeatherStateValue);
+
+				TechniqueInfo WeatherInfo;
+				WeatherInfo.filename = itemWeatherShaderToToggle;
+				WeatherInfo.state = itemWeatherStateValue;
+				techniqueWeatherInfoList.push_back(WeatherInfo);
+				g_Logger->info("Populated TechniqueWeatherInfo: {} - {}", itemWeatherShaderToToggle, itemWeatherStateValue);
+			}
+		}
+	}
+
+	DEBUG_LOG(g_Logger, "\n", nullptr);
+
+	//WeatherProcess
+	ini.GetAllKeys(sectionWeatherProcess, WeatherProcess_keys);
+	g_INIweather.reserve(WeatherProcess_keys.size()); // Reserve space for vector
+
+	Menus weather;
+	for (const auto& key : WeatherProcess_keys)
+	{
+		g_INIweather.push_back(key.pItem);
+		const char* weatherItem = g_INIweather.back().c_str();
+		const char* weatheritemValue = ini.GetValue(sectionWeatherProcess, key.pItem, nullptr);
+		g_WeatherValue.emplace(weatheritemValue);
+
+		weather.menuIndex = weatherItem;
+		weather.menuName = weatheritemValue;
+		weatherList.push_back(weather);
+
+		g_Logger->info("Weather:  {} - Value: {}", weatherItem, weatheritemValue);
+	}
+
+	DEBUG_LOG(g_Logger, "\n", nullptr);
+#pragma endregion
+
 }
 
 void TimeThread()
@@ -337,6 +406,25 @@ void InteriorThread()
 			{
 				std::thread(InteriorThread).join();
 				g_Logger->info("Detaching InteriorThread");
+			}
+		}
+	}
+}
+
+void WeatherThread()
+{
+	if (EnableWeather)
+	{
+		g_Logger->info("Attaching WeatherThread");
+		while (EnableWeather)
+		{
+			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalWeather));
+			Processor::GetSingleton().ProcessWeatherBasedToggling();
+
+			if (!EnableWeather)
+			{
+				std::thread(WeatherThread).join();
+				g_Logger->info("Detaching WeatherThread");
 			}
 		}
 	}
@@ -401,14 +489,14 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 			std::thread(InteriorThread).detach();
 		}
 
-		break;
-		/*
-		if (EnableInterior)
+		if (EnableWeather)
 		{
-			processor.ProcessInteriorBasedToggling();
+			processor.ProcessWeatherBasedToggling();
+			std::thread(WeatherThread).detach();
 		}
+
 		break;
-		*/
+
 		/*
 	default:
 		logger::info("Unknown system message of type: {}", message->type);
@@ -443,6 +531,11 @@ void ReshadeToggler::Setup()
 		g_Logger->info("EnableInterior is set to false, interior-based toggling won't be processed.");
 	}
 
+	if (!EnableWeather)
+	{
+		g_Logger->info("EnableWeather is set to false, weather-based toggling won't be processed.");
+	}
+
 	if (EnableMenus)
 	{
 		auto& eventProcessorMenu = Processor::GetSingleton();
@@ -470,6 +563,11 @@ int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
 		{
 			std::thread(InteriorThread).join();
 		}
+		if (EnableWeather)
+		{
+			std::thread(WeatherThread).join();
+		}
+
 		unregister_addon_events();
 		reshade::unregister_addon(hModule);
 	}

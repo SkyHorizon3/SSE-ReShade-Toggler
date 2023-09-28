@@ -8,14 +8,14 @@ class ReshadeToggler
 {
 public:
 
-    static ReshadeToggler GetSingleton()
-    {
-        ReshadeToggler toggler;
-        return toggler;
-    }
+	static ReshadeToggler GetSingleton()
+	{
+		ReshadeToggler toggler;
+		return toggler;
+	}
 
-    void Setup();
-    void SetupLog();
-    void Load();
-    void LoadINI();
+	void Setup();
+	void SetupLog();
+	void Load();
+	void LoadINI();
 };

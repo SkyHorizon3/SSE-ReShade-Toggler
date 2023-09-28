@@ -138,7 +138,29 @@ inline const char* itemInteriorStateValue;
 
 inline int TimeUpdateIntervalInterior;
 
+//Weather
+inline std::unordered_set<std::string> g_WeatherValue;
+inline std::unordered_set<std::string> g_WeatherToggleFile;
+inline std::unordered_set<std::string> g_WeatherToggleState;
+
+inline std::vector<std::string> g_SpecificWeather;
+inline std::vector<std::string> g_INIweather;
+inline std::vector<Menus> weatherList;
+inline std::vector<TechniqueInfo> techniqueWeatherInfoList;
+
+inline std::string ToggleStateWeather;
+inline std::string ToggleAllStateWeather;
+inline std::string weatherflags;
+
+inline const char* itemWeatherShaderToToggle;
+inline const char* itemWeatherStateValue;
+
+inline uint32_t TimeUpdateIntervalWeather;
+
+inline bool enableReshadeWeather = false;
+
 // Thread
 inline std::mutex timeMutexTime;
 inline std::mutex vectorMutexTime;
 inline std::mutex timeMutexInterior;
+inline std::mutex timeMutexWeather;

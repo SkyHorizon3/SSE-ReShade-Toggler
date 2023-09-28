@@ -143,3 +143,77 @@ RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling()
 	}
 	return RE::BSEventNotifyControl::kContinue;
 }
+
+RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
+{
+	std::lock_guard<std::mutex> lock(timeMutexWeather);
+
+	const auto sky = RE::Sky::GetSingleton();
+
+	if (const auto currentWeather = sky->currentWeather)
+	{
+
+		const auto flags = currentWeather->data.flags;
+
+		if (flags.any(RE::TESWeather::WeatherDataFlag::kRainy))
+		{
+			weatherflags = "kRainy";
+		}
+		else if (flags.any(RE::TESWeather::WeatherDataFlag::kNone))
+		{
+			weatherflags = "kNone";
+		}
+		else if (flags.any(RE::TESWeather::WeatherDataFlag::kPleasant))
+		{
+			weatherflags = "kPleasant";
+		}
+		else if (flags.any(RE::TESWeather::WeatherDataFlag::kCloudy))
+		{
+			weatherflags = "kCloudy";
+		}
+		else if (flags.any(RE::TESWeather::WeatherDataFlag::kSnow))
+		{
+			weatherflags = "kSnow";
+		}
+		else if (flags.any(RE::TESWeather::WeatherDataFlag::kPermAurora))
+		{
+			weatherflags = "kPermAurora";
+		}
+		else if (flags.any(RE::TESWeather::WeatherDataFlag::kAuroraFollowsSun))
+		{
+			weatherflags = "kAuroraFollowsSun";
+		}
+
+		DEBUG_LOG(g_Logger, "weatherflag {}", weatherflags);
+
+		for (const auto& weatherToDisable : g_WeatherValue)
+		{
+			DEBUG_LOG(g_Logger, "weatherToDisable {}", weatherToDisable);
+
+			if (weatherToDisable == weatherflags)
+			{
+				enableReshadeWeather = false;
+				break;
+			}
+			else
+			{
+				enableReshadeWeather = true;
+			}
+		}
+
+		if (s_pRuntime != nullptr)
+		{
+			if (ToggleStateInterior.find("All") != std::string::npos)
+			{
+				ReshadeIntegration::ApplyReshadeState(enableReshadeWeather, ToggleAllStateWeather);
+			}
+			else if (ToggleStateInterior.find("Specific") != std::string::npos)
+			{
+				ReshadeIntegration::ApplySpecificReshadeStates(enableReshadeWeather, Categories::Weather);
+			}
+		}
+
+
+	}
+	return RE::BSEventNotifyControl::kContinue;
+}
