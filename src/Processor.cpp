@@ -155,13 +155,13 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 
 		const auto flags = currentWeather->data.flags;
 
-		if (flags.any(RE::TESWeather::WeatherDataFlag::kRainy))
-		{
-			weatherflags = "kRainy";
-		}
-		else if (flags.any(RE::TESWeather::WeatherDataFlag::kNone))
+		if (flags.any(RE::TESWeather::WeatherDataFlag::kNone))
 		{
 			weatherflags = "kNone";
+		}
+		else if (flags.any(RE::TESWeather::WeatherDataFlag::kRainy))
+		{
+			weatherflags = "kRainy";
 		}
 		else if (flags.any(RE::TESWeather::WeatherDataFlag::kPleasant))
 		{
@@ -184,11 +184,11 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 			weatherflags = "kAuroraFollowsSun";
 		}
 
-		DEBUG_LOG(g_Logger, "weatherflag {}", weatherflags);
+		//DEBUG_LOG(g_Logger, "weatherflag {}", weatherflags);
 
 		for (const auto& weatherToDisable : g_WeatherValue)
 		{
-			DEBUG_LOG(g_Logger, "weatherToDisable {}", weatherToDisable);
+			//DEBUG_LOG(g_Logger, "weatherToDisable {}", weatherToDisable);
 
 			if (weatherToDisable == weatherflags)
 			{
@@ -203,11 +203,11 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 
 		if (s_pRuntime != nullptr)
 		{
-			if (ToggleStateInterior.find("All") != std::string::npos)
+			if (ToggleStateWeather.find("All") != std::string::npos)
 			{
 				ReshadeIntegration::ApplyReshadeState(enableReshadeWeather, ToggleAllStateWeather);
 			}
-			else if (ToggleStateInterior.find("Specific") != std::string::npos)
+			else if (ToggleStateWeather.find("Specific") != std::string::npos)
 			{
 				ReshadeIntegration::ApplySpecificReshadeStates(enableReshadeWeather, Categories::Weather);
 			}

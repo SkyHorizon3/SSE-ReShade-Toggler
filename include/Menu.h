@@ -17,12 +17,10 @@ private:
 	void RenderInfoPage();
 	void RenderMenusPage();
 	void RenderTimePage();
+	void RenderInteriorPage();
+	void RenderWeatherPage();
 
-
+private:
 	double minTime = 0.0;
 	double maxTime = 23.59;
-
-	// This is a hack
-	bool wasTimeBefore = false;
-	bool wasInteriorBefore = false;
 };

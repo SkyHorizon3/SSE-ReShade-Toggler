@@ -6,14 +6,11 @@
 
 namespace logger = SKSE::log;
 
-
 #define DLLEXPORT __declspec(dllexport)
 extern "C" DLLEXPORT const char* NAME = "ReShadeToggler";
 extern "C" DLLEXPORT const char* DESCRIPTION = "";
 
-
 reshade::api::effect_runtime* s_pRuntime = nullptr;
-
 
 // Callback when Reshade begins effects
 static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
@@ -25,7 +22,6 @@ static void DrawMenu(reshade::api::effect_runtime*)
 {
 	Menu::GetSingleton()->SettingsMenu();
 }
-
 
 // Register and unregister addon events
 void register_addon_events()
@@ -39,7 +35,6 @@ void unregister_addon_events()
 	reshade::unregister_event<reshade::addon_event::init_effect_runtime>(on_reshade_begin_effects);
 	reshade::unregister_overlay(nullptr, &DrawMenu);
 }
-
 
 // Setup logger for plugin
 void ReshadeToggler::SetupLog()
@@ -159,7 +154,7 @@ void ReshadeToggler::LoadINI()
 	ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
 	g_INImenus.reserve(MenusProcess_keys.size()); // Reserve space for vector
 
-	Menus menus;
+	Info menus;
 	for (const auto& key : MenusProcess_keys)
 	{
 		g_INImenus.push_back(key.pItem);
@@ -167,8 +162,8 @@ void ReshadeToggler::LoadINI()
 		const char* itemValue = ini.GetValue(sectionMenusProcess, key.pItem, nullptr);
 		g_MenuValue.emplace(itemValue);
 
-		menus.menuIndex = menuItem;
-		menus.menuName = itemValue;
+		menus.Index = menuItem;
+		menus.Name = itemValue;
 		menuList.push_back(menus);
 
 		g_Logger->info("Menu:  {} - Value: {}", menuItem, itemValue);
@@ -352,7 +347,7 @@ void ReshadeToggler::LoadINI()
 	ini.GetAllKeys(sectionWeatherProcess, WeatherProcess_keys);
 	g_INIweather.reserve(WeatherProcess_keys.size()); // Reserve space for vector
 
-	Menus weather;
+	Info weather;
 	for (const auto& key : WeatherProcess_keys)
 	{
 		g_INIweather.push_back(key.pItem);
@@ -360,8 +355,8 @@ void ReshadeToggler::LoadINI()
 		const char* weatheritemValue = ini.GetValue(sectionWeatherProcess, key.pItem, nullptr);
 		g_WeatherValue.emplace(weatheritemValue);
 
-		weather.menuIndex = weatherItem;
-		weather.menuName = weatheritemValue;
+		weather.Index = weatherItem;
+		weather.Name = weatheritemValue;
 		weatherList.push_back(weather);
 
 		g_Logger->info("Weather:  {} - Value: {}", weatherItem, weatheritemValue);
@@ -370,6 +365,9 @@ void ReshadeToggler::LoadINI()
 	DEBUG_LOG(g_Logger, "\n", nullptr);
 #pragma endregion
 
+	if (TimeUpdateIntervalTime < 0) { TimeUpdateIntervalTime = 0; }
+	if (TimeUpdateIntervalInterior < 0) { TimeUpdateIntervalInterior = 0; }
+	if (TimeUpdateIntervalWeather < 0) { TimeUpdateIntervalWeather = 0; }
 }
 
 void TimeThread()
@@ -476,7 +474,7 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 
 	case SKSE::MessagingInterface::kDataLoaded:
 		DEBUG_LOG(g_Logger, "kDataLoaded: sent after the data handler has loaded all its forms", nullptr);
-		loaded = true;
+		isLoaded = true;
 		if (EnableTime)
 		{
 			processor.ProcessTimeBasedToggling();
@@ -584,7 +582,6 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 	return true;
 }
 
-
 extern "C" DLLEXPORT const auto SKSEPlugin_Version = []() noexcept {
 	SKSE::PluginVersionData v;
 	v.PluginName(Plugin::NAME.data());
@@ -594,7 +591,6 @@ extern "C" DLLEXPORT const auto SKSEPlugin_Version = []() noexcept {
 	return v;
 	}
 ();
-
 
 extern "C" DLLEXPORT bool SKSEAPI SKSEPlugin_Query(const SKSE::QueryInterface*, SKSE::PluginInfo * pluginInfo)
 {

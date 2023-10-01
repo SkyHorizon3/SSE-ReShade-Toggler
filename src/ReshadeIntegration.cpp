@@ -23,7 +23,7 @@ void ReshadeIntegration::ApplyTechniqueState(bool enableReshade, const Technique
 
 void ReshadeIntegration::ApplySpecificReshadeStates(bool enableReshade, Categories ProcessState)
 {
-	DEBUG_LOG(g_Logger, "Specific is enabled! - EnableReshade: {}", enableReshade);
+	//DEBUG_LOG(g_Logger, "Specific is enabled! - EnableReshade: {}", enableReshade);
 
 	switch (ProcessState)
 	{
@@ -58,7 +58,7 @@ void ReshadeIntegration::ApplySpecificReshadeStates(bool enableReshade, Categori
 
 void ReshadeIntegration::ApplyReshadeState(bool enableReshade, const std::string& toggleState)
 {
-	DEBUG_LOG(g_Logger, "All is enabled! - EnableReshade: {}", enableReshade);
+	//DEBUG_LOG(g_Logger, "All is enabled! - EnableReshade: {}", enableReshade);
 
 	if (toggleState == "off")
 	{

@@ -14,10 +14,10 @@ struct TechniqueInfo
 	double stopTime = 0.0;
 };
 
-struct Menus
+struct Info
 {
-	std::string menuIndex = "";
-	std::string menuName = "";
+	std::string Index = "";
+	std::string Name = "";
 };
 
 enum class Categories
@@ -76,7 +76,17 @@ inline std::vector<std::string> g_MenuNames = {
 	"Training Menu"
 };
 
-inline bool loaded = false;
+inline std::vector<std::string> g_WeatherFlags = {
+	"kNone",
+	"kPleasant",
+	"kCloudy",
+	"kRainy",
+	"kSnow",
+	"kPermAurora",
+	"kAuroraFollowsSun"
+};
+
+inline bool isLoaded = false;
 
 // General
 inline bool EnableMenus = true;
@@ -93,7 +103,7 @@ inline std::unordered_set<std::string> g_MenuToggleState;
 inline std::vector<std::string> g_SpecificMenu;
 inline std::vector<std::string> g_INImenus;
 inline std::vector<TechniqueInfo> techniqueMenuInfoList;
-inline std::vector<Menus> menuList;
+inline std::vector<Info> menuList;
 
 inline std::string ToggleStateMenus;
 inline std::string ToggleAllStateMenus;
@@ -145,7 +155,7 @@ inline std::unordered_set<std::string> g_WeatherToggleState;
 
 inline std::vector<std::string> g_SpecificWeather;
 inline std::vector<std::string> g_INIweather;
-inline std::vector<Menus> weatherList;
+inline std::vector<Info> weatherList;
 inline std::vector<TechniqueInfo> techniqueWeatherInfoList;
 
 inline std::string ToggleStateWeather;
@@ -155,7 +165,7 @@ inline std::string weatherflags;
 inline const char* itemWeatherShaderToToggle;
 inline const char* itemWeatherStateValue;
 
-inline uint32_t TimeUpdateIntervalWeather;
+inline int TimeUpdateIntervalWeather;
 
 inline bool enableReshadeWeather = false;
 
