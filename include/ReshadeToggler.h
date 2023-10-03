@@ -17,5 +17,6 @@ public:
 	void Setup();
 	void SetupLog();
 	void Load();
-	void LoadINI();
+	void LoadINI(const std::string& presetPath);
+	void LoadPreset(const std::string& Preset);
 };

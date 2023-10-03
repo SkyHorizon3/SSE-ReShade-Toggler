@@ -83,3 +83,16 @@ void ReshadeIntegration::EnumerateEffects()
 		}
 	}
 }
+
+void ReshadeIntegration::EnumeratePresets()
+{
+	const std::filesystem::path presetDirectory = L"Data\\SKSE\\Plugins\\TogglerConfigs\\";
+
+	for (const auto& preset : std::filesystem::recursive_directory_iterator(presetDirectory))
+	{
+		if (preset.is_regular_file() && preset.path().filename().extension() == ".ini")
+		{
+			g_Presets.push_back(preset.path().filename().string());
+		}
+	}
+}

@@ -34,8 +34,11 @@ extern reshade::api::effect_runtime* s_pRuntime;
 inline std::shared_ptr<spdlog::logger> g_Logger;
 
 inline std::vector<std::string> g_Effects;
+inline std::vector<std::string> g_Presets;
 inline std::vector<std::string> g_EffectState = { "on", "off" };
 inline std::vector<std::string> g_ToggleState = { "All", "Specific" };
+
+inline std::string selectedPreset = "Default.ini";
 
 // Hard coding probably isn't a good idea... idgaf rn tho, migh fix later
 // TODO: Don't Hardcode

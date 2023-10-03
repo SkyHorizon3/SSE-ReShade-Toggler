@@ -55,6 +55,64 @@ void ReshadeToggler::SetupLog()
 	spdlog::flush_on(spdlog::level::trace);
 }
 
+void TimeThread()
+{
+	if (EnableTime)
+	{
+		g_Logger->info("Attaching TimeThread");
+		while (EnableTime)
+		{
+			// Call ProcessTimeBasedToggling every x seconds
+			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalTime));
+			Processor::GetSingleton().ProcessTimeBasedToggling();
+
+			if (!EnableTime)
+			{
+				std::thread(TimeThread).join();
+				g_Logger->info("Detaching TimeThread");
+			}
+		}
+	}
+}
+
+void InteriorThread()
+{
+	if (EnableInterior)
+	{
+		g_Logger->info("Attaching InteriorThread");
+		while (EnableInterior)
+		{
+			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalInterior));
+			Processor::GetSingleton().ProcessInteriorBasedToggling();
+
+			if (!EnableInterior)
+			{
+				std::thread(InteriorThread).join();
+				g_Logger->info("Detaching InteriorThread");
+			}
+		}
+	}
+}
+
+void WeatherThread()
+{
+	if (EnableWeather)
+	{
+		g_Logger->info("Attaching WeatherThread");
+		while (EnableWeather)
+		{
+			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalWeather));
+			Processor::GetSingleton().ProcessWeatherBasedToggling();
+
+			if (!EnableWeather)
+			{
+				std::thread(WeatherThread).join();
+				g_Logger->info("Detaching WeatherThread");
+			}
+		}
+	}
+}
+
 // Load Reshade and register events
 void ReshadeToggler::Load()
 {
@@ -68,13 +126,13 @@ void ReshadeToggler::Load()
 	}
 }
 
-void ReshadeToggler::LoadINI()
+void ReshadeToggler::LoadINI(const std::string& presetPath)
 {
-	ReshadeIntegration::EnumerateEffects();
+	DEBUG_LOG(g_Logger, "Starting to load: {}", presetPath.c_str());
 
 	CSimpleIniA ini;
-	ini.SetUnicode();
-	ini.LoadFile(L"Data\\SKSE\\Plugins\\ReShadeToggler.ini");
+	ini.SetUnicode(false);
+	ini.LoadFile(presetPath.c_str());
 
 	const char* sectionGeneral = "General";
 	const char* sectionMenusGeneral = "MenusGeneral";
@@ -365,62 +423,79 @@ void ReshadeToggler::LoadINI()
 	if (TimeUpdateIntervalWeather < 0) { TimeUpdateIntervalWeather = 0; }
 }
 
-void TimeThread()
+void ReshadeToggler::LoadPreset(const std::string& Preset)
 {
-	if (EnableTime)
+	const std::string& fullPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\" + Preset;
+
+	DEBUG_LOG(g_Logger, "Starting clear procedure...", nullptr);
+	if (EnableTime && isLoaded)
 	{
-		g_Logger->info("Attaching TimeThread");
-		while (EnableTime)
-		{
-			// Call ProcessTimeBasedToggling every x seconds
-			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalTime));
-			Processor::GetSingleton().ProcessTimeBasedToggling();
-
-			if (!EnableTime)
-			{
-				std::thread(TimeThread).join();
-				g_Logger->info("Detaching TimeThread");
-			}
-		}
+		std::thread(TimeThread).join();
 	}
-}
-
-void InteriorThread()
-{
-	if (EnableInterior)
+	if (EnableInterior && isLoaded)
 	{
-		g_Logger->info("Attaching InteriorThread");
-		while (EnableInterior)
-		{
-			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalInterior));
-			Processor::GetSingleton().ProcessInteriorBasedToggling();
-
-			if (!EnableInterior)
-			{
-				std::thread(InteriorThread).join();
-				g_Logger->info("Detaching InteriorThread");
-			}
-		}
+		std::thread(InteriorThread).join();
 	}
-}
-
-void WeatherThread()
-{
-	if (EnableWeather)
+	if (EnableWeather && isLoaded)
 	{
-		g_Logger->info("Attaching WeatherThread");
-		while (EnableWeather)
-		{
-			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalWeather));
-			Processor::GetSingleton().ProcessWeatherBasedToggling();
-
-			if (!EnableWeather)
-			{
-				std::thread(WeatherThread).join();
-				g_Logger->info("Detaching WeatherThread");
-			}
-		}
+		std::thread(WeatherThread).join();
 	}
+
+	// Empty every vector
+	g_MenuToggleFile.clear();
+	g_MenuToggleState.clear();
+	g_SpecificMenu.clear();
+	g_INImenus.clear();
+	techniqueMenuInfoList.clear();
+	menuList.clear();
+	ToggleStateMenus.clear();
+	ToggleAllStateMenus.clear();
+	itemMenuShaderToToggle = nullptr; // Assuming itemMenuShaderToToggle is a pointer, set it to nullptr.
+	itemMenuStateValue = nullptr; // Similarly, set itemMenuStateValue to nullptr.
+
+	g_TimeToggleFile.clear();
+	g_TimeToggleState.clear();
+	techniqueTimeInfoList.clear();
+	techniqueTimeInfoListAll.clear();
+	g_SpecificTime.clear();
+	ToggleStateTime.clear();
+	ToggleAllStateTime.clear();
+	itemTimeShaderToToggle = nullptr; // Set to nullptr.
+	itemTimeStateValue = nullptr; // Set to nullptr.
+	itemTimeStartHour = 0.0;
+	itemTimeStopHour = 0.0;
+	itemTimeStartHourAll = 0.0;
+	itemTimeStopHourAll = 0.0;
+	TimeUpdateIntervalTime = 0;
+
+	g_InteriorToggleFile.clear();
+	g_InteriorToggleState.clear();
+	techniqueInteriorInfoList.clear();
+	g_SpecificInterior.clear();
+	ToggleStateInterior.clear();
+	ToggleAllStateInterior.clear();
+	itemInteriorShaderToToggle = nullptr; // Set to nullptr.
+	itemInteriorStateValue = nullptr; // Set to nullptr.
+	TimeUpdateIntervalInterior = 0;
+
+	g_WeatherValue.clear();
+	g_WeatherToggleFile.clear();
+	g_WeatherToggleState.clear();
+	g_SpecificWeather.clear();
+	g_INIweather.clear();
+	weatherList.clear();
+	techniqueWeatherInfoList.clear();
+	ToggleStateWeather.clear();
+	ToggleAllStateWeather.clear();
+	weatherflags.clear();
+	itemWeatherShaderToToggle = nullptr; // Set to nullptr.
+	itemWeatherStateValue = nullptr; // Set to nullptr.
+	TimeUpdateIntervalWeather = 0;
+
+	DEBUG_LOG(g_Logger, "Finished clearing procedure...", nullptr);
+
+	// Load the new INI
+	LoadINI(fullPath);
 }
 
 void MessageListener(SKSE::MessagingInterface::Message* message)
@@ -501,7 +576,11 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 void ReshadeToggler::Setup()
 {
 	SetupLog();
-	LoadINI();
+
+	ReshadeIntegration::EnumeratePresets();
+	ReshadeIntegration::EnumerateEffects();
+
+	LoadINI("Data\\SKSE\\Plugins\\TogglerConfigs\\Default.ini");
 
 	// Check if all options are false, and unregister the addon if true
 	if (!EnableMenus && !EnableTime && !EnableInterior && !EnableWeather)

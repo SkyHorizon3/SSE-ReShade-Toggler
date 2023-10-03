@@ -41,9 +41,21 @@ bool Menu::CreateCombo(const char* label, std::string& currentItem, std::vector<
 
 void Menu::SettingsMenu()
 {
-	//if (ImGui::Button("Save"))
-	//{
-	//}
+	if (ImGui::Button("Save"))
+	{
+		saveConfigPopupOpen = true; // Open the Save Config popup
+		inputBuffer[0] = '\0';     // Clear the input buffer
+	}
+
+	SaveConfig();
+
+	CreateCombo("Select Preset", selectedPreset, g_Presets, ImGuiComboFlags_None);
+	ImGui::SameLine();
+	if (ImGui::Button("Load Preset"))
+	{
+		// Load the selected preset (you can implement this logic)
+		ReshadeToggler::GetSingleton().LoadPreset(selectedPreset);
+	}
 
 	if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_CollapsingHeader))
 	{
@@ -80,6 +92,156 @@ void Menu::SettingsMenu()
 		if (ImGui::CollapsingHeader("Weather", ImGuiTreeNodeFlags_CollapsingHeader))
 		{
 			RenderWeatherPage();
+		}
+	}
+}
+
+// I LOVE THIS. ALL HAIL SimipleINI!!!!!!
+void Menu::Save(const std::string& filename)
+{
+	// Define the path to your mod's TogglerConfigs directory
+	std::string configDirectory = "Data\\SKSE\\Plugins\\TogglerConfigs"; // Update this path as needed
+
+	// Ensure that the directory exists, create it if necessary
+	std::filesystem::create_directories(configDirectory);
+
+	// Combine the directory path and the provided filename
+	std::string fullPath = configDirectory + "\\" + filename;
+
+	CSimpleIniA ini;
+	ini.SetUnicode(false);
+
+	// Save General section
+	ini.SetBoolValue("General", "EnableMenus", EnableMenus);
+	ini.SetBoolValue("General", "EnableTime", EnableTime);
+	ini.SetBoolValue("General", "EnableInterior", EnableInterior);
+	ini.SetBoolValue("General", "EnableWeather", EnableWeather);
+
+	// MenusGeneral Section
+	ini.SetValue("MenusGeneral", "MenuToggleOption", ToggleStateMenus.c_str());
+	ini.SetValue("MenusGeneral", "MenuToggleAllState", ToggleAllStateMenus.c_str());
+
+	for (size_t i = 0; i < techniqueMenuInfoList.size(); i++)
+	{
+		const auto& menuInfo = techniqueMenuInfoList[i];
+		std::string effectFileKey = "MenuToggleSpecificFile" + std::to_string(i + 1);
+		std::string effectStateKey = "MenuToggleSpecificState" + std::to_string(i + 1);
+
+		ini.SetValue("MenusGeneral", effectFileKey.c_str(), menuInfo.filename.c_str());
+		ini.SetValue("MenusGeneral", effectStateKey.c_str(), menuInfo.state.c_str());
+	}
+
+	// Save MenusProcess section
+	for (size_t i = 0; i < menuList.size(); i++)
+	{
+		const auto& menuData = menuList[i];
+		std::string menuKey = "Menu" + std::to_string(i + 1);
+		ini.SetValue("MenusProcess", menuKey.c_str(), menuData.Name.c_str());
+	}
+
+	// Save Time Section
+	ini.SetValue("Time", "TimeUpdateInterval", std::to_string(TimeUpdateIntervalTime).c_str());
+
+	ini.SetValue("Time", "TimeToggleOption", ToggleStateTime.c_str());
+	ini.SetValue("Time", "TimeToggleAllState", ToggleAllStateTime.c_str());
+
+	for (const auto& info : techniqueTimeInfoListAll)
+	{
+		ini.SetDoubleValue("Time", "TimeToggleAllTimeStart", info.startTime);
+		ini.SetDoubleValue("Time", "TimeToggleAllTimeStop", info.stopTime);
+	}
+
+	for (size_t i = 0; i < techniqueTimeInfoList.size(); i++)
+	{
+		const auto& timeInfo = techniqueTimeInfoList[i];
+		std::string effectFileKey = "TimeToggleSpecificFile" + std::to_string(i + 1);
+		std::string effectStateKey = "TimeToggleSpecificState" + std::to_string(i + 1);
+		std::string effectStartTimeKey = "TimeToggleSpecificTimeStart" + std::to_string(i + 1);
+		std::string effectStopTimeKey = "TimeToggleSpecificTimeStop" + std::to_string(i + 1);
+
+		ini.SetValue("Time", effectFileKey.c_str(), timeInfo.filename.c_str());
+		ini.SetValue("Time", effectStateKey.c_str(), timeInfo.state.c_str());
+		ini.SetDoubleValue("Time", effectStartTimeKey.c_str(), timeInfo.startTime);
+		ini.SetDoubleValue("Time", effectStopTimeKey.c_str(), timeInfo.stopTime);
+	}
+
+	// Save Interior section
+	ini.SetValue("Interior", "InteriorUpdateInterval", std::to_string(TimeUpdateIntervalInterior).c_str());
+	ini.SetValue("Interior", "InteriorToggleOption", ToggleStateInterior.c_str());
+	ini.SetValue("Interior", "InteriorToggleAllState", ToggleAllStateInterior.c_str());
+
+	for (size_t i = 0; i < techniqueInteriorInfoList.size(); i++)
+	{
+		const auto& interiorInfo = techniqueInteriorInfoList[i];
+		std::string effectFileKey = "InteriorToggleSpecificFile" + std::to_string(i + 1);
+		std::string effectStateKey = "InteriorToggleSpecificState" + std::to_string(i + 1);
+
+		ini.SetValue("Interior", effectFileKey.c_str(), interiorInfo.filename.c_str());
+		ini.SetValue("Interior", effectStateKey.c_str(), interiorInfo.state.c_str());
+	}
+
+	// Save Weather section
+	ini.SetValue("Weather", "WeatherToggleOption", ToggleStateWeather.c_str());
+	ini.SetValue("Weather", "WeatherToggleAllState", ToggleAllStateWeather.c_str());
+
+	for (size_t i = 0; i < techniqueWeatherInfoList.size(); i++)
+	{
+		const auto& weatherInfo = techniqueWeatherInfoList[i];
+		std::string effectFileKey = "WeatherToggleSpecificFile" + std::to_string(i + 1);
+		std::string effectStateKey = "WeatherToggleSpecificState" + std::to_string(i + 1);
+
+		ini.SetValue("Weather", effectFileKey.c_str(), weatherInfo.filename.c_str());
+		ini.SetValue("Weather", effectStateKey.c_str(), weatherInfo.state.c_str());
+	}
+
+	// Save WeatherProcess section
+	for (size_t i = 0; i < weatherList.size(); i++)
+	{
+		const auto& weatherData = weatherList[i];
+		std::string weatherKey = "Weather" + std::to_string(i + 1);
+		ini.SetValue("WeatherProcess", weatherKey.c_str(), weatherData.Name.c_str());
+	}
+
+	ini.SaveFile(fullPath.c_str());
+}
+
+void Menu::SaveConfig()
+{
+	if (saveConfigPopupOpen)
+	{
+		ImGui::OpenPopup("Save Config");
+
+		// Check if the "Save Config" modal is open
+		if (ImGui::BeginPopupModal("Save Config", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+		{
+			ImGui::Text("Enter the filename:");
+
+			// Create an input field for the filename
+			ImGui::InputText("##FileName", inputBuffer, sizeof(inputBuffer));
+
+			if (ImGui::Button("Ok, Save!"))
+			{
+				// Use the provided filename or the default if empty
+				std::string filename = (inputBuffer[0] != '\0') ? inputBuffer : m_SaveFilename;
+
+				// Call the Save function with the chosen filename
+				Save(filename);
+
+				// Close the modal and reset the flag
+				ImGui::CloseCurrentPopup();
+				saveConfigPopupOpen = false;
+			}
+
+			ImGui::SameLine();
+
+			if (ImGui::Button("Cancel"))
+			{
+				// Close the modal and reset the flag
+				ImGui::CloseCurrentPopup();
+				saveConfigPopupOpen = false;
+			}
+
+			ImGui::EndPopup();
 		}
 	}
 }
@@ -174,7 +336,7 @@ void Menu::RenderMenusPage()
 					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
 
 					// Add a button to remove the effect
-					if (ImGui::Button(removeID.c_str(), ImVec2(200, 20)))
+					if (ImGui::Button(removeID.c_str()))
 					{
 						if (!techniqueMenuInfoList.empty())
 						{
@@ -195,7 +357,7 @@ void Menu::RenderMenusPage()
 		ImGui::Separator();
 
 		// Add new
-		if (ImGui::Button("Add New Effect", ImVec2(200, 20)))
+		if (ImGui::Button("Add New Effect"))
 		{
 			TechniqueInfo info;
 			info.filename = "Default.fx";
@@ -226,7 +388,7 @@ void Menu::RenderMenusPage()
 			if (CreateCombo(menuNameComboID.c_str(), currentMenuName, g_MenuNames, ImGuiComboFlags_None)) { valueChanged = true; }
 
 			// Add a button to remove the effect
-			if (ImGui::Button(removeID.c_str(), ImVec2(200, 20)))
+			if (ImGui::Button(removeID.c_str()))
 			{
 				if (!menuList.empty())
 				{
@@ -247,7 +409,7 @@ void Menu::RenderMenusPage()
 	ImGui::Separator();
 
 	// Add new
-	if (ImGui::Button("Add New Menu", ImVec2(150, 20)))
+	if (ImGui::Button("Add New Menu"))
 	{
 		Info menu;
 		menu.Index = "";
@@ -327,7 +489,7 @@ void Menu::RenderTimePage()
 					if (ImGui::SliderScalar(stopTimeID.c_str(), ImGuiDataType_Double, &currentStopTime, &minTime, &maxTime, "%.2f")) { valueChanged = true; }
 
 					// Add a button to remove the effect
-					if (ImGui::Button(removeID.c_str(), ImVec2(50, 20)))
+					if (ImGui::Button(removeID.c_str()))
 					{
 						if (!techniqueTimeInfoList.empty())
 						{
@@ -353,7 +515,7 @@ void Menu::RenderTimePage()
 		}
 
 		// Add new 
-		if (ImGui::Button("Add", ImVec2(45, 20)))
+		if (ImGui::Button("Add new Effect"))
 		{
 			// Fill new info with default values
 			TechniqueInfo info;
@@ -405,7 +567,7 @@ void Menu::RenderInteriorPage()
 					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
 
 					// Add a button to remove the effect
-					if (ImGui::Button(removeID.c_str(), ImVec2(200, 20)))
+					if (ImGui::Button(removeID.c_str()))
 					{
 						if (!techniqueInteriorInfoList.empty())
 						{
@@ -426,7 +588,7 @@ void Menu::RenderInteriorPage()
 		ImGui::Separator();
 
 		// Add new
-		if (ImGui::Button("Add New Effect", ImVec2(200, 20)))
+		if (ImGui::Button("Add New Effect"))
 		{
 			TechniqueInfo info;
 			info.filename = "Default.fx";
@@ -475,7 +637,7 @@ void Menu::RenderWeatherPage()
 					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
 
 					// Add a button to remove the effect
-					if (ImGui::Button(removeID.c_str(), ImVec2(200, 20)))
+					if (ImGui::Button(removeID.c_str()))
 					{
 						if (!techniqueWeatherInfoList.empty())
 						{
@@ -496,7 +658,7 @@ void Menu::RenderWeatherPage()
 		ImGui::Separator();
 
 		// Add new
-		if (ImGui::Button("Add New Effect", ImVec2(200, 20)))
+		if (ImGui::Button("Add New Effect"))
 		{
 			TechniqueInfo info;
 			info.filename = "Default.fx";
@@ -526,7 +688,7 @@ void Menu::RenderWeatherPage()
 			if (CreateCombo(weatherNameComboID.c_str(), currentWeatherName, g_WeatherFlags, ImGuiComboFlags_None)) { valueChanged = true; }
 
 			// Add a button to remove the effect
-			if (ImGui::Button(removeID.c_str(), ImVec2(200, 20)))
+			if (ImGui::Button(removeID.c_str()))
 			{
 				if (!weatherList.empty())
 				{
@@ -546,7 +708,7 @@ void Menu::RenderWeatherPage()
 	ImGui::Separator();
 
 	// Add new
-	if (ImGui::Button("Add New Weather", ImVec2(150, 20)))
+	if (ImGui::Button("Add New Weather"))
 	{
 		Info weather;
 		weather.Index = "";
