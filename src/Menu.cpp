@@ -169,7 +169,7 @@ void Menu::RenderMenusPage()
 					std::string currentEffectFileName = menuInfo.filename;
 					std::string currentEffectState = menuInfo.state;
 
-					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_MenuNames, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
 					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
 
@@ -239,6 +239,7 @@ void Menu::RenderMenusPage()
 			{
 				iniMenus.Index = "Menu" + std::to_string(i);
 				iniMenus.Name = currentMenuName;
+				DEBUG_LOG(g_Logger, "New Menu Name:{} - {}", iniMenus.Index, iniMenus.Name);
 			}
 		}
 	}
@@ -263,11 +264,33 @@ void Menu::RenderTimePage()
 
 	if (ToggleStateTime.find("All") != std::string::npos)
 	{
-		ImGui::SameLine();
-		CreateCombo("State", ToggleAllStateTime, g_EffectState, ImGuiComboFlags_None);
+		bool valueChanged = false;
+		for (int i = 0; i < techniqueTimeInfoListAll.size(); i++)
+		{
+			auto& info = techniqueTimeInfoListAll[i];
+
+			std::string currentEffectState = info.state;
+			double currentStartTime = info.startTime;
+			double currentStopTime = info.stopTime;
+
+			ImGui::SameLine();
+			if (CreateCombo("State", ToggleAllStateTime, g_EffectState, ImGuiComboFlags_None)) valueChanged = true;
+			ImGui::SetNextItemWidth(200.0f);
+			if (ImGui::SliderScalar("Start Time", ImGuiDataType_Double, &currentStartTime, &minTime, &maxTime, "%.2f")) valueChanged = true;
+			ImGui::SameLine();
+			ImGui::SetNextItemWidth(200.0f);
+			if (ImGui::SliderScalar("Stop Time", ImGuiDataType_Double, &currentStopTime, &minTime, &maxTime, "%.2f")) valueChanged = true;
+
+			if (valueChanged)
+			{
+				info.state = currentEffectState;
+				info.startTime = currentStartTime;
+				info.stopTime = currentStopTime;
+			}
+		}
 	}
 
-	// Wtf happened to this function... holy crap this nesting!
+	// Wtf happened to this... holy crap this nesting!
 	if (ToggleStateTime.find("Specific") != std::string::npos)
 	{
 		ImGui::SeparatorText("Effects");

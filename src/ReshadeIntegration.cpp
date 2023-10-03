@@ -5,7 +5,7 @@ void ReshadeIntegration::ApplyTechniqueState(bool enableReshade, const Technique
 {
 	s_pRuntime->enumerate_techniques(info.filename.c_str(), [&enableReshade, &info](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
 		{
-			DEBUG_LOG(g_Logger, "State: {} for: {}", info.state.c_str(), info.filename.c_str());
+			//DEBUG_LOG(g_Logger, "State: {} for: {}", info.state.c_str(), info.filename.c_str());
 			if (info.state == "off")
 			{
 				runtime->set_technique_state(technique, enableReshade);
@@ -33,6 +33,7 @@ void ReshadeIntegration::ApplySpecificReshadeStates(bool enableReshade, Categori
 			ApplyTechniqueState(enableReshade, info);
 		}
 		break;
+		// Kind of redundant, but we'll keep it in here for now, might need later
 	case Categories::Time:
 		for (const TechniqueInfo& info : techniqueTimeInfoList)
 		{

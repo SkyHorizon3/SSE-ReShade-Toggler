@@ -12,6 +12,7 @@ struct TechniqueInfo
 	std::string state = "";
 	double startTime = 0.0;
 	double stopTime = 0.0;
+	bool enable = true;
 };
 
 struct Info
@@ -96,7 +97,6 @@ inline bool EnableWeather = true;
 
 
 // Menus
-inline std::unordered_set<std::string> g_MenuValue;
 inline std::unordered_set<std::string> g_MenuToggleFile;
 inline std::unordered_set<std::string> g_MenuToggleState;
 
@@ -117,6 +117,7 @@ inline std::unordered_set<std::string> g_TimeToggleFile;
 inline std::unordered_set<std::string> g_TimeToggleState;
 
 inline std::vector<TechniqueInfo> techniqueTimeInfoList;
+inline std::vector<TechniqueInfo> techniqueTimeInfoListAll;
 inline std::vector<std::string> g_SpecificTime;
 
 inline std::string ToggleStateTime;
@@ -166,8 +167,6 @@ inline const char* itemWeatherShaderToToggle;
 inline const char* itemWeatherStateValue;
 
 inline int TimeUpdateIntervalWeather;
-
-inline bool enableReshadeWeather = false;
 
 // Thread
 inline std::mutex timeMutexTime;

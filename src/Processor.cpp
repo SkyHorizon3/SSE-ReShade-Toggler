@@ -18,38 +18,41 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 		return RE::BSEventNotifyControl::kContinue; // Skip if no open menus
 	}
 
-	// Is this necessary? No. Are we still doing it, yes. Why? Idk, it looks fancy
-	bool enableReshade = [this]() {
-		for (const auto& menuToDisable : g_MenuValue)
-		{
-			if (m_OpenMenus.find(menuToDisable) != m_OpenMenus.end())
-			{
-				return false; // If any disabled menu is open, disable Reshade
-			}
-		}
-		return true; // If no disabled menus are open, enable Reshade
-		}();
 
-		if (s_pRuntime != nullptr)
+	bool enableReshade = [this]()
 		{
-			if (ToggleStateMenus.find("All") != std::string::npos)
+			for (const Info& menu : menuList)
 			{
-				ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateMenus);
+				if (m_OpenMenus.find(menu.Name) != m_OpenMenus.end())
+				{
+					return false;
+				}
 			}
-			else if (ToggleStateMenus.find("Specific") != std::string::npos)
-			{
-				ReshadeIntegration::ApplySpecificReshadeStates(enableReshade, Categories::Menu);
-			}
-
-			DEBUG_LOG(g_Logger, "Menu {} {}", menuName, opening ? "open" : "closed");
-			DEBUG_LOG(g_Logger, "Reshade {}", enableReshade ? "enabled" : "disabled");
+			return true;
 		}
-		else
+	();
+
+
+	if (s_pRuntime != nullptr)
+	{
+		if (ToggleStateMenus.find("All") != std::string::npos)
 		{
-			g_Logger->critical("Uhm, what? How? s_pRuntime was null. How the fuck did this happen");
+			ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateMenus);
+		}
+		else if (ToggleStateMenus.find("Specific") != std::string::npos)
+		{
+			ReshadeIntegration::ApplySpecificReshadeStates(enableReshade, Categories::Menu);
 		}
 
-		return RE::BSEventNotifyControl::kContinue;
+		DEBUG_LOG(g_Logger, "Menu {} {}", menuName, opening ? "open" : "closed");
+		DEBUG_LOG(g_Logger, "Reshade {}", enableReshade ? "enabled" : "disabled");
+	}
+	else
+	{
+		g_Logger->critical("Uhm, what? How? s_pRuntime was null. How the fuck did this happen");
+	}
+
+	return RE::BSEventNotifyControl::kContinue;
 }
 
 RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
@@ -61,34 +64,47 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 
 	const auto time = RE::Calendar::GetSingleton();
 
-	double currentTime = time->GetHour();
-	DEBUG_LOG(g_Logger, "currentTime: {} ", currentTime);
+	float TimecurrentTime = time->GetHour();
+	DEBUG_LOG(g_Logger, "currentTime: {} ", TimecurrentTime);
 
-	bool enableReshade = [this, currentTime]()
+	// Specific
+	std::vector<Bool> enableReshade;
+	if (ToggleStateTime.find("Specific") != std::string::npos)
+	{
+		for (TechniqueInfo& info : techniqueTimeInfoList)
 		{
-			for (const TechniqueInfo& info : techniqueTimeInfoList)
-			{
-				if (IsTimeWithinRange(currentTime, info.startTime, info.stopTime))
-				{
-					return false;
-				}
-			}
-			return true;
-		}();
+			DEBUG_LOG(g_Logger, "info.startTime: {} - info.stopTime: {}", info.startTime, info.stopTime);
+			info.enable = !IsTimeWithinRange(TimecurrentTime, info.startTime, info.stopTime);
+		}
+	}
 
-		if (s_pRuntime != nullptr)
+	// All
+	bool enableReshadeTime = true;
+	if (ToggleStateTime.find("All") != std::string::npos)
+	{
+		for (auto& allInfo : techniqueTimeInfoListAll)
 		{
-			if (ToggleStateTime.find("All") != std::string::npos)
+			enableReshadeTime = !IsTimeWithinRange(TimecurrentTime, allInfo.startTime, allInfo.stopTime);
+			DEBUG_LOG(g_Logger, "State: {} for time: {} - {}. ReshadeBool: {}", allInfo.state, allInfo.startTime, allInfo.stopTime, enableReshadeTime);
+		}
+	}
+
+	if (s_pRuntime != nullptr)
+	{
+		if (ToggleStateTime.find("All") != std::string::npos)
+		{
+			ReshadeIntegration::ApplyReshadeState(enableReshadeTime, ToggleAllStateTime);
+		}
+		else if (ToggleStateTime.find("Specific") != std::string::npos)
+		{
+			for (TechniqueInfo& info : techniqueTimeInfoList)
 			{
-				ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateTime);
-			}
-			else if (ToggleStateTime.find("Specific") != std::string::npos)
-			{
-				ReshadeIntegration::ApplySpecificReshadeStates(enableReshade, Categories::Time);
+				ReshadeIntegration::ApplyTechniqueState(info.enable, info);
 			}
 		}
+	}
 
-		return RE::BSEventNotifyControl::kContinue;
+	return RE::BSEventNotifyControl::kContinue;
 }
 
 bool Processor::IsTimeWithinRange(double currentTime, double startTime, double endTime)
@@ -186,6 +202,7 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 
 		//DEBUG_LOG(g_Logger, "weatherflag {}", weatherflags);
 
+		bool enableReshadeWeather = true;
 		for (const auto& weatherToDisable : g_WeatherValue)
 		{
 			//DEBUG_LOG(g_Logger, "weatherToDisable {}", weatherToDisable);
@@ -194,10 +211,6 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 			{
 				enableReshadeWeather = false;
 				break;
-			}
-			else
-			{
-				enableReshadeWeather = true;
 			}
 		}
 

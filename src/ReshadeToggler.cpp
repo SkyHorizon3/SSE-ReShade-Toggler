@@ -160,7 +160,6 @@ void ReshadeToggler::LoadINI()
 		g_INImenus.push_back(key.pItem);
 		const char* menuItem = g_INImenus.back().c_str();
 		const char* itemValue = ini.GetValue(sectionMenusProcess, key.pItem, nullptr);
-		g_MenuValue.emplace(itemValue);
 
 		menus.Index = menuItem;
 		menus.Name = itemValue;
@@ -180,74 +179,70 @@ void ReshadeToggler::LoadINI()
 	g_Logger->info("General TimeToggleOption:  {} - TimeUpdateInterval: {}", ToggleStateTime, TimeUpdateIntervalTime);
 
 	// All Time
-	if (ToggleStateTime == "All")
-	{
-		ToggleAllStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleAllState");
-		itemTimeStartHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStart");
-		itemTimeStopHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStop");
+	ToggleAllStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleAllState");
+	itemTimeStartHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStart");
+	itemTimeStopHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStop");
 
-		TechniqueInfo TimeInfo;
-		TimeInfo.state = ToggleAllStateTime;
-		TimeInfo.startTime = itemTimeStartHourAll;
-		TimeInfo.stopTime = itemTimeStopHourAll;
-		techniqueTimeInfoList.push_back(TimeInfo);
-		g_Logger->info("Set all effects to {} from {} - {}", ToggleAllStateTime, itemTimeStartHourAll, itemTimeStopHourAll);
-	}
+	TechniqueInfo TimeInfoAll;
+	TimeInfoAll.state = ToggleAllStateTime;
+	TimeInfoAll.startTime = itemTimeStartHourAll;
+	TimeInfoAll.stopTime = itemTimeStopHourAll;
+	techniqueTimeInfoListAll.push_back(TimeInfoAll);
+	g_Logger->info("Set all effects to {} from {} - {}", ToggleAllStateTime, itemTimeStartHourAll, itemTimeStopHourAll);
+
 
 	// Specific Time
-	if (ToggleStateTime == "Specific")
+	ini.GetAllKeys(sectionTimeGeneral, TimeGeneral_keys);
+	g_SpecificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
+
+	const char* togglePrefix03 = "TimeToggleSpecificFile";
+	const char* togglePrefix04 = "TimeToggleSpecificState";
+	const char* togglePrefix05 = "TimeToggleSpecificTimeStart";
+	const char* togglePrefix06 = "TimeToggleSpecificTimeStop";
+
+	for (const auto& key : TimeGeneral_keys)
 	{
-		ini.GetAllKeys(sectionTimeGeneral, TimeGeneral_keys);
-		g_SpecificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
-
-		const char* togglePrefix03 = "TimeToggleSpecificFile";
-		const char* togglePrefix04 = "TimeToggleSpecificState";
-		const char* togglePrefix05 = "TimeToggleSpecificTimeStart";
-		const char* togglePrefix06 = "TimeToggleSpecificTimeStop";
-
-		for (const auto& key : TimeGeneral_keys)
+		if (strcmp(key.pItem, "TimeToggleOption") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStart") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStop") != 0)
 		{
-			if (strcmp(key.pItem, "TimeToggleOption") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStart") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStop") != 0)
+			g_SpecificTime.push_back(key.pItem);
+
+			// DEBUG_LOG(g_Logger, "Size of m_SpecificTime: {} ", m_SpecificTime.size());
+
+			const char* timeItemGeneral = g_SpecificTime.back().c_str();
+
+			if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
 			{
-				g_SpecificTime.push_back(key.pItem);
+				itemTimeShaderToToggle = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
+				g_TimeToggleFile.emplace(itemTimeShaderToToggle);
+				g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
 
-				// DEBUG_LOG(g_Logger, "Size of m_SpecificTime: {} ", m_SpecificTime.size());
+				// Construct the corresponding key for the state
+				std::string stateKeyName = togglePrefix04 + std::to_string(g_SpecificTime.size());
 
-				const char* timeItemGeneral = g_SpecificTime.back().c_str();
+				// Retrieve the state using the constructed key
+				itemTimeStateValue = ini.GetValue(sectionTimeGeneral, stateKeyName.c_str(), nullptr);
+				g_TimeToggleState.emplace(itemTimeStateValue);
 
-				if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
-				{
-					itemTimeShaderToToggle = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
-					g_TimeToggleFile.emplace(itemTimeShaderToToggle);
-					g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
-
-					// Construct the corresponding key for the state
-					std::string stateKeyName = togglePrefix04 + std::to_string(g_SpecificTime.size());
-
-					// Retrieve the state using the constructed key
-					itemTimeStateValue = ini.GetValue(sectionTimeGeneral, stateKeyName.c_str(), nullptr);
-					g_TimeToggleState.emplace(itemTimeStateValue);
-
-					// Construct the corresponding key for the the start and stop times
-					std::string startTimeKey = togglePrefix05 + std::to_string(g_SpecificTime.size());
-					std::string endTimeKey = togglePrefix06 + std::to_string(g_SpecificTime.size());
-					itemTimeStartHour = ini.GetDoubleValue(sectionTimeGeneral, startTimeKey.c_str());
-					itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
-					g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
+				// Construct the corresponding key for the the start and stop times
+				std::string startTimeKey = togglePrefix05 + std::to_string(g_SpecificTime.size());
+				std::string endTimeKey = togglePrefix06 + std::to_string(g_SpecificTime.size());
+				itemTimeStartHour = ini.GetDoubleValue(sectionTimeGeneral, startTimeKey.c_str());
+				itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
+				g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
 
 
-					// Populate the technique info
-					TechniqueInfo TimeInfo;
-					TimeInfo.filename = itemTimeShaderToToggle;
-					TimeInfo.state = itemTimeStateValue;
-					TimeInfo.startTime = itemTimeStartHour;
-					TimeInfo.stopTime = itemTimeStopHour;
-					techniqueTimeInfoList.push_back(TimeInfo);
-					g_Logger->info("Set effect {} to {} from {} - {}", itemTimeShaderToToggle, itemTimeStateValue, itemTimeStartHour, itemTimeStopHour);
-				}
+				// Populate the technique info
+				TechniqueInfo TimeInfo;
+				TimeInfo.filename = itemTimeShaderToToggle;
+				TimeInfo.state = itemTimeStateValue;
+				TimeInfo.startTime = itemTimeStartHour;
+				TimeInfo.stopTime = itemTimeStopHour;
+				techniqueTimeInfoList.push_back(TimeInfo);
+				g_Logger->info("Set effect {} to {} from {} - {}", itemTimeShaderToToggle, itemTimeStateValue, itemTimeStartHour, itemTimeStopHour);
 			}
 		}
 	}
+
 
 	DEBUG_LOG(g_Logger, "\n", nullptr);
 #pragma endregion 
