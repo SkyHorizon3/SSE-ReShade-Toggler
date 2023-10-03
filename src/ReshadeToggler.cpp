@@ -105,7 +105,7 @@ void WeatherThread()
 
 			if (!EnableWeather)
 			{
-				std::thread(WeatherThread).join();
+				weatherThread.join();
 				g_Logger->info("Detaching WeatherThread");
 			}
 		}
@@ -577,7 +577,7 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 		if (EnableWeather)
 		{
 			processor.ProcessWeatherBasedToggling();
-			std::thread(WeatherThread).detach();
+			weatherThread = std::thread(WeatherThread);
 		}
 
 		break;
@@ -668,7 +668,7 @@ int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
 		}
 		if (EnableWeather)
 		{
-			std::thread(WeatherThread).join();
+			weatherThread.join();
 		}
 
 		unregister_addon_events();

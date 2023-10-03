@@ -1,9 +1,12 @@
 #include "../include/Processor.h"
 #include "../include/ReshadeIntegration.h"
-#include "../src/ReshadeToggler.cpp"
+
+void PauseThread(std::thread& threadToPause);
+void ResumeThread(std::thread& threadToResume);
 
 RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
+
 	const auto& menuName = event->menuName;
 	auto& opening = event->opening;
 
@@ -19,35 +22,45 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 		return RE::BSEventNotifyControl::kContinue; // Skip if no open menus
 	}
 
-
-	bool enableReshade = [this]()
+	bool enableReshadeMenu = true;
+	for (const Info& menu : menuList)
+	{
+		if (m_OpenMenus.find(menu.Name) != m_OpenMenus.end())
 		{
-			for (const Info& menu : menuList)
+			if (EnableWeather)
 			{
-				if (m_OpenMenus.find(menu.Name) != m_OpenMenus.end())
-				{
-					//PauseThread(weatherThread);
-					return false;
-				}
+				PauseThread(weatherThread);
+
+				DEBUG_LOG(g_Logger, "PauseThreadWorked", nullptr);
+				ispaused = true;
 			}
-			return true;
+			enableReshadeMenu = false;
 		}
-	();
+		else
+		{
+			if (ispaused)
+			{
+				ResumeThread(weatherThread);
+				DEBUG_LOG(g_Logger, "ResumeThreadWorked", nullptr);
+			}
+		}
+	}
+
 
 
 	if (s_pRuntime != nullptr)
 	{
 		if (ToggleStateMenus.find("All") != std::string::npos)
 		{
-			ReshadeIntegration::ApplyReshadeState(enableReshade, ToggleAllStateMenus);
+			ReshadeIntegration::ApplyReshadeState(enableReshadeMenu, ToggleAllStateMenus);
 		}
 		else if (ToggleStateMenus.find("Specific") != std::string::npos)
 		{
-			ReshadeIntegration::ApplySpecificReshadeStates(enableReshade, Categories::Menu);
+			ReshadeIntegration::ApplySpecificReshadeStates(enableReshadeMenu, Categories::Menu);
 		}
 
 		DEBUG_LOG(g_Logger, "Menu {} {}", menuName, opening ? "open" : "closed");
-		DEBUG_LOG(g_Logger, "Reshade {}", enableReshade ? "enabled" : "disabled");
+		DEBUG_LOG(g_Logger, "Reshade {}", enableReshadeMenu ? "enabled" : "disabled");
 	}
 	else
 	{
