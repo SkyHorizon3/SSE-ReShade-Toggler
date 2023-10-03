@@ -112,6 +112,30 @@ void WeatherThread()
 	}
 }
 
+void PauseThread(std::thread& threadToPause)
+{
+	std::unique_lock<std::mutex> lock(threadMutex);
+	std::thread::id threadId = threadToPause.get_id();
+
+	if (threadConditions.find(threadId) == threadConditions.end())
+	{
+		threadConditions[threadId] = std::make_shared<std::condition_variable>();
+	}
+
+	threadConditions[threadId]->wait(lock);
+}
+
+void ResumeThread(std::thread& threadToResume)
+{
+	std::unique_lock<std::mutex> lock(threadMutex);
+	std::thread::id threadId = threadToResume.get_id();
+
+	if (threadConditions.find(threadId) != threadConditions.end())
+	{
+		threadConditions[threadId]->notify_all();
+	}
+}
+
 // Load Reshade and register events
 void ReshadeToggler::Load()
 {

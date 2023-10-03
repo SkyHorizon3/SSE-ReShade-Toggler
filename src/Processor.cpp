@@ -1,5 +1,6 @@
 #include "../include/Processor.h"
 #include "../include/ReshadeIntegration.h"
+#include "../src/ReshadeToggler.cpp"
 
 RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
@@ -25,6 +26,7 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 			{
 				if (m_OpenMenus.find(menu.Name) != m_OpenMenus.end())
 				{
+					//PauseThread(weatherThread);
 					return false;
 				}
 			}
