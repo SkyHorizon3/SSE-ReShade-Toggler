@@ -55,6 +55,18 @@ void Menu::SettingsMenu()
 	{
 		// Load the selected preset (you can implement this logic)
 		ReshadeToggler::GetSingleton().LoadPreset(selectedPreset);
+		selectedPresetPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\" + selectedPreset;
+		CSimpleIniA ini;
+		ini.SetUnicode(false);
+		ini.SetValue("Presets", "PresetPath", selectedPresetPath.c_str());
+		ini.SetValue("Presets", "PresetName", selectedPreset.c_str());
+		ini.SaveFile("Data\\SKSE\\Plugins\\ReShadeToggler.ini");
+	}
+
+	if (ImGui::Button("Refresh"))
+	{
+		g_Presets.clear();
+		ReshadeIntegration::EnumeratePresets();
 	}
 
 	if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_CollapsingHeader))
@@ -306,7 +318,7 @@ void Menu::RenderMenusPage()
 	if (ToggleStateMenus.find("All") != std::string::npos)
 	{
 		ImGui::SameLine();
-		CreateCombo("State", ToggleAllStateMenus, g_EffectState, ImGuiComboFlags_None);
+		CreateCombo("MenuAllState", ToggleAllStateMenus, g_EffectStateMenu, ImGuiComboFlags_None);
 	}
 
 	if (ToggleStateMenus.find("Specific") != std::string::npos)
@@ -324,16 +336,16 @@ void Menu::RenderMenusPage()
 
 					bool valueChanged = false;
 					// Create IDs for every element in the vector
-					std::string effectComboID = "Effect##" + std::to_string(i);
-					std::string effectStateID = "State##" + std::to_string(i);
-					std::string removeID = "Remove Effect##" + std::to_string(i);
+					std::string effectComboID = "Effect##Menu" + std::to_string(i);
+					std::string effectStateID = "State##Menu" + std::to_string(i);
+					std::string removeID = "Remove Effect##Menu" + std::to_string(i);
 
 					std::string currentEffectFileName = menuInfo.filename;
 					std::string currentEffectState = menuInfo.state;
 
 					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
-					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectStateMenu, ImGuiComboFlags_None)) { valueChanged = true; }
 
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
@@ -378,7 +390,7 @@ void Menu::RenderMenusPage()
 
 			bool valueChanged = false;
 			std::string menuIndexComboID = "Menu" + std::to_string(i + 1);
-			std::string menuNameComboID = "##" + std::to_string(i);
+			std::string menuNameComboID = "##Menu" + std::to_string(i);
 			std::string removeID = "Remove Menu##" + std::to_string(i);
 
 			std::string currentMenuName = iniMenus.Name;
@@ -436,7 +448,7 @@ void Menu::RenderTimePage()
 			double currentStopTime = info.stopTime;
 
 			ImGui::SameLine();
-			if (CreateCombo("State", ToggleAllStateTime, g_EffectState, ImGuiComboFlags_None)) valueChanged = true;
+			if (CreateCombo("TimeAllState", ToggleAllStateTime, g_EffectStateTime, ImGuiComboFlags_None)) valueChanged = true;
 			ImGui::SetNextItemWidth(200.0f);
 			if (ImGui::SliderScalar("Start Time", ImGuiDataType_Double, &currentStartTime, &minTime, &maxTime, "%.2f")) valueChanged = true;
 			ImGui::SameLine();
@@ -466,11 +478,11 @@ void Menu::RenderTimePage()
 				{
 
 					// Create IDs for every element in the vector that is to be rendered
-					std::string effectComboID = "Effect##" + std::to_string(i);
-					std::string effectStateID = "State##" + std::to_string(i);
-					std::string startTimeID = "StartTime##" + std::to_string(i);
-					std::string stopTimeID = "StopTime##" + std::to_string(i);
-					std::string removeID = "Remove##" + std::to_string(i);
+					std::string effectComboID = "Effect##Time" + std::to_string(i);
+					std::string effectStateID = "State##Time" + std::to_string(i);
+					std::string startTimeID = "StartTime##Time" + std::to_string(i);
+					std::string stopTimeID = "StopTime##Time" + std::to_string(i);
+					std::string removeID = "Remove##Time" + std::to_string(i);
 
 					std::string currentEffectFileName = timeInfo.filename;
 					std::string currentEffectState = timeInfo.state;
@@ -481,7 +493,7 @@ void Menu::RenderTimePage()
 
 					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
-					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectStateTime, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SetNextItemWidth(200.0f);
 					if (ImGui::SliderScalar(startTimeID.c_str(), ImGuiDataType_Double, &currentStartTime, &minTime, &maxTime, "%.2f")) { valueChanged = true; }
 					ImGui::SameLine();
@@ -538,7 +550,7 @@ void Menu::RenderInteriorPage()
 	if (ToggleStateInterior.find("All") != std::string::npos)
 	{
 		ImGui::SameLine();
-		CreateCombo("State", ToggleAllStateInterior, g_EffectState, ImGuiComboFlags_None);
+		CreateCombo("InteriorAllState##", ToggleAllStateInterior, g_EffectStateInterior, ImGuiComboFlags_None);
 	}
 
 	bool valueChanged = false;
@@ -555,16 +567,16 @@ void Menu::RenderInteriorPage()
 				if (interiorInfo.filename != "" && interiorInfo.state != "")
 				{
 					// Create IDs for every element in the vector
-					std::string effectComboID = "Effect##" + std::to_string(i);
-					std::string effectStateID = "State##" + std::to_string(i);
-					std::string removeID = "Remove Effect##" + std::to_string(i);
+					std::string effectComboID = "Effect##Inter" + std::to_string(i);
+					std::string effectStateID = "State##Inter" + std::to_string(i);
+					std::string removeID = "Remove Effect##Inter" + std::to_string(i);
 
 					std::string currentEffectFileName = interiorInfo.filename;
 					std::string currentEffectState = interiorInfo.state;
 
 					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
-					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectStateInterior, ImGuiComboFlags_None)) { valueChanged = true; }
 
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
@@ -607,7 +619,7 @@ void Menu::RenderWeatherPage()
 	if (ToggleStateWeather.find("All") != std::string::npos)
 	{
 		ImGui::SameLine();
-		CreateCombo("State", ToggleAllStateWeather, g_EffectState, ImGuiComboFlags_None);
+		CreateCombo("WeatherAllState", ToggleAllStateWeather, g_EffectStateWeather, ImGuiComboFlags_None);
 	}
 
 	if (ToggleStateWeather.find("Specific") != std::string::npos)
@@ -624,9 +636,9 @@ void Menu::RenderWeatherPage()
 				if (weatherInfo.filename != "" && weatherInfo.state != "")
 				{
 					// Create IDs for every element in the vector
-					std::string effectComboID = "Effect##" + std::to_string(i);
-					std::string effectStateID = "State##" + std::to_string(i);
-					std::string removeID = "Remove Effect##" + std::to_string(i);
+					std::string effectComboID = "Effect##Weather" + std::to_string(i);
+					std::string effectStateID = "State##Weather" + std::to_string(i);
+					std::string removeID = "Remove Effect##Weather" + std::to_string(i);
 
 					std::string currentEffectFileName = weatherInfo.filename;
 					std::string currentEffectState = weatherInfo.state;
@@ -634,7 +646,7 @@ void Menu::RenderWeatherPage()
 
 					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
-					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectStateWeather, ImGuiComboFlags_None)) { valueChanged = true; }
 
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
@@ -668,7 +680,7 @@ void Menu::RenderWeatherPage()
 		}
 	}
 
-	// Display all the Menus
+	// Display all the Weathers
 	ImGui::SeparatorText("Weathers");
 	if (!weatherList.empty())
 	{
@@ -678,7 +690,7 @@ void Menu::RenderWeatherPage()
 
 			bool valueChanged = false;
 			std::string weatherIndexComboID = "Weather" + std::to_string(i + 1);
-			std::string weatherNameComboID = "##" + std::to_string(i);
+			std::string weatherNameComboID = "##Weather" + std::to_string(i);
 			std::string removeID = "Remove Weather##" + std::to_string(i);
 
 			std::string currentWeatherName = iniWeather.Name;

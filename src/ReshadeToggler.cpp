@@ -3,7 +3,6 @@
 #include "../include/ReshadeToggler.h"
 #include "../include/Globals.h"
 #include "../include/Menu.h"
-
 namespace logger = SKSE::log;
 
 #define DLLEXPORT __declspec(dllexport)
@@ -57,7 +56,7 @@ void ReshadeToggler::SetupLog()
 
 void TimeThread()
 {
-	if (EnableTime)
+	if (EnableTime && isLoaded)
 	{
 		g_Logger->info("Attaching TimeThread");
 		while (EnableTime)
@@ -77,7 +76,7 @@ void TimeThread()
 
 void InteriorThread()
 {
-	if (EnableInterior)
+	if (EnableInterior && isLoaded)
 	{
 		g_Logger->info("Attaching InteriorThread");
 		while (EnableInterior)
@@ -96,7 +95,7 @@ void InteriorThread()
 
 void WeatherThread()
 {
-	if (EnableWeather)
+	if (EnableWeather && isLoaded)
 	{
 		g_Logger->info("Attaching WeatherThread");
 		while (EnableWeather)
@@ -156,7 +155,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 	EnableWeather = ini.GetBoolValue(sectionGeneral, "EnableWeather");
 
 
-	g_Logger->info("{}: EnableMenus: {} - EnableTime: {} - EnableInterior: {} - EnableWeather: {}", sectionGeneral, EnableMenus, EnableTime, EnableInterior, EnableWeather);
+	DEBUG_LOG(g_Logger, "{}: EnableMenus: {} - EnableTime: {} - EnableInterior: {} - EnableWeather: {}", sectionGeneral, EnableMenus, EnableTime, EnableInterior, EnableWeather);
 
 	DEBUG_LOG(g_Logger, "\n", nullptr);
 
@@ -166,7 +165,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 	ToggleStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleOption");
 	ToggleAllStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleAllState");
 
-	g_Logger->info("General MenuToggleOption:  {} - MenuToggleAllState: {}", ToggleStateMenus, ToggleAllStateMenus);
+	DEBUG_LOG(g_Logger, "General MenuToggleOption:  {} - MenuToggleAllState: {}", ToggleStateMenus, ToggleAllStateMenus);
 
 	ini.GetAllKeys(sectionMenusGeneral, MenusGeneral_keys);
 	g_SpecificMenu.reserve(MenusGeneral_keys.size()); // Reserve space for vector
@@ -186,7 +185,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 			{
 				itemMenuShaderToToggle = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
 				g_MenuToggleFile.emplace(itemMenuShaderToToggle);
-				g_Logger->info("MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemMenuShaderToToggle);
+				DEBUG_LOG(g_Logger, "MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemMenuShaderToToggle);
 
 				// Construct the corresponding key for the state
 				std::string stateKeyName = togglePrefix02 + std::to_string(g_SpecificMenu.size());
@@ -200,7 +199,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 				MenuInfo.filename = itemMenuShaderToToggle;
 				MenuInfo.state = itemMenuStateValue;
 				techniqueMenuInfoList.push_back(MenuInfo);
-				g_Logger->info("Populated TechniqueMenuInfo: {} - {}", itemMenuShaderToToggle, itemMenuStateValue);
+				DEBUG_LOG(g_Logger, "Populated TechniqueMenuInfo: {} - {}", itemMenuShaderToToggle, itemMenuStateValue);
 			}
 		}
 	}
@@ -212,9 +211,9 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 	ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
 	g_INImenus.reserve(MenusProcess_keys.size()); // Reserve space for vector
 
-	Info menus;
 	for (const auto& key : MenusProcess_keys)
 	{
+		Info menus;
 		g_INImenus.push_back(key.pItem);
 		const char* menuItem = g_INImenus.back().c_str();
 		const char* itemValue = ini.GetValue(sectionMenusProcess, key.pItem, nullptr);
@@ -223,7 +222,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 		menus.Name = itemValue;
 		menuList.push_back(menus);
 
-		g_Logger->info("Menu:  {} - Value: {}", menuItem, itemValue);
+		DEBUG_LOG(g_Logger, "Menu:  {} - Value: {}", menuItem, itemValue);
 	}
 
 	DEBUG_LOG(g_Logger, "\n", nullptr);
@@ -234,7 +233,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 	ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
 	TimeUpdateIntervalTime = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
 
-	g_Logger->info("General TimeToggleOption:  {} - TimeUpdateInterval: {}", ToggleStateTime, TimeUpdateIntervalTime);
+	DEBUG_LOG(g_Logger, "General TimeToggleOption:  {} - TimeUpdateInterval: {}", ToggleStateTime, TimeUpdateIntervalTime);
 
 	// All Time
 	ToggleAllStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleAllState");
@@ -246,7 +245,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 	TimeInfoAll.startTime = itemTimeStartHourAll;
 	TimeInfoAll.stopTime = itemTimeStopHourAll;
 	techniqueTimeInfoListAll.push_back(TimeInfoAll);
-	g_Logger->info("Set all effects to {} from {} - {}", ToggleAllStateTime, itemTimeStartHourAll, itemTimeStopHourAll);
+	DEBUG_LOG(g_Logger, "Set all effects to {} from {} - {}", ToggleAllStateTime, itemTimeStartHourAll, itemTimeStopHourAll);
 
 
 	// Specific Time
@@ -272,7 +271,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 			{
 				itemTimeShaderToToggle = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
 				g_TimeToggleFile.emplace(itemTimeShaderToToggle);
-				g_Logger->info("TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
+				DEBUG_LOG(g_Logger, "TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
 
 				// Construct the corresponding key for the state
 				std::string stateKeyName = togglePrefix04 + std::to_string(g_SpecificTime.size());
@@ -286,7 +285,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 				std::string endTimeKey = togglePrefix06 + std::to_string(g_SpecificTime.size());
 				itemTimeStartHour = ini.GetDoubleValue(sectionTimeGeneral, startTimeKey.c_str());
 				itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
-				g_Logger->info("startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
+				DEBUG_LOG(g_Logger, "startTime: {}; stopTimeKey: {} ", itemTimeStartHour, itemTimeStopHour);
 
 
 				// Populate the technique info
@@ -296,7 +295,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 				TimeInfo.startTime = itemTimeStartHour;
 				TimeInfo.stopTime = itemTimeStopHour;
 				techniqueTimeInfoList.push_back(TimeInfo);
-				g_Logger->info("Set effect {} to {} from {} - {}", itemTimeShaderToToggle, itemTimeStateValue, itemTimeStartHour, itemTimeStopHour);
+				DEBUG_LOG(g_Logger, "Set effect {} to {} from {} - {}", itemTimeShaderToToggle, itemTimeStateValue, itemTimeStartHour, itemTimeStopHour);
 			}
 		}
 	}
@@ -311,7 +310,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 	ToggleAllStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleAllState");
 	TimeUpdateIntervalInterior = ini.GetLongValue(sectionInteriorGeneral, "InteriorUpdateInterval");
 
-	g_Logger->info("General InteriorToggleOption:  {} - InteriorToggleAllState: {} - InteriorUpdateInterval: {}", ToggleStateInterior, ToggleAllStateInterior, TimeUpdateIntervalInterior);
+	DEBUG_LOG(g_Logger, "General InteriorToggleOption:  {} - InteriorToggleAllState: {} - InteriorUpdateInterval: {}", ToggleStateInterior, ToggleAllStateInterior, TimeUpdateIntervalInterior);
 
 	ini.GetAllKeys(sectionInteriorGeneral, InteriorGeneral_keys);
 	g_SpecificInterior.reserve(InteriorGeneral_keys.size()); // Reserve space for vector
@@ -331,7 +330,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 			{
 				itemInteriorShaderToToggle = ini.GetValue(sectionInteriorGeneral, key.pItem, nullptr);
 				g_InteriorToggleFile.emplace(itemInteriorShaderToToggle);
-				g_Logger->info("InteriorToggleSpecificFile:  {} - Value: {}", interiorItemgeneral, itemInteriorShaderToToggle);
+				DEBUG_LOG(g_Logger, "InteriorToggleSpecificFile:  {} - Value: {}", interiorItemgeneral, itemInteriorShaderToToggle);
 
 				// Construct the corresponding key for the state
 				std::string stateKeyName = togglePrefix08 + std::to_string(g_SpecificInterior.size());
@@ -345,7 +344,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 				InteriorInfo.filename = itemInteriorShaderToToggle;
 				InteriorInfo.state = itemInteriorStateValue;
 				techniqueInteriorInfoList.push_back(InteriorInfo);
-				g_Logger->info("Populated TechniqueInteriorInfo: {} - {}", itemInteriorShaderToToggle, itemInteriorStateValue);
+				DEBUG_LOG(g_Logger, "Populated TechniqueInteriorInfo: {} - {}", itemInteriorShaderToToggle, itemInteriorStateValue);
 			}
 		}
 	}
@@ -359,7 +358,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 	ToggleAllStateWeather = ini.GetValue(sectionWeatherGeneral, "WeatherToggleAllState");
 	TimeUpdateIntervalWeather = ini.GetLongValue(sectionWeatherGeneral, "WeatherUpdateInterval");
 
-	g_Logger->info("General WeatherToggleOption:  {} - WeatherToggleAllState: {} - WeatherUpdateInterval: {}", ToggleStateWeather, ToggleAllStateWeather, TimeUpdateIntervalWeather);
+	DEBUG_LOG(g_Logger, "General WeatherToggleOption:  {} - WeatherToggleAllState: {} - WeatherUpdateInterval: {}", ToggleStateWeather, ToggleAllStateWeather, TimeUpdateIntervalWeather);
 
 	ini.GetAllKeys(sectionWeatherGeneral, WeatherGeneral_keys);
 	g_SpecificWeather.reserve(WeatherGeneral_keys.size());
@@ -378,7 +377,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 			{
 				itemWeatherShaderToToggle = ini.GetValue(sectionWeatherGeneral, key.pItem, nullptr);
 				g_WeatherToggleFile.emplace(itemWeatherShaderToToggle);
-				g_Logger->info("WeatherToggleSpecificFile:  {} - Value: {}", weatherItemgeneral, itemWeatherShaderToToggle);
+				DEBUG_LOG(g_Logger, "WeatherToggleSpecificFile:  {} - Value: {}", weatherItemgeneral, itemWeatherShaderToToggle);
 
 				std::string stateKeyName = togglePrefix10 + std::to_string(g_SpecificWeather.size());
 
@@ -389,7 +388,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 				WeatherInfo.filename = itemWeatherShaderToToggle;
 				WeatherInfo.state = itemWeatherStateValue;
 				techniqueWeatherInfoList.push_back(WeatherInfo);
-				g_Logger->info("Populated TechniqueWeatherInfo: {} - {}", itemWeatherShaderToToggle, itemWeatherStateValue);
+				DEBUG_LOG(g_Logger, "Populated TechniqueWeatherInfo: {} - {}", itemWeatherShaderToToggle, itemWeatherStateValue);
 			}
 		}
 	}
@@ -400,9 +399,9 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 	ini.GetAllKeys(sectionWeatherProcess, WeatherProcess_keys);
 	g_INIweather.reserve(WeatherProcess_keys.size()); // Reserve space for vector
 
-	Info weather;
 	for (const auto& key : WeatherProcess_keys)
 	{
+		Info weather;
 		g_INIweather.push_back(key.pItem);
 		const char* weatherItem = g_INIweather.back().c_str();
 		const char* weatheritemValue = ini.GetValue(sectionWeatherProcess, key.pItem, nullptr);
@@ -412,7 +411,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 		weather.Name = weatheritemValue;
 		weatherList.push_back(weather);
 
-		g_Logger->info("Weather:  {} - Value: {}", weatherItem, weatheritemValue);
+		DEBUG_LOG(g_Logger, "Weather:  {} - Value: {}", weatherItem, weatheritemValue);
 	}
 
 	DEBUG_LOG(g_Logger, "\n", nullptr);
@@ -420,26 +419,20 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 
 	if (TimeUpdateIntervalTime < 0) { TimeUpdateIntervalTime = 0; }
 	if (TimeUpdateIntervalInterior < 0) { TimeUpdateIntervalInterior = 0; }
-	if (TimeUpdateIntervalWeather < 0) { TimeUpdateIntervalWeather = 0; }
+	//if (TimeUpdateIntervalWeather < 0) { TimeUpdateIntervalWeather = 0; }
 }
 
 void ReshadeToggler::LoadPreset(const std::string& Preset)
 {
 	const std::string& fullPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\" + Preset;
 
-	DEBUG_LOG(g_Logger, "Starting clear procedure...", nullptr);
-	if (EnableTime && isLoaded)
-	{
-		std::thread(TimeThread).join();
-	}
-	if (EnableInterior && isLoaded)
-	{
-		std::thread(InteriorThread).join();
-	}
-	if (EnableWeather && isLoaded)
-	{
-		std::thread(WeatherThread).join();
-	}
+
+	g_Logger->info("Starting clear procedure...");
+
+	EnableMenus = false;
+	EnableTime = false;
+	EnableInterior = false;
+	EnableWeather = false;
 
 	// Empty every vector
 	g_MenuToggleFile.clear();
@@ -450,7 +443,7 @@ void ReshadeToggler::LoadPreset(const std::string& Preset)
 	menuList.clear();
 	ToggleStateMenus.clear();
 	ToggleAllStateMenus.clear();
-	itemMenuShaderToToggle = nullptr; // Assuming itemMenuShaderToToggle is a pointer, set it to nullptr.
+	itemMenuShaderToToggle = nullptr; // itemMenuShaderToToggle is a pointer, set it to nullptr.
 	itemMenuStateValue = nullptr; // Similarly, set itemMenuStateValue to nullptr.
 
 	g_TimeToggleFile.clear();
@@ -474,8 +467,8 @@ void ReshadeToggler::LoadPreset(const std::string& Preset)
 	g_SpecificInterior.clear();
 	ToggleStateInterior.clear();
 	ToggleAllStateInterior.clear();
-	itemInteriorShaderToToggle = nullptr; // Set to nullptr.
-	itemInteriorStateValue = nullptr; // Set to nullptr.
+	itemInteriorShaderToToggle = nullptr;
+	itemInteriorStateValue = nullptr;
 	TimeUpdateIntervalInterior = 0;
 
 	g_WeatherValue.clear();
@@ -492,7 +485,7 @@ void ReshadeToggler::LoadPreset(const std::string& Preset)
 	itemWeatherStateValue = nullptr; // Set to nullptr.
 	TimeUpdateIntervalWeather = 0;
 
-	DEBUG_LOG(g_Logger, "Finished clearing procedure...", nullptr);
+	g_Logger->info("Finished clearing procedure...");
 
 	// Load the new INI
 	LoadINI(fullPath);
@@ -580,7 +573,21 @@ void ReshadeToggler::Setup()
 	ReshadeIntegration::EnumeratePresets();
 	ReshadeIntegration::EnumerateEffects();
 
-	LoadINI("Data\\SKSE\\Plugins\\TogglerConfigs\\Default.ini");
+
+	CSimpleIniA ini;
+	ini.SetUnicode(false);
+	ini.LoadFile("Data\\SKSE\\Plugins\\ReShadeToggler.ini");
+	selectedPresetPath = ini.GetValue("Presets", "PresetPath");
+	selectedPreset = ini.GetValue("Presets", "PresetName");
+
+	if (FileExists(selectedPresetPath))
+	{
+		LoadINI(selectedPresetPath);
+	}
+	else
+	{
+		LoadINI("Data\\SKSE\\Plugins\\TogglerConfigs\\Default.ini");
+	}
 
 	// Check if all options are false, and unregister the addon if true
 	if (!EnableMenus && !EnableTime && !EnableInterior && !EnableWeather)

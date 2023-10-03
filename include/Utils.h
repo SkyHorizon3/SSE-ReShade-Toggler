@@ -15,3 +15,9 @@ public:
 private:
 	bool m_Value;
 };
+
+inline bool FileExists(const std::string& filePath)
+{
+	std::ifstream file(filePath);
+	return file.good();
+}
