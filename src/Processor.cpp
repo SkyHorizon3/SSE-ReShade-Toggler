@@ -1,8 +1,6 @@
 #include "../include/Processor.h"
 #include "../include/ReshadeIntegration.h"
 
-void PauseThread(std::thread& threadToPause);
-void ResumeThread(std::thread& threadToResume);
 
 RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
 {
@@ -27,25 +25,9 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 	{
 		if (m_OpenMenus.find(menu.Name) != m_OpenMenus.end())
 		{
-			if (EnableWeather)
-			{
-				PauseThread(weatherThread);
-
-				DEBUG_LOG(g_Logger, "PauseThreadWorked", nullptr);
-				ispaused = true;
-			}
 			enableReshadeMenu = false;
 		}
-		else
-		{
-			if (ispaused)
-			{
-				ResumeThread(weatherThread);
-				DEBUG_LOG(g_Logger, "ResumeThreadWorked", nullptr);
-			}
-		}
 	}
-
 
 
 	if (s_pRuntime != nullptr)

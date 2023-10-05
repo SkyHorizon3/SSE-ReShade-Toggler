@@ -182,9 +182,3 @@ inline std::mutex timeMutexTime;
 inline std::mutex vectorMutexTime;
 inline std::mutex timeMutexInterior;
 inline std::mutex timeMutexWeather;
-
-inline std::mutex threadMutex;
-inline std::map<std::thread::id, std::shared_ptr<std::condition_variable>> threadConditions;
-
-inline std::thread weatherThread;
-inline bool ispaused = false;

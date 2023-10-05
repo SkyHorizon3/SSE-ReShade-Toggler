@@ -7,7 +7,7 @@ namespace logger = SKSE::log;
 
 #define DLLEXPORT __declspec(dllexport)
 extern "C" DLLEXPORT const char* NAME = "ReShadeToggler";
-extern "C" DLLEXPORT const char* DESCRIPTION = "";
+extern "C" DLLEXPORT const char* DESCRIPTION = "ReShade Toggler by SkyHorizon and PhilikusHD.";
 
 reshade::api::effect_runtime* s_pRuntime = nullptr;
 
@@ -103,36 +103,13 @@ void WeatherThread()
 			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalWeather));
 			Processor::GetSingleton().ProcessWeatherBasedToggling();
 
+
 			if (!EnableWeather)
 			{
-				weatherThread.join();
+				std::thread(WeatherThread).join();
 				g_Logger->info("Detaching WeatherThread");
 			}
 		}
-	}
-}
-
-void PauseThread(std::thread& threadToPause)
-{
-	std::unique_lock<std::mutex> lock(threadMutex);
-	std::thread::id threadId = threadToPause.get_id();
-
-	if (threadConditions.find(threadId) == threadConditions.end())
-	{
-		threadConditions[threadId] = std::make_shared<std::condition_variable>();
-	}
-
-	threadConditions[threadId]->wait(lock);
-}
-
-void ResumeThread(std::thread& threadToResume)
-{
-	std::unique_lock<std::mutex> lock(threadMutex);
-	std::thread::id threadId = threadToResume.get_id();
-
-	if (threadConditions.find(threadId) != threadConditions.end())
-	{
-		threadConditions[threadId]->notify_all();
 	}
 }
 
@@ -577,7 +554,7 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 		if (EnableWeather)
 		{
 			processor.ProcessWeatherBasedToggling();
-			weatherThread = std::thread(WeatherThread);
+			std::thread(WeatherThread).detach();
 		}
 
 		break;
@@ -668,7 +645,7 @@ int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
 		}
 		if (EnableWeather)
 		{
-			weatherThread.join();
+			std::thread(WeatherThread).join();
 		}
 
 		unregister_addon_events();
