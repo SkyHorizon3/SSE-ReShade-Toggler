@@ -233,11 +233,11 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 		{
 			if (ToggleStateWeather.find("All") != std::string::npos)
 			{
-				ReshadeIntegration::ApplyReshadeState(enableReshadeWeather, ToggleAllStateWeather);
+				ReshadeIntegration::ApplyReshadeState(!enableReshadeWeather, ToggleAllStateWeather);
 			}
 			else if (ToggleStateWeather.find("Specific") != std::string::npos)
 			{
-				ReshadeIntegration::ApplySpecificReshadeStates(enableReshadeWeather, Categories::Weather);
+				ReshadeIntegration::ApplySpecificReshadeStates(!enableReshadeWeather, Categories::Weather);
 			}
 		}
 

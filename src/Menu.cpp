@@ -118,7 +118,7 @@ void Menu::Save(const std::string& filename)
 	std::filesystem::create_directories(configDirectory);
 
 	// Combine the directory path and the provided filename
-	std::string fullPath = configDirectory + "\\" + filename;
+	std::string fullPath = configDirectory + "\\" + filename + ".ini";
 
 	CSimpleIniA ini;
 	ini.SetUnicode(false);
@@ -193,6 +193,7 @@ void Menu::Save(const std::string& filename)
 	}
 
 	// Save Weather section
+	ini.SetValue("Weather", "WeatherUpdateInterval", std::to_string(TimeUpdateIntervalWeather).c_str());
 	ini.SetValue("Weather", "WeatherToggleOption", ToggleStateWeather.c_str());
 	ini.SetValue("Weather", "WeatherToggleAllState", ToggleAllStateWeather.c_str());
 
