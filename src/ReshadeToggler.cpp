@@ -113,6 +113,52 @@ void WeatherThread()
 	}
 }
 
+void CentralControl::Update()
+{
+	std::lock_guard<std::mutex> lock(m_mutex);
+
+	Categories system;
+	bool isActive;
+	m_systemStates[system] = isActive;
+
+
+	Prioritize();
+}
+
+void CentralControl::Prioritize()
+{
+	bool shouldEnableReshade = true;
+
+	if (m_systemStates[Categories::Menu] || m_systemStates[Categories::Interior]) {
+		shouldEnableReshade = false; // Disable Reshade for Menu and Interior
+	}
+	else if (m_systemStates[Categories::Weather] && !m_systemStates[Categories::Time]) {
+		shouldEnableReshade = true; // Enable Reshade for Weather when not in Time
+	}
+	/*
+	else if (m_systemStates[Categories::Time]) {
+		// Implement time-based logic here
+		// Example: Toggle Reshade based on time of day
+		shouldEnableReshade = IsTimeInRange(9.0, 17.0);
+	}
+	*/
+
+	FinalReshadeUpdate(shouldEnableReshade);
+
+	m_enableReshade = shouldEnableReshade;
+
+
+}
+
+
+void CentralControl::FinalReshadeUpdate(bool enable)
+{
+
+
+
+
+}
+
 // Load Reshade and register events
 void ReshadeToggler::Load()
 {
