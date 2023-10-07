@@ -200,11 +200,11 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 		//DEBUG_LOG(g_Logger, "weatherflag {}", weatherflags);
 
 		bool enableReshadeWeather = true;
-		for (const auto& weatherToDisable : g_WeatherValue)
+		for (const Info& weather : weatherList)
 		{
 			//DEBUG_LOG(g_Logger, "weatherToDisable {}", weatherToDisable);
 
-			if (weatherToDisable == weatherflags)
+			if (weather.Name == weatherflags)
 			{
 				enableReshadeWeather = false;
 				break;
@@ -215,11 +215,11 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 		{
 			if (ToggleStateWeather.find("All") != std::string::npos)
 			{
-				ReshadeIntegration::ApplyReshadeState(!enableReshadeWeather, ToggleAllStateWeather);
+				ReshadeIntegration::ApplyReshadeState(enableReshadeWeather, ToggleAllStateWeather);
 			}
 			else if (ToggleStateWeather.find("Specific") != std::string::npos)
 			{
-				ReshadeIntegration::ApplySpecificReshadeStates(!enableReshadeWeather, Categories::Weather);
+				ReshadeIntegration::ApplySpecificReshadeStates(enableReshadeWeather, Categories::Weather);
 			}
 		}
 
