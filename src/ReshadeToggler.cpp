@@ -54,110 +54,102 @@ void ReshadeToggler::SetupLog()
 	spdlog::flush_on(spdlog::level::trace);
 }
 
-void TimeThread()
+void RuntimeThread()
 {
-	if (EnableTime && isLoaded)
+	g_Logger->info("Attaching RuntimeThread");
+	auto MainThread = ReshadeToggler::GetSingleton();
+	//auto& processor = Processor::GetSingleton();
+
+	while (isLoaded)
 	{
-		g_Logger->info("Attaching TimeThread");
-		while (EnableTime)
+
+		if (EnableTime)
 		{
+			g_Logger->info("Adding Time to Mainqueue");
 			// Call ProcessTimeBasedToggling every x seconds
 			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalTime));
-			Processor::GetSingleton().ProcessTimeBasedToggling();
-
-			if (!EnableTime)
-			{
-				std::thread(TimeThread).join();
-				g_Logger->info("Detaching TimeThread");
-			}
+			MainThread->SubmitToMainThread("Time", []() -> RE::BSEventNotifyControl {
+				return Processor::GetSingleton().ProcessTimeBasedToggling();
+				});
 		}
-	}
-}
 
-void InteriorThread()
-{
-	if (EnableInterior && isLoaded)
-	{
-		g_Logger->info("Attaching InteriorThread");
-		while (EnableInterior)
+		if (EnableInterior)
 		{
+			g_Logger->info("Adding Interior to Mainqueue");
+			// Call ProcessTimeBasedToggling every x seconds
 			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalInterior));
-			Processor::GetSingleton().ProcessInteriorBasedToggling();
-
-			if (!EnableInterior)
-			{
-				std::thread(InteriorThread).join();
-				g_Logger->info("Detaching InteriorThread");
-			}
+			MainThread->SubmitToMainThread("Interior", []() -> RE::BSEventNotifyControl {
+				return Processor::GetSingleton().ProcessInteriorBasedToggling();
+				});
 		}
+
+		if (EnableWeather)
+		{
+			g_Logger->info("Adding Weather to Mainqueue");
+			// Call ProcessTimeBasedToggling every x seconds
+			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalWeather));
+			MainThread->SubmitToMainThread("Weather", []() -> RE::BSEventNotifyControl {
+				return Processor::GetSingleton().ProcessWeatherBasedToggling();
+				});
+		}
+
+		std::this_thread::sleep_for(std::chrono::milliseconds(500));
+		MainThread->Run();
 	}
 }
 
-void WeatherThread()
+void ReshadeToggler::SubmitToMainThread(const std::string& functionName, FunctionToExecute function)
 {
-	if (EnableWeather && isLoaded)
+	std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+
+
+	m_MainThreadQueue[functionName] = function;
+	g_Logger->info("Submit {}", functionName);
+}
+
+void ReshadeToggler::ExecuteMainThreadQueue()
+{
+	std::scoped_lock<std::mutex> lock(m_MainThreadQueueMutex);
+
+	for (const auto& func : m_MainThreadQueue)
+	{
+		func.second(); // Funktion ausführen
+	}
+	m_MainThreadQueue.clear();
+
+}
+
+void ReshadeToggler::Run()
+{
+	if (m_MainThreadQueue["Weather"])
 	{
 		g_Logger->info("Attaching WeatherThread");
-		while (EnableWeather)
-		{
-			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalWeather));
-			Processor::GetSingleton().ProcessWeatherBasedToggling();
+		ExecuteMainThreadQueue();
+	}
 
+	if (m_MainThreadQueue["Interior"])
+	{
+		g_Logger->info("Attaching InteriorThread");
+		ExecuteMainThreadQueue();
+	}
 
-			if (!EnableWeather)
-			{
-				std::thread(WeatherThread).join();
-				g_Logger->info("Detaching WeatherThread");
-			}
-		}
+	if (m_MainThreadQueue["Time"])
+	{
+		g_Logger->info("Attaching TimeThread");
+		ExecuteMainThreadQueue();
+	}
+
+	auto& eventProcessorMenu = Processor::GetSingleton();
+	if (EnableMenus)
+	{
+		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
+	}
+	else
+	{
+		RE::UI::GetSingleton()->RemoveEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
 	}
 }
 
-void CentralControl::Update()
-{
-	std::lock_guard<std::mutex> lock(m_mutex);
-
-	Categories system;
-	bool isActive;
-	m_systemStates[system] = isActive;
-
-
-	Prioritize();
-}
-
-void CentralControl::Prioritize()
-{
-	bool shouldEnableReshade = true;
-
-	if (m_systemStates[Categories::Menu] || m_systemStates[Categories::Interior]) {
-		shouldEnableReshade = false; // Disable Reshade for Menu and Interior
-	}
-	else if (m_systemStates[Categories::Weather] && !m_systemStates[Categories::Time]) {
-		shouldEnableReshade = true; // Enable Reshade for Weather when not in Time
-	}
-	/*
-	else if (m_systemStates[Categories::Time]) {
-		// Implement time-based logic here
-		// Example: Toggle Reshade based on time of day
-		shouldEnableReshade = IsTimeInRange(9.0, 17.0);
-	}
-	*/
-
-	FinalReshadeUpdate(shouldEnableReshade);
-
-	m_enableReshade = shouldEnableReshade;
-
-
-}
-
-
-void CentralControl::FinalReshadeUpdate(bool enable)
-{
-
-
-
-
-}
 
 // Load Reshade and register events
 void ReshadeToggler::Load()
@@ -585,22 +577,23 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 	case SKSE::MessagingInterface::kDataLoaded:
 		DEBUG_LOG(g_Logger, "kDataLoaded: sent after the data handler has loaded all its forms", nullptr);
 		isLoaded = true;
+		if (isLoaded)
+		{
+			std::thread(RuntimeThread).detach();
+		}
 		if (EnableTime)
 		{
 			processor.ProcessTimeBasedToggling();
-			std::thread(TimeThread).detach();
 		}
 
 		if (EnableInterior)
 		{
 			processor.ProcessInteriorBasedToggling();
-			std::thread(InteriorThread).detach();
 		}
 
 		if (EnableWeather)
 		{
 			processor.ProcessWeatherBasedToggling();
-			std::thread(WeatherThread).detach();
 		}
 
 		break;
@@ -681,19 +674,10 @@ int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
 	}
 	else if (fdwReason == DLL_PROCESS_DETACH)
 	{
-		if (EnableTime)
+		if (isLoaded)
 		{
-			std::thread(TimeThread).join();
+			std::thread(RuntimeThread).join();
 		}
-		if (EnableInterior)
-		{
-			std::thread(InteriorThread).join();
-		}
-		if (EnableWeather)
-		{
-			std::thread(WeatherThread).join();
-		}
-
 		unregister_addon_events();
 		reshade::unregister_addon(hModule);
 	}

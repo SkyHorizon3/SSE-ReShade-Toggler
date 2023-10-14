@@ -8,36 +8,24 @@ class ReshadeToggler
 {
 public:
 
-	static ReshadeToggler GetSingleton()
+	static ReshadeToggler* GetSingleton()
 	{
-		ReshadeToggler toggler;
-		return toggler;
+		static ReshadeToggler toggler;
+		return &toggler;
 	}
+
+	using FunctionToExecute = RE::BSEventNotifyControl(*)();
 
 	void Setup();
 	void SetupLog();
 	void Load();
 	void LoadINI(const std::string& presetPath);
 	void LoadPreset(const std::string& Preset);
-};
-
-class CentralControl
-{
-public:
-
-	static CentralControl* GetSingleton()
-	{
-		static CentralControl control;
-		return &control;
-	}
-
-	void Update();
-	void Prioritize();
+	void SubmitToMainThread(const std::string& functionName, FunctionToExecute);
+	void ExecuteMainThreadQueue();
+	void Run();
 
 private:
-	std::mutex m_mutex;
-	std::unordered_map<Categories, bool> m_systemStates;
-
-	void FinalReshadeUpdate(bool enable);
-
+	std::unordered_map <std::string, FunctionToExecute> m_MainThreadQueue;
+	std::mutex m_MainThreadQueueMutex;
 };

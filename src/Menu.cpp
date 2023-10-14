@@ -5,9 +5,9 @@
 #include "../include/Processor.h"
 
 // Forward declare the threads
-void TimeThread();
-void InteriorThread();
-void WeatherThread();
+//void TimeThread();
+//void InteriorThread();
+//void WeatherThread();
 
 bool Menu::CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags)
 {
@@ -54,7 +54,7 @@ void Menu::SettingsMenu()
 	if (ImGui::Button("Load Preset"))
 	{
 		// Load the selected preset (you can implement this logic)
-		ReshadeToggler::GetSingleton().LoadPreset(selectedPreset);
+		ReshadeToggler::GetSingleton()->LoadPreset(selectedPreset);
 		selectedPresetPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\" + selectedPreset;
 		CSimpleIniA ini;
 		ini.SetUnicode(false);
@@ -279,7 +279,7 @@ void Menu::RenderInfoPage()
 		if (EnableTime && isLoaded)
 		{
 			Processor::GetSingleton().ProcessTimeBasedToggling();
-			std::thread(TimeThread).detach();
+			//std::thread(TimeThread).detach();
 		}
 	}
 
@@ -288,7 +288,7 @@ void Menu::RenderInfoPage()
 		if (EnableInterior && isLoaded)
 		{
 			Processor::GetSingleton().ProcessInteriorBasedToggling();
-			std::thread(InteriorThread).detach();
+			//std::thread(InteriorThread).detach();
 		}
 	}
 
@@ -297,7 +297,7 @@ void Menu::RenderInfoPage()
 		if (EnableWeather && isLoaded)
 		{
 			Processor::GetSingleton().ProcessWeatherBasedToggling();
-			std::thread(WeatherThread).detach();
+			//std::thread(WeatherThread).detach();
 		}
 	}
 
