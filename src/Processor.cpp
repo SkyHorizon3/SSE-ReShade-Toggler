@@ -20,15 +20,46 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 		return RE::BSEventNotifyControl::kContinue; // Skip if no open menus
 	}
 
+	std::unordered_map<std::string, std::unordered_set<std::string>> menuEffectsMap;
 	bool enableReshadeMenu = true;
-	for (const Info& menu : menuList)
+
+	if (ToggleStateMenus.find("All") != std::string::npos)
 	{
-		if (m_OpenMenus.find(menu.Name) != m_OpenMenus.end())
+		for (const Info& menu : menuList)
 		{
-			enableReshadeMenu = false;
+			if (m_OpenMenus.find(menu.Name) != m_OpenMenus.end())
+			{
+				enableReshadeMenu = false;
+			}
 		}
 	}
+	else if (ToggleStateMenus.find("Specific") != std::string::npos)
+	{
+		for (const TechniqueInfo& info : techniqueMenuInfoList)
+		{
+			menuEffectsMap[info.Name] = { info.filename };
+		}
 
+		// Loop through menus and toggle effects accordingly
+		for (const auto& menuEntry : menuEffectsMap)
+		{
+			const std::string& menuName = menuEntry.first;
+			const std::unordered_set<std::string>& effectsToToggle = menuEntry.second;
+
+			// Check if the menu is open and if any of the associated effects should be toggled
+			if (m_OpenMenus.find(menuName) != m_OpenMenus.end())
+			{
+				for (const TechniqueInfo& info : techniqueMenuInfoList)
+				{
+					if (effectsToToggle.find(info.Name) != effectsToToggle.end())
+					{
+						enableReshadeMenu = true;
+						break; // At least one effect should be toggled
+					}
+				}
+			}
+		}
+	}
 
 	if (s_pRuntime != nullptr)
 	{
@@ -50,6 +81,7 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 	}
 
 	return RE::BSEventNotifyControl::kContinue;
+
 }
 
 RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
@@ -163,67 +195,72 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 
 	const auto sky = RE::Sky::GetSingleton();
 
-	if (const auto currentWeather = sky->currentWeather)
+	const auto currentWeather = sky->currentWeather;
+
+	const auto flags = currentWeather->data.flags;
+
+	switch (flags.get())
 	{
-
-		const auto flags = currentWeather->data.flags;
-
-		if (flags.any(RE::TESWeather::WeatherDataFlag::kNone))
-		{
-			weatherflags = "kNone";
-		}
-		else if (flags.any(RE::TESWeather::WeatherDataFlag::kRainy))
-		{
-			weatherflags = "kRainy";
-		}
-		else if (flags.any(RE::TESWeather::WeatherDataFlag::kPleasant))
-		{
-			weatherflags = "kPleasant";
-		}
-		else if (flags.any(RE::TESWeather::WeatherDataFlag::kCloudy))
-		{
-			weatherflags = "kCloudy";
-		}
-		else if (flags.any(RE::TESWeather::WeatherDataFlag::kSnow))
-		{
-			weatherflags = "kSnow";
-		}
-		else if (flags.any(RE::TESWeather::WeatherDataFlag::kPermAurora))
-		{
-			weatherflags = "kPermAurora";
-		}
-		else if (flags.any(RE::TESWeather::WeatherDataFlag::kAuroraFollowsSun))
-		{
-			weatherflags = "kAuroraFollowsSun";
-		}
-
-		//DEBUG_LOG(g_Logger, "weatherflag {}", weatherflags);
-
-		bool enableReshadeWeather = true;
-		for (const Info& weather : weatherList)
-		{
-			//DEBUG_LOG(g_Logger, "weatherToDisable {}", weatherToDisable);
-
-			if (weather.Name == weatherflags)
-			{
-				enableReshadeWeather = false;
-				break;
-			}
-		}
-
-		if (s_pRuntime != nullptr)
-		{
-			if (ToggleStateWeather.find("All") != std::string::npos)
-			{
-				ReshadeIntegration::ApplyReshadeState(enableReshadeWeather, ToggleAllStateWeather);
-			}
-			else if (ToggleStateWeather.find("Specific") != std::string::npos)
-			{
-				ReshadeIntegration::ApplySpecificReshadeStates(enableReshadeWeather, Categories::Weather);
-			}
-		}
-
-
+	case RE::TESWeather::WeatherDataFlag::kNone:
+		weatherflags = "kNone";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kRainy:
+		weatherflags = "kRainy";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kPleasant:
+		weatherflags = "kPleasant";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kCloudy:
+		weatherflags = "kCloudy";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kSnow:
+		weatherflags = "kSnow";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kPermAurora:
+		weatherflags = "kPermAurora";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kAuroraFollowsSun:
+		weatherflags = "kAuroraFollowsSun";
+		break;
 	}
+
+	//DEBUG_LOG(g_Logger, "weatherflag {}", weatherflags);
+
+	bool enableReshadeWeather = true;
+
+	if (s_pRuntime != nullptr)
+	{
+		if (ToggleStateWeather.find("All") != std::string::npos)
+		{
+			for (const Info& weather : weatherList)
+			{
+				//DEBUG_LOG(g_Logger, "weatherToDisable {}", weatherToDisable);
+
+				if (weather.Name == weatherflags)
+				{
+					enableReshadeWeather = false;
+					break;
+				}
+			}
+
+			ReshadeIntegration::ApplyReshadeState(enableReshadeWeather, ToggleAllStateWeather);
+		}
+		else if (ToggleStateWeather.find("Specific") != std::string::npos)
+		{
+			for (const TechniqueInfo& info : techniqueWeatherInfoList)
+			{
+				if (info.Name == weatherflags)
+				{
+					enableReshadeWeather = false;
+					break;
+				}
+			}
+
+			ReshadeIntegration::ApplySpecificReshadeStates(enableReshadeWeather, Categories::Weather);
+		}
+	}
+
+
+
 	return RE::BSEventNotifyControl::kContinue;
 }

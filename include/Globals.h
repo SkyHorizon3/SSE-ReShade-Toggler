@@ -10,6 +10,7 @@ struct TechniqueInfo
 {
 	std::string filename = "";
 	std::string state = "";
+	std::string Name = "";
 	double startTime = 0.0;
 	double stopTime = 0.0;
 	bool enable = true;
@@ -108,6 +109,8 @@ inline bool EnableWeather = true;
 // Menus
 inline std::unordered_set<std::string> g_MenuToggleFile;
 inline std::unordered_set<std::string> g_MenuToggleState;
+inline std::unordered_set<std::string> g_MenuSpecificMenu;
+
 
 inline std::vector<std::string> g_SpecificMenu;
 inline std::vector<std::string> g_INImenus;
@@ -119,6 +122,7 @@ inline std::string ToggleAllStateMenus;
 
 inline const char* itemMenuShaderToToggle;
 inline const char* itemMenuStateValue;
+inline const char* itemSpecificMenu;
 
 
 // Time
@@ -162,6 +166,7 @@ inline int TimeUpdateIntervalInterior;
 inline std::unordered_set<std::string> g_WeatherValue;
 inline std::unordered_set<std::string> g_WeatherToggleFile;
 inline std::unordered_set<std::string> g_WeatherToggleState;
+inline std::unordered_set<std::string> g_WeatherSpecificWeather;
 
 inline std::vector<std::string> g_SpecificWeather;
 inline std::vector<std::string> g_INIweather;
@@ -174,6 +179,7 @@ inline std::string weatherflags;
 
 inline const char* itemWeatherShaderToToggle;
 inline const char* itemWeatherStateValue;
+inline const char* itemSpecificWeather;
 
 inline int TimeUpdateIntervalWeather;
 

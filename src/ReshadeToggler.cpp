@@ -113,6 +113,7 @@ void ReshadeToggler::ExecuteMainThreadQueue()
 
 	for (const auto& func : m_MainThreadQueue)
 	{
+		g_Logger->info("Function: {}", func.first.c_str());
 		func.second(); // Funktion ausführen
 	}
 	m_MainThreadQueue.clear();
@@ -121,19 +122,19 @@ void ReshadeToggler::ExecuteMainThreadQueue()
 
 void ReshadeToggler::Run()
 {
-	if (m_MainThreadQueue["Weather"])
+	if (m_MainThreadQueue.find("Weather") != m_MainThreadQueue.end())
 	{
 		g_Logger->info("Attaching WeatherThread");
 		ExecuteMainThreadQueue();
 	}
 
-	if (m_MainThreadQueue["Interior"])
+	if (m_MainThreadQueue.find("Interior") != m_MainThreadQueue.end())
 	{
 		g_Logger->info("Attaching InteriorThread");
 		ExecuteMainThreadQueue();
 	}
 
-	if (m_MainThreadQueue["Time"])
+	if (m_MainThreadQueue.find("Time") != m_MainThreadQueue.end())
 	{
 		g_Logger->info("Attaching TimeThread");
 		ExecuteMainThreadQueue();
@@ -148,6 +149,10 @@ void ReshadeToggler::Run()
 	{
 		RE::UI::GetSingleton()->RemoveEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
 	}
+
+	//m_enableReshade = shouldEnableReshade;
+
+
 }
 
 
@@ -211,6 +216,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 
 	const char* togglePrefix01 = "MenuToggleSpecificFile";
 	const char* togglePrefix02 = "MenuToggleSpecificState";
+	const char* togglePrefixMenu = "MenuToggleSpecificMenu";
 
 	for (const auto& key : MenusGeneral_keys)
 	{
@@ -233,10 +239,15 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 				itemMenuStateValue = ini.GetValue(sectionMenusGeneral, stateKeyName.c_str(), nullptr);
 				g_MenuToggleState.emplace(itemMenuStateValue);
 
+				std::string menuKeyName = togglePrefixMenu + std::to_string(g_SpecificMenu.size());
+				itemSpecificMenu = ini.GetValue(sectionMenusGeneral, menuKeyName.c_str(), nullptr);
+				g_MenuSpecificMenu.emplace(itemSpecificMenu);
+
 				// Populate the technique info
 				TechniqueInfo MenuInfo;
 				MenuInfo.filename = itemMenuShaderToToggle;
 				MenuInfo.state = itemMenuStateValue;
+				MenuInfo.Name = itemSpecificMenu;
 				techniqueMenuInfoList.push_back(MenuInfo);
 				DEBUG_LOG(g_Logger, "Populated TechniqueMenuInfo: {} - {}", itemMenuShaderToToggle, itemMenuStateValue);
 			}
@@ -404,6 +415,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 
 	const char* togglePrefix09 = "WeatherToggleSpecificFile";
 	const char* togglePrefix10 = "WeatherToggleSpecificState";
+	const char* togglePrefixItemWeather = "WeatherToggleSpecificWeather";
 
 	for (const auto& key : WeatherGeneral_keys)
 	{
@@ -423,9 +435,14 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 				itemWeatherStateValue = ini.GetValue(sectionWeatherGeneral, stateKeyName.c_str(), nullptr);
 				g_WeatherToggleState.emplace(itemWeatherStateValue);
 
+				std::string weatherKeyName = togglePrefixItemWeather + std::to_string(g_SpecificWeather.size());
+				itemSpecificWeather = ini.GetValue(sectionWeatherGeneral, weatherKeyName.c_str(), nullptr);
+				g_WeatherSpecificWeather.emplace(itemSpecificWeather);
+
 				TechniqueInfo WeatherInfo;
 				WeatherInfo.filename = itemWeatherShaderToToggle;
 				WeatherInfo.state = itemWeatherStateValue;
+				WeatherInfo.Name = itemSpecificWeather;
 				techniqueWeatherInfoList.push_back(WeatherInfo);
 				DEBUG_LOG(g_Logger, "Populated TechniqueWeatherInfo: {} - {}", itemWeatherShaderToToggle, itemWeatherStateValue);
 			}
@@ -476,6 +493,7 @@ void ReshadeToggler::LoadPreset(const std::string& Preset)
 	// Empty every vector
 	g_MenuToggleFile.clear();
 	g_MenuToggleState.clear();
+	g_MenuSpecificMenu.clear();
 	g_SpecificMenu.clear();
 	g_INImenus.clear();
 	techniqueMenuInfoList.clear();
@@ -484,6 +502,7 @@ void ReshadeToggler::LoadPreset(const std::string& Preset)
 	ToggleAllStateMenus.clear();
 	itemMenuShaderToToggle = nullptr; // itemMenuShaderToToggle is a pointer, set it to nullptr.
 	itemMenuStateValue = nullptr; // Similarly, set itemMenuStateValue to nullptr.
+	itemSpecificMenu = nullptr;
 
 	g_TimeToggleFile.clear();
 	g_TimeToggleState.clear();
@@ -513,6 +532,7 @@ void ReshadeToggler::LoadPreset(const std::string& Preset)
 	g_WeatherValue.clear();
 	g_WeatherToggleFile.clear();
 	g_WeatherToggleState.clear();
+	g_WeatherSpecificWeather.clear();
 	g_SpecificWeather.clear();
 	g_INIweather.clear();
 	weatherList.clear();
@@ -522,6 +542,7 @@ void ReshadeToggler::LoadPreset(const std::string& Preset)
 	weatherflags.clear();
 	itemWeatherShaderToToggle = nullptr; // Set to nullptr.
 	itemWeatherStateValue = nullptr; // Set to nullptr.
+	itemSpecificWeather = nullptr;
 	TimeUpdateIntervalWeather = 0;
 
 	g_Logger->info("Finished clearing procedure...");

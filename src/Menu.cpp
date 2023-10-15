@@ -138,9 +138,11 @@ void Menu::Save(const std::string& filename)
 		const auto& menuInfo = techniqueMenuInfoList[i];
 		std::string effectFileKey = "MenuToggleSpecificFile" + std::to_string(i + 1);
 		std::string effectStateKey = "MenuToggleSpecificState" + std::to_string(i + 1);
+		std::string effectMenuKey = "MenuToggleSpecificMenu" + std::to_string(i + 1);
 
 		ini.SetValue("MenusGeneral", effectFileKey.c_str(), menuInfo.filename.c_str());
 		ini.SetValue("MenusGeneral", effectStateKey.c_str(), menuInfo.state.c_str());
+		ini.SetValue("MenusGeneral", effectMenuKey.c_str(), menuInfo.Name.c_str());
 	}
 
 	// Save MenusProcess section
@@ -202,9 +204,11 @@ void Menu::Save(const std::string& filename)
 		const auto& weatherInfo = techniqueWeatherInfoList[i];
 		std::string effectFileKey = "WeatherToggleSpecificFile" + std::to_string(i + 1);
 		std::string effectStateKey = "WeatherToggleSpecificState" + std::to_string(i + 1);
+		std::string effectWeatherKey = "WeatherToggleSpecificWeather" + std::to_string(i + 1);
 
 		ini.SetValue("Weather", effectFileKey.c_str(), weatherInfo.filename.c_str());
 		ini.SetValue("Weather", effectStateKey.c_str(), weatherInfo.state.c_str());
+		ini.SetValue("Weather", effectWeatherKey.c_str(), weatherInfo.Name.c_str());
 	}
 
 	// Save WeatherProcess section
@@ -320,6 +324,56 @@ void Menu::RenderMenusPage()
 	{
 		ImGui::SameLine();
 		CreateCombo("MenuAllState", ToggleAllStateMenus, g_EffectStateMenu, ImGuiComboFlags_None);
+
+		// Display all the Menus
+		ImGui::SeparatorText("Menus");
+		if (!menuList.empty())
+		{
+			for (int i = 0; i < menuList.size(); i++)
+			{
+				auto& iniMenus = menuList[i];
+
+				bool valueChanged = false;
+				std::string menuIndexComboID = "Menu" + std::to_string(i + 1);
+				std::string menuNameComboID = "##Menu" + std::to_string(i);
+				std::string removeID = "Remove Menu##" + std::to_string(i);
+
+				std::string currentMenuName = iniMenus.Name;
+
+				ImGui::Text("%s:", menuIndexComboID.c_str());
+				ImGui::SameLine();
+				if (CreateCombo(menuNameComboID.c_str(), currentMenuName, g_MenuNames, ImGuiComboFlags_None)) { valueChanged = true; }
+
+				// Add a button to remove the effect
+				if (ImGui::Button(removeID.c_str()))
+				{
+					if (!menuList.empty())
+					{
+						menuList.erase(menuList.begin() + i);
+						i--;  // Decrement i to stay at the current index after removing the element
+					}
+				}
+
+				if (valueChanged)
+				{
+					iniMenus.Index = "Menu" + std::to_string(i);
+					iniMenus.Name = currentMenuName;
+					DEBUG_LOG(g_Logger, "New Menu Name:{} - {}", iniMenus.Index, iniMenus.Name);
+				}
+			}
+		}
+
+		ImGui::Separator();
+
+		// Add new
+		if (ImGui::Button("Add New Menu"))
+		{
+			Info menu;
+			menu.Index = "";
+			menu.Name = "default";
+
+			menuList.push_back(menu);
+		}
 	}
 
 	if (ToggleStateMenus.find("Specific") != std::string::npos)
@@ -340,13 +394,16 @@ void Menu::RenderMenusPage()
 					std::string effectComboID = "Effect##Menu" + std::to_string(i);
 					std::string effectStateID = "State##Menu" + std::to_string(i);
 					std::string removeID = "Remove Effect##Menu" + std::to_string(i);
+					std::string menuID = "Menu##Menu" + std::to_string(i);
 
 					std::string currentEffectFileName = menuInfo.filename;
 					std::string currentEffectState = menuInfo.state;
+					std::string currentEffectMenu = menuInfo.Name;
 
 					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
 					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectStateMenu, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(menuID.c_str(), currentEffectMenu, g_MenuNames, ImGuiComboFlags_None)) { valueChanged = true; }
 
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
@@ -362,6 +419,7 @@ void Menu::RenderMenusPage()
 					{
 						menuInfo.filename = currentEffectFileName;
 						menuInfo.state = currentEffectState;
+						menuInfo.Name = currentEffectMenu;
 					}
 				}
 			}
@@ -379,56 +437,6 @@ void Menu::RenderMenusPage()
 			techniqueMenuInfoList.push_back(info);
 		}
 
-	}
-
-	// Display all the Menus
-	ImGui::SeparatorText("Menus");
-	if (!menuList.empty())
-	{
-		for (int i = 0; i < menuList.size(); i++)
-		{
-			auto& iniMenus = menuList[i];
-
-			bool valueChanged = false;
-			std::string menuIndexComboID = "Menu" + std::to_string(i + 1);
-			std::string menuNameComboID = "##Menu" + std::to_string(i);
-			std::string removeID = "Remove Menu##" + std::to_string(i);
-
-			std::string currentMenuName = iniMenus.Name;
-
-			ImGui::Text("%s:", menuIndexComboID.c_str());
-			ImGui::SameLine();
-			if (CreateCombo(menuNameComboID.c_str(), currentMenuName, g_MenuNames, ImGuiComboFlags_None)) { valueChanged = true; }
-
-			// Add a button to remove the effect
-			if (ImGui::Button(removeID.c_str()))
-			{
-				if (!menuList.empty())
-				{
-					menuList.erase(menuList.begin() + i);
-					i--;  // Decrement i to stay at the current index after removing the element
-				}
-			}
-
-			if (valueChanged)
-			{
-				iniMenus.Index = "Menu" + std::to_string(i);
-				iniMenus.Name = currentMenuName;
-				DEBUG_LOG(g_Logger, "New Menu Name:{} - {}", iniMenus.Index, iniMenus.Name);
-			}
-		}
-	}
-
-	ImGui::Separator();
-
-	// Add new
-	if (ImGui::Button("Add New Menu"))
-	{
-		Info menu;
-		menu.Index = "";
-		menu.Name = "default";
-
-		menuList.push_back(menu);
 	}
 }
 
@@ -621,6 +629,55 @@ void Menu::RenderWeatherPage()
 	{
 		ImGui::SameLine();
 		CreateCombo("WeatherAllState", ToggleAllStateWeather, g_EffectStateWeather, ImGuiComboFlags_None);
+
+		// Display all the Weathers
+		ImGui::SeparatorText("Weathers");
+		if (!weatherList.empty())
+		{
+			for (int i = 0; i < weatherList.size(); i++)
+			{
+				auto& iniWeather = weatherList[i];
+
+				bool valueChanged = false;
+				std::string weatherIndexComboID = "Weather" + std::to_string(i + 1);
+				std::string weatherNameComboID = "##Weather" + std::to_string(i);
+				std::string removeID = "Remove Weather##" + std::to_string(i);
+
+				std::string currentWeatherName = iniWeather.Name;
+
+				ImGui::Text("%s:", weatherIndexComboID.c_str());
+				ImGui::SameLine();
+				if (CreateCombo(weatherNameComboID.c_str(), currentWeatherName, g_WeatherFlags, ImGuiComboFlags_None)) { valueChanged = true; }
+
+				// Add a button to remove the effect
+				if (ImGui::Button(removeID.c_str()))
+				{
+					if (!weatherList.empty())
+					{
+						weatherList.erase(weatherList.begin() + i);
+						i--;  // Decrement i to stay at the current index after removing the element
+					}
+				}
+
+				if (valueChanged)
+				{
+					iniWeather.Index = "Weather" + std::to_string(i);
+					iniWeather.Name = currentWeatherName;
+				}
+			}
+		}
+
+		ImGui::Separator();
+
+		// Add new
+		if (ImGui::Button("Add New Weather"))
+		{
+			Info weather;
+			weather.Index = "";
+			weather.Name = "default";
+
+			weatherList.push_back(weather);
+		}
 	}
 
 	if (ToggleStateWeather.find("Specific") != std::string::npos)
@@ -640,15 +697,16 @@ void Menu::RenderWeatherPage()
 					std::string effectComboID = "Effect##Weather" + std::to_string(i);
 					std::string effectStateID = "State##Weather" + std::to_string(i);
 					std::string removeID = "Remove Effect##Weather" + std::to_string(i);
+					std::string weatherID = "Weather##Weather" + std::to_string(i);
 
 					std::string currentEffectFileName = weatherInfo.filename;
 					std::string currentEffectState = weatherInfo.state;
-					std::string currentWeatherFlag = weatherflags;
+					std::string currentWeatherFlag = weatherInfo.Name;
 
 					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
 					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectStateWeather, ImGuiComboFlags_None)) { valueChanged = true; }
-
+					if (CreateCombo(weatherID.c_str(), currentWeatherFlag, g_WeatherFlags, ImGuiComboFlags_None)) { valueChanged = true; }
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
 					{
@@ -663,6 +721,7 @@ void Menu::RenderWeatherPage()
 					{
 						weatherInfo.filename = currentEffectFileName;
 						weatherInfo.state = currentEffectState;
+						weatherInfo.Name = currentWeatherFlag;
 					}
 				}
 			}
@@ -679,54 +738,5 @@ void Menu::RenderWeatherPage()
 
 			techniqueWeatherInfoList.push_back(info);
 		}
-	}
-
-	// Display all the Weathers
-	ImGui::SeparatorText("Weathers");
-	if (!weatherList.empty())
-	{
-		for (int i = 0; i < weatherList.size(); i++)
-		{
-			auto& iniWeather = weatherList[i];
-
-			bool valueChanged = false;
-			std::string weatherIndexComboID = "Weather" + std::to_string(i + 1);
-			std::string weatherNameComboID = "##Weather" + std::to_string(i);
-			std::string removeID = "Remove Weather##" + std::to_string(i);
-
-			std::string currentWeatherName = iniWeather.Name;
-
-			ImGui::Text("%s:", weatherIndexComboID.c_str());
-			ImGui::SameLine();
-			if (CreateCombo(weatherNameComboID.c_str(), currentWeatherName, g_WeatherFlags, ImGuiComboFlags_None)) { valueChanged = true; }
-
-			// Add a button to remove the effect
-			if (ImGui::Button(removeID.c_str()))
-			{
-				if (!weatherList.empty())
-				{
-					weatherList.erase(weatherList.begin() + i);
-					i--;  // Decrement i to stay at the current index after removing the element
-				}
-			}
-
-			if (valueChanged)
-			{
-				iniWeather.Index = "Weather" + std::to_string(i);
-				iniWeather.Name = currentWeatherName;
-			}
-		}
-	}
-
-	ImGui::Separator();
-
-	// Add new
-	if (ImGui::Button("Add New Weather"))
-	{
-		Info weather;
-		weather.Index = "";
-		weather.Name = "default";
-
-		weatherList.push_back(weather);
 	}
 }
