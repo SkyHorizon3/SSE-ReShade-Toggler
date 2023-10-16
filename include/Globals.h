@@ -124,7 +124,6 @@ inline const char* itemMenuShaderToToggle;
 inline const char* itemMenuStateValue;
 inline const char* itemSpecificMenu;
 
-
 // Time
 inline std::unordered_set<std::string> g_TimeToggleFile;
 inline std::unordered_set<std::string> g_TimeToggleState;
@@ -146,7 +145,6 @@ inline double itemTimeStopHourAll;
 
 inline int TimeUpdateIntervalTime;
 
-
 //Interior
 inline std::unordered_set<std::string> g_InteriorToggleFile;
 inline std::unordered_set<std::string> g_InteriorToggleState;
@@ -161,6 +159,8 @@ inline const char* itemInteriorShaderToToggle;
 inline const char* itemInteriorStateValue;
 
 inline int TimeUpdateIntervalInterior;
+
+inline bool IsInInteriorCell = false;
 
 //Weather
 inline std::unordered_set<std::string> g_WeatherValue;

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(ReShadeToggler VERSION 2.0.0 LANGUAGES CXX)
+project(ReShadeToggler VERSION 3.0.0 LANGUAGES CXX)
 
 # Set your project version and specify C++ standard
 set(CMAKE_CXX_STANDARD 23)

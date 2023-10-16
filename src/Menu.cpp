@@ -108,7 +108,7 @@ void Menu::SettingsMenu()
 	}
 }
 
-// I LOVE THIS. ALL HAIL SimipleINI!!!!!!
+// I LOVE THIS. ALL HAIL SimpleINI!!!!!!
 void Menu::Save(const std::string& filename)
 {
 	// Define the path to your mod's TogglerConfigs directory
@@ -283,7 +283,6 @@ void Menu::RenderInfoPage()
 		if (EnableTime && isLoaded)
 		{
 			Processor::GetSingleton().ProcessTimeBasedToggling();
-			//std::thread(TimeThread).detach();
 		}
 	}
 
@@ -292,16 +291,14 @@ void Menu::RenderInfoPage()
 		if (EnableInterior && isLoaded)
 		{
 			Processor::GetSingleton().ProcessInteriorBasedToggling();
-			//std::thread(InteriorThread).detach();
 		}
 	}
 
 	if (ImGui::Checkbox("Enable Weather", &EnableWeather))
 	{
-		if (EnableWeather && isLoaded)
+		if (EnableWeather && isLoaded && !IsInInteriorCell)
 		{
 			Processor::GetSingleton().ProcessWeatherBasedToggling();
-			//std::thread(WeatherThread).detach();
 		}
 	}
 

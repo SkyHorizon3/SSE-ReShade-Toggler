@@ -58,15 +58,13 @@ void RuntimeThread()
 {
 	g_Logger->info("Attaching RuntimeThread");
 	auto MainThread = ReshadeToggler::GetSingleton();
-	//auto& processor = Processor::GetSingleton();
 
 	while (isLoaded)
 	{
 
 		if (EnableTime)
 		{
-			g_Logger->info("Adding Time to Mainqueue");
-			// Call ProcessTimeBasedToggling every x seconds
+			//g_Logger->info("Adding Time to Mainqueue");
 			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalTime));
 			MainThread->SubmitToMainThread("Time", []() -> RE::BSEventNotifyControl {
 				return Processor::GetSingleton().ProcessTimeBasedToggling();
@@ -75,22 +73,22 @@ void RuntimeThread()
 
 		if (EnableInterior)
 		{
-			g_Logger->info("Adding Interior to Mainqueue");
-			// Call ProcessTimeBasedToggling every x seconds
+			//g_Logger->info("Adding Interior to Mainqueue");
 			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalInterior));
 			MainThread->SubmitToMainThread("Interior", []() -> RE::BSEventNotifyControl {
 				return Processor::GetSingleton().ProcessInteriorBasedToggling();
 				});
 		}
 
-		if (EnableWeather)
+		if (EnableWeather && !IsInInteriorCell)
 		{
-			g_Logger->info("Adding Weather to Mainqueue");
-			// Call ProcessTimeBasedToggling every x seconds
+
+			//g_Logger->info("Adding Weather to Mainqueue");
 			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalWeather));
 			MainThread->SubmitToMainThread("Weather", []() -> RE::BSEventNotifyControl {
 				return Processor::GetSingleton().ProcessWeatherBasedToggling();
 				});
+
 		}
 
 		std::this_thread::sleep_for(std::chrono::milliseconds(500));
@@ -104,7 +102,7 @@ void ReshadeToggler::SubmitToMainThread(const std::string& functionName, Functio
 
 
 	m_MainThreadQueue[functionName] = function;
-	g_Logger->info("Submit {}", functionName);
+	//g_Logger->info("Submit {}", functionName);
 }
 
 void ReshadeToggler::ExecuteMainThreadQueue()
@@ -113,7 +111,7 @@ void ReshadeToggler::ExecuteMainThreadQueue()
 
 	for (const auto& func : m_MainThreadQueue)
 	{
-		g_Logger->info("Function: {}", func.first.c_str());
+		//g_Logger->info("Function: {}", func.first.c_str());
 		func.second(); // Funktion ausführen
 	}
 	m_MainThreadQueue.clear();
@@ -124,19 +122,19 @@ void ReshadeToggler::Run()
 {
 	if (m_MainThreadQueue.find("Weather") != m_MainThreadQueue.end())
 	{
-		g_Logger->info("Attaching WeatherThread");
+		//g_Logger->info("Attaching WeatherThread");
 		ExecuteMainThreadQueue();
 	}
 
 	if (m_MainThreadQueue.find("Interior") != m_MainThreadQueue.end())
 	{
-		g_Logger->info("Attaching InteriorThread");
+		//g_Logger->info("Attaching InteriorThread");
 		ExecuteMainThreadQueue();
 	}
 
 	if (m_MainThreadQueue.find("Time") != m_MainThreadQueue.end())
 	{
-		g_Logger->info("Attaching TimeThread");
+		//g_Logger->info("Attaching TimeThread");
 		ExecuteMainThreadQueue();
 	}
 
@@ -150,11 +148,7 @@ void ReshadeToggler::Run()
 		RE::UI::GetSingleton()->RemoveEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
 	}
 
-	//m_enableReshade = shouldEnableReshade;
-
-
 }
-
 
 // Load Reshade and register events
 void ReshadeToggler::Load()
@@ -223,14 +217,14 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 		if (strcmp(key.pItem, "MenuToggleOption") != 0 && strcmp(key.pItem, "MenuToggleAllState") != 0)
 		{
 			g_SpecificMenu.push_back(key.pItem);
-			const char* menuItemgeneral = g_SpecificMenu.back().c_str();
+			//const char* menuItemgeneral = g_SpecificMenu.back().c_str();
 
 			// Check if the key starts with MenuToggleSpecificFile
 			if (strncmp(key.pItem, togglePrefix01, strlen(togglePrefix01)) == 0)
 			{
 				itemMenuShaderToToggle = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
 				g_MenuToggleFile.emplace(itemMenuShaderToToggle);
-				DEBUG_LOG(g_Logger, "MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemMenuShaderToToggle);
+				//DEBUG_LOG(g_Logger, "MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemMenuShaderToToggle);
 
 				// Construct the corresponding key for the state
 				std::string stateKeyName = togglePrefix02 + std::to_string(g_SpecificMenu.size());
@@ -315,13 +309,13 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 
 			// DEBUG_LOG(g_Logger, "Size of m_SpecificTime: {} ", m_SpecificTime.size());
 
-			const char* timeItemGeneral = g_SpecificTime.back().c_str();
+			//const char* timeItemGeneral = g_SpecificTime.back().c_str();
 
 			if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
 			{
 				itemTimeShaderToToggle = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
 				g_TimeToggleFile.emplace(itemTimeShaderToToggle);
-				DEBUG_LOG(g_Logger, "TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
+				//DEBUG_LOG(g_Logger, "TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
 
 				// Construct the corresponding key for the state
 				std::string stateKeyName = togglePrefix04 + std::to_string(g_SpecificTime.size());
@@ -373,14 +367,14 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 		if (strcmp(key.pItem, "InteriorToggleOption") != 0 && strcmp(key.pItem, "InteriorToggleAllState") != 0)
 		{
 			g_SpecificInterior.push_back(key.pItem);
-			const char* interiorItemgeneral = g_SpecificInterior.back().c_str();
+			//const char* interiorItemgeneral = g_SpecificInterior.back().c_str();
 
 			// Check if the key starts with InteriorToggleSpecificFile
 			if (strncmp(key.pItem, togglePrefix07, strlen(togglePrefix07)) == 0)
 			{
 				itemInteriorShaderToToggle = ini.GetValue(sectionInteriorGeneral, key.pItem, nullptr);
 				g_InteriorToggleFile.emplace(itemInteriorShaderToToggle);
-				DEBUG_LOG(g_Logger, "InteriorToggleSpecificFile:  {} - Value: {}", interiorItemgeneral, itemInteriorShaderToToggle);
+				//DEBUG_LOG(g_Logger, "InteriorToggleSpecificFile:  {} - Value: {}", interiorItemgeneral, itemInteriorShaderToToggle);
 
 				// Construct the corresponding key for the state
 				std::string stateKeyName = togglePrefix08 + std::to_string(g_SpecificInterior.size());
@@ -422,13 +416,13 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 		if (strcmp(key.pItem, "WeatherToggleOption") != 0 && strcmp(key.pItem, "WeatherToggleAllState") != 0)
 		{
 			g_SpecificWeather.push_back(key.pItem);
-			const char* weatherItemgeneral = g_SpecificWeather.back().c_str();
+			//const char* weatherItemgeneral = g_SpecificWeather.back().c_str();
 
 			if (strncmp(key.pItem, togglePrefix09, strlen(togglePrefix09)) == 0)
 			{
 				itemWeatherShaderToToggle = ini.GetValue(sectionWeatherGeneral, key.pItem, nullptr);
 				g_WeatherToggleFile.emplace(itemWeatherShaderToToggle);
-				DEBUG_LOG(g_Logger, "WeatherToggleSpecificFile:  {} - Value: {}", weatherItemgeneral, itemWeatherShaderToToggle);
+				//DEBUG_LOG(g_Logger, "WeatherToggleSpecificFile:  {} - Value: {}", weatherItemgeneral, itemWeatherShaderToToggle);
 
 				std::string stateKeyName = togglePrefix10 + std::to_string(g_SpecificWeather.size());
 

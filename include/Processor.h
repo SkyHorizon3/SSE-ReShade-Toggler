@@ -18,7 +18,6 @@ public:
 	RE::BSEventNotifyControl ProcessWeatherBasedToggling();
 
 	bool IsTimeWithinRange(double currentTime, double startTime, double endTime);
-
 private:
 	Processor() = default;
 	~Processor() = default;

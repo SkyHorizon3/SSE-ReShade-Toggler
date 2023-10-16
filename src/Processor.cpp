@@ -43,11 +43,11 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 		// Loop through menus and toggle effects accordingly
 		for (const auto& menuEntry : menuEffectsMap)
 		{
-			const std::string& menuName = menuEntry.first;
+			const std::string& menuName_ = menuEntry.first;
 			const std::unordered_set<std::string>& effectsToToggle = menuEntry.second;
 
 			// Check if the menu is open and if any of the associated effects should be toggled
-			if (m_OpenMenus.find(menuName) != m_OpenMenus.end())
+			if (m_OpenMenus.find(menuName_) != m_OpenMenus.end())
 			{
 				for (const TechniqueInfo& info : techniqueMenuInfoList)
 				{
@@ -162,12 +162,14 @@ RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling()
 			{
 				if (cell->IsInteriorCell())
 				{
-					DEBUG_LOG(g_Logger, "Player is in interior cell {}", cell->GetName());
+					DEBUG_LOG(g_Logger, "Player is in interior cell", nullptr);
+					IsInInteriorCell = true;
 					return false;
 				}
 				else
 				{
 					DEBUG_LOG(g_Logger, "Player is in exterior cell", nullptr);
+					IsInInteriorCell = false;
 					return true;
 				}
 
