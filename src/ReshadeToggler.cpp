@@ -654,10 +654,6 @@ void ReshadeToggler::Setup()
 		auto& eventProcessorMenu = Processor::GetSingleton();
 		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
 	}
-	else
-	{
-		g_Logger->info("EnableMenus is set to false, no menus will be processed.");
-	}
 }
 
 int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
