@@ -14,10 +14,6 @@ void ReshadeIntegration::ApplyTechniqueState(bool enableReshade, const Technique
 			{
 				runtime->set_technique_state(technique, !enableReshade);
 			}
-			else
-			{
-				g_Logger->error("Wrong input: MenuToggleSpecificState has to be on/off, input was: {} for: {}", info.state.c_str(), info.filename.c_str());
-			}
 		});
 }
 

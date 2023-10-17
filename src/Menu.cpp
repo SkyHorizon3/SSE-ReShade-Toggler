@@ -4,11 +4,6 @@
 #include "../include/ReshadeIntegration.h"
 #include "../include/Processor.h"
 
-// Forward declare the threads
-//void TimeThread();
-//void InteriorThread();
-//void WeatherThread();
-
 bool Menu::CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags)
 {
 	ImGuiStyle& style = ImGui::GetStyle();

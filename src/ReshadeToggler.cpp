@@ -644,31 +644,10 @@ void ReshadeToggler::Setup()
 		LoadINI("Data\\SKSE\\Plugins\\TogglerConfigs\\Default.ini");
 	}
 
-	// Check if all options are false, and unregister the addon if true
-	if (!EnableMenus && !EnableTime && !EnableInterior && !EnableWeather)
-	{
-		g_Logger->info("All options are set to false.");
-	}
-
 	SKSE::GetMessagingInterface()->RegisterListener(MessageListener);
 
 	Load();
 	g_Logger->info("Loaded plugin");
-
-	if (!EnableTime)
-	{
-		g_Logger->info("EnableTime is set to false, time-based toggling won't be processed.");
-	}
-
-	if (!EnableInterior)
-	{
-		g_Logger->info("EnableInterior is set to false, interior-based toggling won't be processed.");
-	}
-
-	if (!EnableWeather)
-	{
-		g_Logger->info("EnableWeather is set to false, weather-based toggling won't be processed.");
-	}
 
 	if (EnableMenus)
 	{
