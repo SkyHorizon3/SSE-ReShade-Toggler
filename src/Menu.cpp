@@ -246,6 +246,10 @@ void Menu::SaveConfig()
 				// Call the Save function with the chosen filename
 				Save(filename);
 
+				//Refresh
+				g_Presets.clear();
+				ReshadeIntegration::EnumeratePresets();
+
 				// Close the modal and reset the flag
 				ImGui::CloseCurrentPopup();
 				saveConfigPopupOpen = false;
