@@ -82,6 +82,8 @@ void ReshadeIntegration::EnumerateEffects()
 			g_Effects.push_back(entry.path().filename().string());
 		}
 	}
+	//sort Files
+	std::sort(g_Effects.begin(), g_Effects.end());
 }
 
 void ReshadeIntegration::EnumeratePresets()
@@ -95,4 +97,6 @@ void ReshadeIntegration::EnumeratePresets()
 			g_Presets.push_back(preset.path().filename().string());
 		}
 	}
+	//sort Presets
+	std::sort(g_Presets.begin(), g_Presets.end());
 }

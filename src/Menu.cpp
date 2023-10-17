@@ -53,14 +53,21 @@ void Menu::SettingsMenu()
 	ImGui::SameLine();
 	if (ImGui::Button("Load Preset"))
 	{
-		// Load the selected preset (you can implement this logic)
-		ReshadeToggler::GetSingleton()->LoadPreset(selectedPreset);
 		selectedPresetPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\" + selectedPreset;
-		CSimpleIniA ini;
-		ini.SetUnicode(false);
-		ini.SetValue("Presets", "PresetPath", selectedPresetPath.c_str());
-		ini.SetValue("Presets", "PresetName", selectedPreset.c_str());
-		ini.SaveFile("Data\\SKSE\\Plugins\\ReShadeToggler.ini");
+		// Load the selected preset (you can implement this logic)
+		if (std::filesystem::exists(selectedPresetPath))
+		{
+			ReshadeToggler::GetSingleton()->LoadPreset(selectedPreset);
+			CSimpleIniA ini;
+			ini.SetUnicode(false);
+			ini.SetValue("Presets", "PresetPath", selectedPresetPath.c_str());
+			ini.SetValue("Presets", "PresetName", selectedPreset.c_str());
+			ini.SaveFile("Data\\SKSE\\Plugins\\ReShadeToggler.ini");
+		}
+		else
+		{
+			g_Logger->info("Tried to load presetpath {}. Preset doesn't exist!", selectedPresetPath);
+		}
 	}
 
 	if (ImGui::Button("Refresh"))

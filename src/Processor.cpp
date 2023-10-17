@@ -51,10 +51,10 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 			{
 				for (const TechniqueInfo& info : techniqueMenuInfoList)
 				{
-					if (effectsToToggle.find(info.Name) != effectsToToggle.end())
+
+					if (effectsToToggle.find(info.filename) != effectsToToggle.end())
 					{
-						enableReshadeMenu = true;
-						break; // At least one effect should be toggled
+						enableReshadeMenu = false;
 					}
 				}
 			}

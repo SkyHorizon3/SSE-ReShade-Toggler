@@ -50,8 +50,6 @@ inline std::string selectedPresetPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\De
 // Hard coding probably isn't a good idea... idgaf rn tho, migh fix later
 // TODO: Don't Hardcode
 inline std::vector<std::string> g_MenuNames = {
-	"Tutorial Menu",
-	"TweenMenu",
 	"BarterMenu",
 	"Book Menu",
 	"Console",
@@ -84,7 +82,9 @@ inline std::vector<std::string> g_MenuNames = {
 	"Sleep/Wait Menu",
 	"StatsMenu",
 	"TitleSequence Menu",
-	"Training Menu"
+	"Training Menu",
+	"Tutorial Menu",
+	"TweenMenu"
 };
 
 inline std::vector<std::string> g_WeatherFlags = {
