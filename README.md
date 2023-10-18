@@ -2,7 +2,7 @@
 **Menu-Based Toggling:** Toggle ReShade effects when entering or leaving specific menus.   
 **﻿﻿Time-Based Toggling:** Enable or disable ReShade effects during user-defined time intervals.\
 **Interior-Based Toggling:** Enable or disable ReShade effects when entering interior cells.\
-**Weather-Baesed Toggling:** Enable or disable ReShade effects during specific weather types.\
+**Weather-Based Toggling:** Enable or disable ReShade effects during specific weather types.\
 **Custom Configuration:** Fine-tune your ReShade toggling preferences via the ImGui menu of ReShade! Save and share created presets easily!
 
 ## Requirements
