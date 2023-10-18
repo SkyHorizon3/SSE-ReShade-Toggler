@@ -1,24 +1,31 @@
+# Features
+**Menu-Based Toggling:** Toggle ReShade effects when entering or leaving specific menus.   
+**﻿﻿Time-Based Toggling:** Enable or disable ReShade effects during user-defined time intervals.\
+**Interior-Based Toggling:** Enable or disable ReShade effects when entering interior cells.\
+**Weather-Baesed Toggling:** Enable or disable ReShade effects during specific weather types.\
+**Custom Configuration:** Fine-tune your ReShade toggling preferences via the ImGui menu of ReShade! Save and share created presets easily!
 
-# Description
-With some reshade presets, some menus like the map are too bright. This brought up the idea for this SKSE plugin. It activates/deactivates the reshade effects in the menus that were set in the INI.
-By default, the reshade effects are disabled in the main menu, loading screen and map. Which and how many menus are affected can be configured as desired in the ReshadeToggler.ini.
+## Requirements
+[Address Library for SKSE Plugins](https://www.nexusmods.com/skyrimspecialedition/mods/32444)\
+[SKSE](https://www.nexusmods.com/skyrimspecialedition/mods/30379)﻿\
+[ReShade 5.9+ with full add-on support﻿﻿](https://reshade.me/)
 
+## Configuration
+To configure ReShade Toggler, open the ReShade overlay and navigate to the Add-ons tab. By default, the functionality to disable all effects on the Map Menu, Main Menu, and the Loading Menu is enabled.
 
-# Requirements
-Address Library for SKSE Plugins
+For each feature, you can specify whether it should toggle all ReShade effects or specific effects (.fx files). You can also save and load your configuration presets. Use the refresh button to recheck all configurations, which is necessary when adding new INI-Configs.
 
-SKSE﻿
+If you wish to create a more complex preset, we highly recommend using the toggling of specific effects. Enabling all effects can quickly become incompatible with other configuration options.
 
-ReShade 5.9+ with full add-on support﻿﻿
+You can locate the saved presets at the following path: Data\SKSE\Plugins\TogglerConfigs\PresetName.ini.
 
+![alt text](https://i.imgur.com/PLHS54j.png)
 
-# Compatibility
-Compatible with everything thats compatible with Reshade.
-Works on SE and AE. No idea about VR, but it should work.
+## Compatibility
+Compatible with everything thats also compatible with ReShade.
+Works on SE, AE and VR.
 
-# Credits
-crosire﻿ for Reshade
-
-doodlum﻿ and PureDark﻿ for skyrim-reshade-helper
-
-Skyrim Scripting for providing skse tutorials and code snippets
+## Credits
+[crosire](https://www.patreon.com/bePatron?u=23312785&redirect_uri=https%3A%2F%2Freshade.me%2F)﻿ for [ReShade](https://reshade.me/)\
+[doodlum](https://www.nexusmods.com/skyrimspecialedition/users/28038035)﻿ and [PureDark](https://github.com/PureDark)﻿ for [skyrim-reshade-helper](https://github.com/doodlum/skyrim-reshade-helper)\
+[Skyrim Scripting](https://www.youtube.com/c/SkyrimScripting) for providing skse tutorials and code snippets
