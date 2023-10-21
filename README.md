@@ -19,10 +19,11 @@ If you wish to create a more complex preset, we highly recommend using the toggl
 
 You can locate the saved presets at the following path: Data\SKSE\Plugins\TogglerConfigs\PresetName.ini.
 
-![alt text](https://i.imgur.com/PLHS54j.png)
+![alt text](https://i.imgur.com/wGmqlIX.png)
 
 ## Compatibility
 Compatible with everything thats also compatible with ReShade.
+Not compatible with Skyrim-Upscaler-ENB-Test-Build by PureDark.
 Works on SE, AE and VR.
 
 ## Credits
