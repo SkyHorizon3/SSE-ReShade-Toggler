@@ -7,7 +7,7 @@
 bool Menu::CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags)
 {
 	ImGuiStyle& style = ImGui::GetStyle();
-	float w = 200.0f;
+	float w = 250.0f;
 	float spacing = style.ItemInnerSpacing.x;
 	float button_sz = ImGui::GetFrameHeight();
 	ImGui::PushItemWidth(w - spacing - button_sz * 2.0f);

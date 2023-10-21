@@ -6,7 +6,7 @@
 namespace logger = SKSE::log;
 
 #define DLLEXPORT __declspec(dllexport)
-extern "C" DLLEXPORT const char* NAME = "ReShadeToggler";
+extern "C" DLLEXPORT const char* NAME = "SSE ReShade Toggler";
 extern "C" DLLEXPORT const char* DESCRIPTION = "ReShade Toggler by SkyHorizon and PhilikusHD.";
 
 reshade::api::effect_runtime* s_pRuntime = nullptr;
