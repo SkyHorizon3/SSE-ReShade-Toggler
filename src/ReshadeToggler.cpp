@@ -547,7 +547,6 @@ void ReshadeToggler::LoadPreset(const std::string& Preset)
 
 void MessageListener(SKSE::MessagingInterface::Message* message)
 {
-	auto& processor = Processor::GetSingleton();
 	switch (message->type) {
 
 		/*
@@ -596,21 +595,6 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 		{
 			std::thread(RuntimeThread).detach();
 		}
-		if (EnableTime)
-		{
-			processor.ProcessTimeBasedToggling();
-		}
-
-		if (EnableInterior)
-		{
-			processor.ProcessInteriorBasedToggling();
-		}
-
-		if (EnableWeather)
-		{
-			processor.ProcessWeatherBasedToggling();
-		}
-
 		break;
 
 		/*

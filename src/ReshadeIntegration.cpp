@@ -45,7 +45,7 @@ void ReshadeIntegration::ApplySpecificReshadeStates(bool enableReshade, Categori
 	case Categories::Weather:
 		for (const TechniqueInfo& info : techniqueWeatherInfoList)
 		{
-			ApplyTechniqueState(enableReshade, info);
+			ApplyTechniqueState(!enableReshade, info);
 		}
 		break;
 	default:
