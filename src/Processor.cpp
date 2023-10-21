@@ -32,10 +32,6 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 				{
 					enableReshadeMenu = false;
 				}
-				else
-				{
-					enableReshadeMenu = true;
-				}
 			}
 
 			ReshadeIntegration::ApplyReshadeState(enableReshadeMenu, ToggleAllStateMenus);
