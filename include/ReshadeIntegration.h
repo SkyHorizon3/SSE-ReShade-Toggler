@@ -30,4 +30,5 @@ public:
 	static void ApplyReshadeState(bool enableReshade, const std::string& toggleState);
 	static void EnumerateEffects();
 	static void EnumeratePresets();
+	static void EnumerateMenus();
 };

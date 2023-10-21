@@ -469,7 +469,7 @@ void ReshadeToggler::LoadINI(const std::string& presetPath)
 
 	if (TimeUpdateIntervalTime < 0) { TimeUpdateIntervalTime = 0; }
 	if (TimeUpdateIntervalInterior < 0) { TimeUpdateIntervalInterior = 0; }
-	//if (TimeUpdateIntervalWeather < 0) { TimeUpdateIntervalWeather = 0; }
+	if (TimeUpdateIntervalWeather < 0) { TimeUpdateIntervalWeather = 0; }
 }
 
 void ReshadeToggler::LoadPreset(const std::string& Preset)
@@ -627,7 +627,7 @@ void ReshadeToggler::Setup()
 
 	ReshadeIntegration::EnumeratePresets();
 	ReshadeIntegration::EnumerateEffects();
-
+	ReshadeIntegration::EnumerateMenus();
 
 	CSimpleIniA ini;
 	ini.SetUnicode(false);

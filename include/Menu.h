@@ -27,7 +27,7 @@ private:
 	double minTime = 0.0;
 	double maxTime = 23.59;
 
-	std::string m_SaveFilename = "Default2.ini"; // Default filename
+	std::string m_SaveFilename = "Default2"; // Default filename
 
 	bool saveConfigPopupOpen = false; // Flag to control the visibility of the Save Config popup
 	char inputBuffer[256] = { 0 };    // Initialize the input buffer

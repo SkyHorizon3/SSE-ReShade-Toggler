@@ -96,3 +96,20 @@ void ReshadeIntegration::EnumeratePresets()
 	//sort Presets
 	std::sort(g_Presets.begin(), g_Presets.end());
 }
+
+void ReshadeIntegration::EnumerateMenus()
+{
+	const auto ui = RE::UI::GetSingleton();
+
+	const auto& menuMap = ui->menuMap;
+
+	for (const auto& menu : menuMap)
+	{
+		const auto& menuName = menu.first;
+		std::string menuNameStr(menuName);
+
+		g_MenuNames.push_back(menuNameStr);
+	}
+
+	std::sort(g_MenuNames.begin(), g_MenuNames.end());
+}

@@ -47,45 +47,7 @@ inline std::vector<std::string> g_ToggleState = { "All", "Specific" };
 inline std::string selectedPreset = "Default.ini";
 inline std::string selectedPresetPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\Default.ini";
 
-// Hard coding probably isn't a good idea... idgaf rn tho, migh fix later
-// TODO: Don't Hardcode
-inline std::vector<std::string> g_MenuNames = {
-	"BarterMenu",
-	"Book Menu",
-	"Console",
-	"Console Native UI Menu",
-	"ContainerMenu",
-	"Crafting Menu",
-	"Creation Club Menu",
-	"Credits Menu",
-	"Cursor Menu",
-	"Dialogue Menu",
-	"Fader Menu",
-	"FavoritesMenu",
-	"GiftMenu",
-	"HUD Menu",
-	"InventoryMenu",
-	"Journal Menu",
-	"Kinect Menu",
-	"LevelUp Menu",
-	"Loading Menu",
-	"LoadWaitSpinner",
-	"Lockpicking Menu",
-	"MagicMenu",
-	"Main Menu",
-	"MapMenu",
-	"MessageBoxMenu",
-	"Mist Menu",
-	"Mod Manager Menu",
-	"RaceSex Menu",
-	"SafeZoneMenu",
-	"Sleep/Wait Menu",
-	"StatsMenu",
-	"TitleSequence Menu",
-	"Training Menu",
-	"Tutorial Menu",
-	"TweenMenu"
-};
+inline std::vector<std::string> g_MenuNames;
 
 inline std::vector<std::string> g_WeatherFlags = {
 	"kNone",
