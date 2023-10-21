@@ -20,56 +20,41 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* e
 		return RE::BSEventNotifyControl::kContinue; // Skip if no open menus
 	}
 
-	std::unordered_map<std::string, std::unordered_set<std::string>> menuEffectsMap;
 	bool enableReshadeMenu = true;
-
-	if (ToggleStateMenus.find("All") != std::string::npos)
-	{
-		for (const Info& menu : menuList)
-		{
-			if (m_OpenMenus.find(menu.Name) != m_OpenMenus.end())
-			{
-				enableReshadeMenu = false;
-			}
-		}
-	}
-	else if (ToggleStateMenus.find("Specific") != std::string::npos)
-	{
-		for (const TechniqueInfo& info : techniqueMenuInfoList)
-		{
-			menuEffectsMap[info.Name] = { info.filename };
-		}
-
-		// Loop through menus and toggle effects accordingly
-		for (const auto& menuEntry : menuEffectsMap)
-		{
-			const std::string& menuName_ = menuEntry.first;
-			const std::unordered_set<std::string>& effectsToToggle = menuEntry.second;
-
-			// Check if the menu is open and if any of the associated effects should be toggled
-			if (m_OpenMenus.find(menuName_) != m_OpenMenus.end())
-			{
-				for (const TechniqueInfo& info : techniqueMenuInfoList)
-				{
-
-					if (effectsToToggle.find(info.filename) != effectsToToggle.end())
-					{
-						enableReshadeMenu = false;
-					}
-				}
-			}
-		}
-	}
 
 	if (s_pRuntime != nullptr)
 	{
 		if (ToggleStateMenus.find("All") != std::string::npos)
 		{
+			for (const Info& menu : menuList)
+			{
+				if (m_OpenMenus.find(menu.Name) != m_OpenMenus.end())
+				{
+					enableReshadeMenu = false;
+				}
+				else
+				{
+					enableReshadeMenu = true;
+				}
+			}
+
 			ReshadeIntegration::ApplyReshadeState(enableReshadeMenu, ToggleAllStateMenus);
 		}
 		else if (ToggleStateMenus.find("Specific") != std::string::npos)
 		{
-			ReshadeIntegration::ApplySpecificReshadeStates(enableReshadeMenu, Categories::Menu);
+			for (const TechniqueInfo& info : techniqueMenuInfoList)
+			{
+				if (m_OpenMenus.find(info.Name) != m_OpenMenus.end())
+				{
+					enableReshadeMenu = false;
+				}
+				else
+				{
+					enableReshadeMenu = true;
+				}
+
+				ReshadeIntegration::ApplyTechniqueState(enableReshadeMenu, info);
+			}
 		}
 
 		DEBUG_LOG(g_Logger, "Menu {} {}", menuName, opening ? "open" : "closed");
@@ -241,11 +226,15 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 				if (weather.Name == weatherflags)
 				{
 					enableReshadeWeather = false;
-					break;
 				}
+				else
+				{
+					enableReshadeWeather = true;
+				}
+
+				ReshadeIntegration::ApplyReshadeState(enableReshadeWeather, ToggleAllStateWeather);
 			}
 
-			ReshadeIntegration::ApplyReshadeState(enableReshadeWeather, ToggleAllStateWeather);
 		}
 		else if (ToggleStateWeather.find("Specific") != std::string::npos)
 		{
@@ -254,15 +243,16 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 				if (info.Name == weatherflags)
 				{
 					enableReshadeWeather = false;
-					break;
 				}
-			}
+				else
+				{
+					enableReshadeWeather = true;
+				}
 
-			ReshadeIntegration::ApplySpecificReshadeStates(enableReshadeWeather, Categories::Weather);
+				ReshadeIntegration::ApplyTechniqueState(enableReshadeWeather, info);
+			}
 		}
 	}
-
-
 
 	return RE::BSEventNotifyControl::kContinue;
 }
