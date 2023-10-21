@@ -7,13 +7,25 @@
 class ReshadeToggler
 {
 public:
-    void Setup();
-    void SetupLog();
-    void Load();
-    void LoadINI();
+
+	static ReshadeToggler* GetSingleton()
+	{
+		static ReshadeToggler toggler;
+		return &toggler;
+	}
+
+	using FunctionToExecute = RE::BSEventNotifyControl(*)();
+
+	void Setup();
+	void SetupLog();
+	void Load();
+	void LoadINI(const std::string& presetPath);
+	void LoadPreset(const std::string& Preset);
+	void SubmitToMainThread(const std::string& functionName, FunctionToExecute);
+	void ExecuteMainThreadQueue();
+	void Run();
 
 private:
-    std::vector<std::string> m_SpecificMenu;
-    std::vector<std::string> m_SpecificTime;
-    std::vector<std::string> m_INImenus;
+	std::unordered_map <std::string, FunctionToExecute> m_MainThreadQueue;
+	std::mutex m_MainThreadQueueMutex;
 };
