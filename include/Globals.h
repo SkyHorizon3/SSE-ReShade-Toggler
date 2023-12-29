@@ -1,11 +1,5 @@
 #pragma once
 
-#include <unordered_set>
-#include <string>
-#include <memory>
-#include "Reshade/reshade.hpp"
-#include <spdlog/sinks/basic_file_sink.h>
-
 struct TechniqueInfo
 {
 	std::string filename = "";

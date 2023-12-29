@@ -1,10 +1,14 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "reshadetoggler",
-  "version-string": "3.0.0",
+  "version-string": "3.1.0",
   "dependencies": [
-    "commonlibsse-ng",
     "simpleini",
+    "fmt",
+    "spdlog",
+    "directxtk",
+    "catch2",
+    "rapidcsv",
     "imgui"
   ]
 }
