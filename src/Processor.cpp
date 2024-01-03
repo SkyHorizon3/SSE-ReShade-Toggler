@@ -2,11 +2,15 @@
 #include "../include/ReshadeIntegration.h"
 
 
-RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* event, RE::BSTEventSource<RE::MenuOpenCloseEvent>*)
+RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_source)
 {
+	if (!a_event || !a_source)
+	{
+		return RE::BSEventNotifyControl::kContinue;
+	}
 
-	const auto& menuName = event->menuName;
-	auto& opening = event->opening;
+	const auto& menuName = a_event->menuName;
+	auto& opening = a_event->opening;
 
 	auto [it, inserted] = m_OpenMenus.emplace(menuName);
 

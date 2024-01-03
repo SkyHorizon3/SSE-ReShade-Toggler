@@ -6,8 +6,8 @@
 namespace logger = SKSE::log;
 
 #define DLLEXPORT __declspec(dllexport)
-extern "C" DLLEXPORT const char* NAME = "SSE ReShade Toggler";
-extern "C" DLLEXPORT const char* DESCRIPTION = "ReShade Toggler by SkyHorizon and PhilikusHD.";
+extern "C" DLLEXPORT const char* NAME = "SSE ReShade Effect Toggler";
+extern "C" DLLEXPORT const char* DESCRIPTION = "ReShade Effect Toggler by SkyHorizon and PhilikusHD.";
 
 reshade::api::effect_runtime* s_pRuntime = nullptr;
 
@@ -577,7 +577,7 @@ void ReshadeToggler::Setup()
 
 	CSimpleIniA ini;
 	ini.SetUnicode(false);
-	ini.LoadFile("Data\\SKSE\\Plugins\\ReShadeToggler.ini");
+	ini.LoadFile("Data\\SKSE\\Plugins\\ReShadeEffectToggler.ini");
 	selectedPresetPath = ini.GetValue("Presets", "PresetPath");
 	selectedPreset = ini.GetValue("Presets", "PresetName");
 
