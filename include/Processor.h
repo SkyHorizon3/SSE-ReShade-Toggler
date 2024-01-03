@@ -20,6 +20,7 @@ public:
 private:
 	bool IsTimeWithinRange(double currentTime, double startTime, double endTime);
 
+
 	Processor() = default;
 	~Processor() = default;
 	Processor(const Processor&) = delete;
@@ -28,4 +29,5 @@ private:
 	Processor& operator=(Processor&&) = delete;
 
 	std::unordered_set<std::string> m_OpenMenus;
+	bool m_IsMenuOpen = false;
 };

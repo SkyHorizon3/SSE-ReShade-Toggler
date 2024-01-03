@@ -16,8 +16,10 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* a
 
 	if (!opening)
 	{
+		m_IsMenuOpen = false;
 		m_OpenMenus.erase(it); // Mark menu as closed using the iterator
 	}
+	else { m_IsMenuOpen = true; }
 
 	if (m_OpenMenus.empty())
 	{
@@ -65,6 +67,7 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* a
 		g_Logger->critical("Uhm, what? How? s_pRuntime was null. How the fuck did this happen");
 	}
 
+
 	return RE::BSEventNotifyControl::kContinue;
 
 }
@@ -73,6 +76,11 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 {
 
 	std::lock_guard<std::mutex> timeLock(timeMutexTime);
+
+	if (m_IsMenuOpen)
+	{
+		return RE::BSEventNotifyControl::kContinue;
+	}
 
 	DEBUG_LOG(g_Logger, "Started ProcessTimeBasedToggling", nullptr);
 
@@ -137,6 +145,11 @@ RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling()
 {
 	std::lock_guard<std::mutex> lock(timeMutexInterior);
 
+	if (m_IsMenuOpen)
+	{
+		return RE::BSEventNotifyControl::kContinue;
+	}
+
 	const auto player = RE::PlayerCharacter::GetSingleton();
 
 	// DEBUG_LOG(g_Logger, "Got player Singleton: {} ", player->GetName());
@@ -179,6 +192,11 @@ RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling()
 RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
 {
 	std::lock_guard<std::mutex> lock(timeMutexWeather);
+
+	if (m_IsMenuOpen)
+	{
+		return RE::BSEventNotifyControl::kContinue;
+	}
 
 	const auto sky = RE::Sky::GetSingleton();
 
