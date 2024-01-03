@@ -57,7 +57,7 @@ void Menu::SettingsMenu()
 			ini.SetUnicode(false);
 			ini.SetValue("Presets", "PresetPath", selectedPresetPath.c_str());
 			ini.SetValue("Presets", "PresetName", selectedPreset.c_str());
-			ini.SaveFile("Data\\SKSE\\Plugins\\ReShadeToggler.ini");
+			ini.SaveFile("Data\\SKSE\\Plugins\\ReShadeEffectToggler.ini");
 		}
 		else
 		{
