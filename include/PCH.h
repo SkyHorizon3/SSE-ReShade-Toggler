@@ -5,11 +5,14 @@
 
 #include <unordered_set>
 #include <chrono>
+#include <vector>
 #include <memory>
 #include <Windows.h>
 #include <cstdint>
 #include <filesystem>
 
+#include <spdlog/sinks/basic_file_sink.h>
+#include <SimpleIni.h>
 
 using namespace std::literals;
 

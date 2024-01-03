@@ -26,6 +26,10 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_DEBUG OFF)
 set(Boost_USE_STATIC_LIBS ON)
 set(Boost_USE_STATIC_RUNTIME ON)
 
+#pdb
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi")
+set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /DEBUG /OPT:REF /OPT:ICF")
+
 # MSVC-specific settings
 if (CMAKE_GENERATOR MATCHES "Visual Studio")
     add_compile_definitions(_UNICODE)
@@ -57,7 +61,7 @@ if (CMAKE_GENERATOR MATCHES "Visual Studio")
 endif()
 
 # Find required packages (adjust as needed)
-find_package(CommonLibSSE CONFIG REQUIRED)
+add_subdirectory(${CMAKE_SOURCE_DIR}/extern/CommonLibSSE-NG CommonLibSSE)
 find_package(spdlog CONFIG REQUIRED)
 
 # Include directories and libraries

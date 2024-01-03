@@ -1,8 +1,5 @@
 #pragma once
 #include "Globals.h"
-#include <string>
-#include <vector>
-#include <SimpleIni.h>
 
 class ReshadeToggler
 {

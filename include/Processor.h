@@ -12,13 +12,15 @@ public:
 		return singleton;
 	}
 
-	RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* event, RE::BSTEventSource<RE::MenuOpenCloseEvent>* source) override;
+	RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_source) override;
 	RE::BSEventNotifyControl ProcessTimeBasedToggling();
 	RE::BSEventNotifyControl ProcessInteriorBasedToggling();
 	RE::BSEventNotifyControl ProcessWeatherBasedToggling();
 
-	bool IsTimeWithinRange(double currentTime, double startTime, double endTime);
 private:
+	bool IsTimeWithinRange(double currentTime, double startTime, double endTime);
+
+
 	Processor() = default;
 	~Processor() = default;
 	Processor(const Processor&) = delete;
@@ -27,4 +29,5 @@ private:
 	Processor& operator=(Processor&&) = delete;
 
 	std::unordered_set<std::string> m_OpenMenus;
+	bool m_IsMenuOpen = false;
 };
