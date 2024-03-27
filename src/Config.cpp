@@ -99,13 +99,11 @@ void Config::LoadINI(const std::string& presetPath)
 
 	for (const auto& key : MenusProcess_keys)
 	{
-		Info menus;
 		const char* menuItem = key.pItem;
 		const char* itemValue = ini.GetValue(sectionMenusProcess, menuItem, nullptr);
 
-		menus.Index = menuItem;
-		menus.Name = itemValue;
-		menuList.emplace_back(menus);
+		menuList.emplace_back(Info{ menuItem, itemValue });
+
 
 #ifndef NDEBUG
 		SKSE::log::debug("Menu:  {} - Value: {}", menuItem, itemValue);
