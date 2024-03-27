@@ -1,6 +1,5 @@
 #include "Globals.h"
 #include "Menu.h"
-#include "ReshadeToggler.h"
 #include "ReshadeIntegration.h"
 #include "Processor.h"
 #include "Config.h"
@@ -8,16 +7,19 @@
 void Menu::EnumerateEffects()
 {
 	const std::filesystem::path shadersDirectory = L"reshade-shaders\\Shaders";
-
-	for (const auto& entry : std::filesystem::recursive_directory_iterator(shadersDirectory))
+	if (std::filesystem::exists(shadersDirectory))
 	{
-		if (entry.is_regular_file() && entry.path().filename().extension() == ".fx")
+		for (const auto& entry : std::filesystem::recursive_directory_iterator(shadersDirectory))
 		{
-			m_Effects.emplace_back(entry.path().filename().string());
+			if (entry.is_regular_file() && entry.path().filename().extension() == ".fx")
+			{
+				m_Effects.emplace_back(entry.path().filename().string());
+			}
 		}
+		//sort files
+		std::sort(m_Effects.begin(), m_Effects.end());
 	}
-	//sort files
-	std::sort(m_Effects.begin(), m_Effects.end());
+
 }
 
 void Menu::EnumeratePresets()

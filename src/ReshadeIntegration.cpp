@@ -1,5 +1,4 @@
 #include "ReshadeIntegration.h"
-#include "ReShadeToggler.h"
 #include "Processor.h"
 
 void ReshadeIntegration::ApplyTechniqueState(bool enableReshade, const TechniqueInfo& info)
