@@ -25,7 +25,7 @@ private:
 	Processor& operator=(const Processor&) = delete;
 	Processor& operator=(Processor&&) = delete;
 
-	std::unordered_set<std::string> m_openMenus;
+	ankerl::unordered_dense::set<std::string> m_openMenus;
 	bool m_isMenuOpen = false;
 
 	std::mutex m_timeMutexTime;

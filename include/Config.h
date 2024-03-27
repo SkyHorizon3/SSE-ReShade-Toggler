@@ -20,7 +20,6 @@ private:
 	const char* m_itemMenuStateValue;
 	const char* m_itemSpecificMenu;
 
-	std::vector<std::string> m_iniMenus;
 	std::vector<std::string> m_specificMenu;
 
 	//Time
@@ -47,6 +46,5 @@ private:
 	const char* m_itemSpecificWeather;
 
 	std::vector<std::string> m_specificWeather;
-	std::vector<std::string> m_iniWeather;
 
 };

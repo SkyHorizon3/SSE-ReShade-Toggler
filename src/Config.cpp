@@ -59,7 +59,7 @@ void Config::LoadINI(const std::string& presetPath)
 	{
 		if (strcmp(key.pItem, "MenuToggleOption") != 0 && strcmp(key.pItem, "MenuToggleAllState") != 0)
 		{
-			m_specificMenu.push_back(key.pItem);
+			m_specificMenu.emplace_back(key.pItem);
 			//const char* menuItemgeneral = m_SpecificMenu.back().c_str();
 
 			// Check if the key starts with MenuToggleSpecificFile
@@ -69,12 +69,12 @@ void Config::LoadINI(const std::string& presetPath)
 				//DEBUG_LOG(g_Logger, "MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemMenuShaderToToggle);
 
 				// Construct the corresponding key for the state
-				std::string stateKeyName = togglePrefix02 + std::to_string(m_specificMenu.size());
+				const std::string& stateKeyName = togglePrefix02 + std::to_string(m_specificMenu.size());
 
 				// Retrieve the state using the constructed key
 				m_itemMenuStateValue = ini.GetValue(sectionMenusGeneral, stateKeyName.c_str(), nullptr);
 
-				std::string menuKeyName = togglePrefixMenu + std::to_string(m_specificMenu.size());
+				const std::string& menuKeyName = togglePrefixMenu + std::to_string(m_specificMenu.size());
 				m_itemSpecificMenu = ini.GetValue(sectionMenusGeneral, menuKeyName.c_str(), nullptr);
 
 				// Populate the technique info
@@ -82,7 +82,7 @@ void Config::LoadINI(const std::string& presetPath)
 				MenuInfo.filename = m_itemMenuShaderToToggle;
 				MenuInfo.state = m_itemMenuStateValue;
 				MenuInfo.Name = m_itemSpecificMenu;
-				techniqueMenuInfoList.push_back(MenuInfo);
+				techniqueMenuInfoList.emplace_back(MenuInfo);
 #ifndef NDEBUG
 				SKSE::log::debug("Populated TechniqueMenuInfo: {} - {}", m_itemMenuShaderToToggle, m_itemMenuStateValue);
 #endif
@@ -96,18 +96,16 @@ void Config::LoadINI(const std::string& presetPath)
 
 	//MenusProcess
 	ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
-	m_iniMenus.reserve(MenusProcess_keys.size()); // Reserve space for vector
 
 	for (const auto& key : MenusProcess_keys)
 	{
 		Info menus;
-		m_iniMenus.push_back(key.pItem);
-		const char* menuItem = m_iniMenus.back().c_str();
-		const char* itemValue = ini.GetValue(sectionMenusProcess, key.pItem, nullptr);
+		const char* menuItem = key.pItem;
+		const char* itemValue = ini.GetValue(sectionMenusProcess, menuItem, nullptr);
 
 		menus.Index = menuItem;
 		menus.Name = itemValue;
-		menuList.push_back(menus);
+		menuList.emplace_back(menus);
 
 #ifndef NDEBUG
 		SKSE::log::debug("Menu:  {} - Value: {}", menuItem, itemValue);
@@ -138,7 +136,7 @@ void Config::LoadINI(const std::string& presetPath)
 	TimeInfoAll.state = ToggleAllStateTime;
 	TimeInfoAll.startTime = m_itemTimeStartHourAll;
 	TimeInfoAll.stopTime = m_itemTimeStopHourAll;
-	techniqueTimeInfoListAll.push_back(TimeInfoAll);
+	techniqueTimeInfoListAll.emplace_back(TimeInfoAll);
 #ifndef NDEBUG
 	SKSE::log::debug("Set all effects to {} from {} - {}", ToggleAllStateTime, m_itemTimeStartHourAll, m_itemTimeStopHourAll);
 #endif
@@ -156,7 +154,7 @@ void Config::LoadINI(const std::string& presetPath)
 	{
 		if (strcmp(key.pItem, "TimeToggleOption") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStart") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStop") != 0)
 		{
-			m_specificTime.push_back(key.pItem);
+			m_specificTime.emplace_back(key.pItem);
 
 			//const char* timeItemGeneral = m_SpecificTime.back().c_str();
 
@@ -166,14 +164,14 @@ void Config::LoadINI(const std::string& presetPath)
 				//DEBUG_LOG(g_Logger, "TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
 
 				// Construct the corresponding key for the state
-				std::string stateKeyName = togglePrefix04 + std::to_string(m_specificTime.size());
+				const std::string& stateKeyName = togglePrefix04 + std::to_string(m_specificTime.size());
 
 				// Retrieve the state using the constructed key
 				m_itemTimeStateValue = ini.GetValue(sectionTimeGeneral, stateKeyName.c_str(), nullptr);
 
 				// Construct the corresponding key for the the start and stop times
-				std::string startTimeKey = togglePrefix05 + std::to_string(m_specificTime.size());
-				std::string endTimeKey = togglePrefix06 + std::to_string(m_specificTime.size());
+				const std::string& startTimeKey = togglePrefix05 + std::to_string(m_specificTime.size());
+				const std::string& endTimeKey = togglePrefix06 + std::to_string(m_specificTime.size());
 				m_itemTimeStartHour = ini.GetDoubleValue(sectionTimeGeneral, startTimeKey.c_str());
 				m_itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
 #ifndef NDEBUG
@@ -186,7 +184,7 @@ void Config::LoadINI(const std::string& presetPath)
 				TimeInfo.state = m_itemTimeStateValue;
 				TimeInfo.startTime = m_itemTimeStartHour;
 				TimeInfo.stopTime = m_itemTimeStopHour;
-				techniqueTimeInfoList.push_back(TimeInfo);
+				techniqueTimeInfoList.emplace_back(TimeInfo);
 #ifndef NDEBUG
 				SKSE::log::debug("Set effect {} to {} from {} - {}", m_itemTimeShaderToToggle, m_itemTimeStateValue, m_itemTimeStartHour, m_itemTimeStopHour);
 #endif
@@ -219,7 +217,7 @@ void Config::LoadINI(const std::string& presetPath)
 	{
 		if (strcmp(key.pItem, "InteriorToggleOption") != 0 && strcmp(key.pItem, "InteriorToggleAllState") != 0)
 		{
-			m_specificInterior.push_back(key.pItem);
+			m_specificInterior.emplace_back(key.pItem);
 			//const char* interiorItemgeneral = m_SpecificInterior.back().c_str();
 
 			// Check if the key starts with InteriorToggleSpecificFile
@@ -229,7 +227,7 @@ void Config::LoadINI(const std::string& presetPath)
 				//DEBUG_LOG(g_Logger, "InteriorToggleSpecificFile:  {} - Value: {}", interiorItemgeneral, itemInteriorShaderToToggle);
 
 				// Construct the corresponding key for the state
-				std::string stateKeyName = togglePrefix08 + std::to_string(m_specificInterior.size());
+				const std::string& stateKeyName = togglePrefix08 + std::to_string(m_specificInterior.size());
 
 				// Retrieve the state using the constructed key
 				m_itemInteriorStateValue = ini.GetValue(sectionInteriorGeneral, stateKeyName.c_str(), nullptr);
@@ -238,7 +236,7 @@ void Config::LoadINI(const std::string& presetPath)
 				TechniqueInfo InteriorInfo;
 				InteriorInfo.filename = m_itemInteriorShaderToToggle;
 				InteriorInfo.state = m_itemInteriorStateValue;
-				techniqueInteriorInfoList.push_back(InteriorInfo);
+				techniqueInteriorInfoList.emplace_back(InteriorInfo);
 #ifndef NDEBUG
 				SKSE::log::debug("Populated TechniqueInteriorInfo: {} - {}", m_itemInteriorShaderToToggle, m_itemInteriorStateValue);
 #endif
@@ -272,7 +270,7 @@ void Config::LoadINI(const std::string& presetPath)
 	{
 		if (strcmp(key.pItem, "WeatherToggleOption") != 0 && strcmp(key.pItem, "WeatherToggleAllState") != 0)
 		{
-			m_specificWeather.push_back(key.pItem);
+			m_specificWeather.emplace_back(key.pItem);
 			//const char* weatherItemgeneral = m_SpecificWeather.back().c_str();
 
 			if (strncmp(key.pItem, togglePrefix09, strlen(togglePrefix09)) == 0)
@@ -280,18 +278,18 @@ void Config::LoadINI(const std::string& presetPath)
 				m_itemWeatherShaderToToggle = ini.GetValue(sectionWeatherGeneral, key.pItem, nullptr);
 				//DEBUG_LOG(g_Logger, "WeatherToggleSpecificFile:  {} - Value: {}", weatherItemgeneral, itemWeatherShaderToToggle);
 
-				std::string stateKeyName = togglePrefix10 + std::to_string(m_specificWeather.size());
+				const std::string& stateKeyName = togglePrefix10 + std::to_string(m_specificWeather.size());
 
 				m_itemWeatherStateValue = ini.GetValue(sectionWeatherGeneral, stateKeyName.c_str(), nullptr);
 
-				std::string weatherKeyName = togglePrefixItemWeather + std::to_string(m_specificWeather.size());
+				const std::string& weatherKeyName = togglePrefixItemWeather + std::to_string(m_specificWeather.size());
 				m_itemSpecificWeather = ini.GetValue(sectionWeatherGeneral, weatherKeyName.c_str(), nullptr);
 
 				TechniqueInfo WeatherInfo;
 				WeatherInfo.filename = m_itemWeatherShaderToToggle;
 				WeatherInfo.state = m_itemWeatherStateValue;
 				WeatherInfo.Name = m_itemSpecificWeather;
-				techniqueWeatherInfoList.push_back(WeatherInfo);
+				techniqueWeatherInfoList.emplace_back(WeatherInfo);
 #ifndef NDEBUG
 				SKSE::log::debug("Populated TechniqueWeatherInfo: {} - {}", m_itemWeatherShaderToToggle, m_itemWeatherStateValue);
 #endif
@@ -305,18 +303,14 @@ void Config::LoadINI(const std::string& presetPath)
 
 	//WeatherProcess
 	ini.GetAllKeys(sectionWeatherProcess, WeatherProcess_keys);
-	m_iniWeather.reserve(WeatherProcess_keys.size()); // Reserve space for vector
 
 	for (const auto& key : WeatherProcess_keys)
 	{
-		Info weather;
-		m_iniWeather.push_back(key.pItem);
-		const char* weatherItem = m_iniWeather.back().c_str();
-		const char* weatheritemValue = ini.GetValue(sectionWeatherProcess, key.pItem, nullptr);
+		const char* weatherItem = key.pItem;
+		const char* weatheritemValue = ini.GetValue(sectionWeatherProcess, weatherItem, nullptr);
 
-		weather.Index = weatherItem;
-		weather.Name = weatheritemValue;
-		weatherList.push_back(weather);
+		weatherList.emplace_back(Info{ weatherItem, weatheritemValue });
+
 #ifndef NDEBUG
 		SKSE::log::debug("Weather:  {} - Value: {}", weatherItem, weatheritemValue);
 #endif
@@ -347,7 +341,6 @@ void Config::LoadPreset(const std::string& Preset)
 
 	// Empty every vector
 	m_specificMenu.clear();
-	m_iniMenus.clear();
 	techniqueMenuInfoList.clear();
 	menuList.clear();
 	ToggleStateMenus.clear();
@@ -378,7 +371,6 @@ void Config::LoadPreset(const std::string& Preset)
 	TimeUpdateIntervalInterior = 0;
 
 	m_specificWeather.clear();
-	m_iniWeather.clear();
 	weatherList.clear();
 	techniqueWeatherInfoList.clear();
 	ToggleStateWeather.clear();
