@@ -1,8 +1,54 @@
-#include "../include/Globals.h"
-#include "../include/Menu.h"
-#include "../include/ReshadeToggler.h"
-#include "../include/ReshadeIntegration.h"
-#include "../include/Processor.h"
+#include "Globals.h"
+#include "Menu.h"
+#include "ReshadeToggler.h"
+#include "ReshadeIntegration.h"
+#include "Processor.h"
+#include "Config.h"
+
+void Menu::EnumerateEffects()
+{
+	const std::filesystem::path shadersDirectory = L"reshade-shaders\\Shaders";
+
+	for (const auto& entry : std::filesystem::recursive_directory_iterator(shadersDirectory))
+	{
+		if (entry.is_regular_file() && entry.path().filename().extension() == ".fx")
+		{
+			m_Effects.emplace_back(entry.path().filename().string());
+		}
+	}
+	//sort files
+	std::sort(m_Effects.begin(), m_Effects.end());
+}
+
+void Menu::EnumeratePresets()
+{
+	const std::filesystem::path presetDirectory = L"Data\\SKSE\\Plugins\\TogglerConfigs\\";
+
+	for (const auto& preset : std::filesystem::recursive_directory_iterator(presetDirectory))
+	{
+		if (preset.is_regular_file() && preset.path().filename().extension() == ".ini")
+		{
+			m_Presets.emplace_back(preset.path().filename().string());
+		}
+	}
+	//sort presets
+	std::sort(m_Presets.begin(), m_Presets.end());
+}
+
+void Menu::EnumerateMenus()
+{
+	const auto& menuMap = RE::UI::GetSingleton()->menuMap;
+
+	for (const auto& menu : menuMap)
+	{
+		const auto& menuName = menu.first;
+		std::string menuNameStr(menuName);
+
+		m_MenuNames.emplace_back(menuNameStr);
+	}
+
+	std::sort(m_MenuNames.begin(), m_MenuNames.end());
+}
 
 bool Menu::CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags)
 {
@@ -44,15 +90,16 @@ void Menu::SettingsMenu()
 
 	SaveConfig();
 
-	CreateCombo("Select Preset", selectedPreset, g_Presets, ImGuiComboFlags_None);
+	CreateCombo("Select Preset", selectedPreset, m_Presets, ImGuiComboFlags_None);
 	ImGui::SameLine();
 	if (ImGui::Button("Load Preset"))
 	{
 		selectedPresetPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\" + selectedPreset;
-		// Load the selected preset (you can implement this logic)
+
+		// Load the selected preset 
 		if (std::filesystem::exists(selectedPresetPath))
 		{
-			ReshadeToggler::GetSingleton()->LoadPreset(selectedPreset);
+			Config::GetSingleton()->LoadPreset(selectedPreset);
 			CSimpleIniA ini;
 			ini.SetUnicode(false);
 			ini.SetValue("Presets", "PresetPath", selectedPresetPath.c_str());
@@ -61,14 +108,14 @@ void Menu::SettingsMenu()
 		}
 		else
 		{
-			g_Logger->info("Tried to load presetpath {}. Preset doesn't exist!", selectedPresetPath);
+			SKSE::log::info("Tried to load presetpath {}. Preset doesn't exist!", selectedPresetPath);
 		}
 	}
 
 	if (ImGui::Button("Refresh"))
 	{
-		g_Presets.clear();
-		ReshadeIntegration::EnumeratePresets();
+		m_Presets.clear();
+		EnumeratePresets();
 	}
 
 	if (ImGui::CollapsingHeader("General", ImGuiTreeNodeFlags_CollapsingHeader))
@@ -113,13 +160,8 @@ void Menu::SettingsMenu()
 // I LOVE THIS. ALL HAIL SimpleINI!!!!!!
 void Menu::Save(const std::string& filename)
 {
-	// Define the path to your mod's TogglerConfigs directory
-	std::string configDirectory = "Data\\SKSE\\Plugins\\TogglerConfigs"; // Update this path as needed
-
-	// Ensure that the directory exists, create it if necessary
+	std::string configDirectory = "Data\\SKSE\\Plugins\\TogglerConfigs";
 	std::filesystem::create_directories(configDirectory);
-
-	// Combine the directory path and the provided filename
 	std::string fullPath = configDirectory + "\\" + filename + ".ini";
 
 	CSimpleIniA ini;
@@ -247,8 +289,8 @@ void Menu::SaveConfig()
 				Save(filename);
 
 				//Refresh
-				g_Presets.clear();
-				ReshadeIntegration::EnumeratePresets();
+				m_Presets.clear();
+				EnumeratePresets();
 
 				// Close the modal and reset the flag
 				ImGui::CloseCurrentPopup();
@@ -273,14 +315,13 @@ void Menu::RenderInfoPage()
 {
 	if (ImGui::Checkbox("Enable Menu", &EnableMenus))
 	{
-		auto& eventProcessorMenu = Processor::GetSingleton();
 		if (EnableMenus)
 		{
-			RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
+			RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Processor::GetSingleton());
 		}
 		else
 		{
-			RE::UI::GetSingleton()->RemoveEventSink<RE::MenuOpenCloseEvent>(&eventProcessorMenu);
+			RE::UI::GetSingleton()->RemoveEventSink<RE::MenuOpenCloseEvent>(Processor::GetSingleton());
 		}
 	}
 
@@ -288,7 +329,7 @@ void Menu::RenderInfoPage()
 	{
 		if (EnableTime && isLoaded)
 		{
-			Processor::GetSingleton().ProcessTimeBasedToggling();
+			Processor::GetSingleton()->ProcessTimeBasedToggling();
 		}
 	}
 
@@ -296,7 +337,7 @@ void Menu::RenderInfoPage()
 	{
 		if (EnableInterior && isLoaded)
 		{
-			Processor::GetSingleton().ProcessInteriorBasedToggling();
+			Processor::GetSingleton()->ProcessInteriorBasedToggling();
 		}
 	}
 
@@ -304,7 +345,7 @@ void Menu::RenderInfoPage()
 	{
 		if (EnableWeather && isLoaded && !IsInInteriorCell)
 		{
-			Processor::GetSingleton().ProcessWeatherBasedToggling();
+			Processor::GetSingleton()->ProcessWeatherBasedToggling();
 		}
 	}
 
@@ -321,12 +362,12 @@ void Menu::RenderInfoPage()
 void Menu::RenderMenusPage()
 {
 	ImGui::SeparatorText("Toggle State");
-	CreateCombo("Menu Toggle State", ToggleStateMenus, g_ToggleState, ImGuiComboFlags_None);
+	CreateCombo("Menu Toggle State", ToggleStateMenus, m_ToggleState, ImGuiComboFlags_None);
 
 	if (ToggleStateMenus.find("All") != std::string::npos)
 	{
 		ImGui::SameLine();
-		CreateCombo("MenuAllState", ToggleAllStateMenus, g_EffectStateMenu, ImGuiComboFlags_None);
+		CreateCombo("MenuAllState", ToggleAllStateMenus, m_EffectState, ImGuiComboFlags_None);
 
 		// Display all the Menus
 		ImGui::SeparatorText("Menus");
@@ -345,7 +386,7 @@ void Menu::RenderMenusPage()
 
 				ImGui::Text("%s:", menuIndexComboID.c_str());
 				ImGui::SameLine();
-				if (CreateCombo(menuNameComboID.c_str(), currentMenuName, g_MenuNames, ImGuiComboFlags_None)) { valueChanged = true; }
+				if (CreateCombo(menuNameComboID.c_str(), currentMenuName, m_MenuNames, ImGuiComboFlags_None)) { valueChanged = true; }
 
 				// Add a button to remove the effect
 				if (ImGui::Button(removeID.c_str()))
@@ -361,7 +402,9 @@ void Menu::RenderMenusPage()
 				{
 					iniMenus.Index = "Menu" + std::to_string(i);
 					iniMenus.Name = currentMenuName;
-					DEBUG_LOG(g_Logger, "New Menu Name:{} - {}", iniMenus.Index, iniMenus.Name);
+#ifndef NDEBUG
+					SKSE::log::info("New Menu Name:{} - {}", iniMenus.Index, iniMenus.Name);
+#endif
 				}
 			}
 		}
@@ -403,10 +446,10 @@ void Menu::RenderMenusPage()
 					std::string currentEffectState = menuInfo.state;
 					std::string currentEffectMenu = menuInfo.Name;
 
-					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, m_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
-					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectStateMenu, ImGuiComboFlags_None)) { valueChanged = true; }
-					if (CreateCombo(menuID.c_str(), currentEffectMenu, g_MenuNames, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectStateID.c_str(), currentEffectState, m_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(menuID.c_str(), currentEffectMenu, m_MenuNames, ImGuiComboFlags_None)) { valueChanged = true; }
 
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
@@ -446,7 +489,7 @@ void Menu::RenderMenusPage()
 void Menu::RenderTimePage()
 {
 	ImGui::SeparatorText("Toggle State");
-	CreateCombo("Time Toggle State", ToggleStateTime, g_ToggleState, ImGuiComboFlags_None);
+	CreateCombo("Time Toggle State", ToggleStateTime, m_ToggleState, ImGuiComboFlags_None);
 
 	if (ToggleStateTime.find("All") != std::string::npos)
 	{
@@ -460,7 +503,7 @@ void Menu::RenderTimePage()
 			double currentStopTime = info.stopTime;
 
 			ImGui::SameLine();
-			if (CreateCombo("TimeAllState", ToggleAllStateTime, g_EffectStateTime, ImGuiComboFlags_None)) valueChanged = true;
+			if (CreateCombo("TimeAllState", ToggleAllStateTime, m_EffectState, ImGuiComboFlags_None)) valueChanged = true;
 			ImGui::SetNextItemWidth(200.0f);
 			if (ImGui::SliderScalar("Start Time", ImGuiDataType_Double, &currentStartTime, &minTime, &maxTime, "%.2f")) valueChanged = true;
 			ImGui::SameLine();
@@ -503,9 +546,9 @@ void Menu::RenderTimePage()
 
 					bool valueChanged = false;
 
-					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, m_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
-					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectStateTime, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectStateID.c_str(), currentEffectState, m_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SetNextItemWidth(200.0f);
 					if (ImGui::SliderScalar(startTimeID.c_str(), ImGuiDataType_Double, &currentStartTime, &minTime, &maxTime, "%.2f")) { valueChanged = true; }
 					ImGui::SameLine();
@@ -557,12 +600,12 @@ void Menu::RenderTimePage()
 void Menu::RenderInteriorPage()
 {
 	ImGui::SeparatorText("Toggle State");
-	CreateCombo("Interior Toggle State", ToggleStateInterior, g_ToggleState, ImGuiComboFlags_None);
+	CreateCombo("Interior Toggle State", ToggleStateInterior, m_ToggleState, ImGuiComboFlags_None);
 
 	if (ToggleStateInterior.find("All") != std::string::npos)
 	{
 		ImGui::SameLine();
-		CreateCombo("InteriorAllState##", ToggleAllStateInterior, g_EffectStateInterior, ImGuiComboFlags_None);
+		CreateCombo("InteriorAllState##", ToggleAllStateInterior, m_EffectState, ImGuiComboFlags_None);
 	}
 
 	bool valueChanged = false;
@@ -586,9 +629,9 @@ void Menu::RenderInteriorPage()
 					std::string currentEffectFileName = interiorInfo.filename;
 					std::string currentEffectState = interiorInfo.state;
 
-					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, m_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
-					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectStateInterior, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectStateID.c_str(), currentEffectState, m_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
 
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
@@ -626,12 +669,12 @@ void Menu::RenderInteriorPage()
 void Menu::RenderWeatherPage()
 {
 	ImGui::SeparatorText("Toggle State");
-	CreateCombo("Weather Toggle State", ToggleStateWeather, g_ToggleState, ImGuiComboFlags_None);
+	CreateCombo("Weather Toggle State", ToggleStateWeather, m_ToggleState, ImGuiComboFlags_None);
 
 	if (ToggleStateWeather.find("All") != std::string::npos)
 	{
 		ImGui::SameLine();
-		CreateCombo("WeatherAllState", ToggleAllStateWeather, g_EffectStateWeather, ImGuiComboFlags_None);
+		CreateCombo("WeatherAllState", ToggleAllStateWeather, m_EffectState, ImGuiComboFlags_None);
 
 		// Display all the Weathers
 		ImGui::SeparatorText("Weathers");
@@ -650,7 +693,7 @@ void Menu::RenderWeatherPage()
 
 				ImGui::Text("%s:", weatherIndexComboID.c_str());
 				ImGui::SameLine();
-				if (CreateCombo(weatherNameComboID.c_str(), currentWeatherName, g_WeatherFlags, ImGuiComboFlags_None)) { valueChanged = true; }
+				if (CreateCombo(weatherNameComboID.c_str(), currentWeatherName, m_WeatherFlags, ImGuiComboFlags_None)) { valueChanged = true; }
 
 				// Add a button to remove the effect
 				if (ImGui::Button(removeID.c_str()))
@@ -706,10 +749,10 @@ void Menu::RenderWeatherPage()
 					std::string currentEffectState = weatherInfo.state;
 					std::string currentWeatherFlag = weatherInfo.Name;
 
-					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, g_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, m_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
-					if (CreateCombo(effectStateID.c_str(), currentEffectState, g_EffectStateWeather, ImGuiComboFlags_None)) { valueChanged = true; }
-					if (CreateCombo(weatherID.c_str(), currentWeatherFlag, g_WeatherFlags, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(effectStateID.c_str(), currentEffectState, m_EffectState, ImGuiComboFlags_None)) { valueChanged = true; }
+					if (CreateCombo(weatherID.c_str(), currentWeatherFlag, m_WeatherFlags, ImGuiComboFlags_None)) { valueChanged = true; }
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
 					{

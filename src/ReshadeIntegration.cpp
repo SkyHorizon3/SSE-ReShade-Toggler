@@ -1,5 +1,6 @@
-#include "../include/ReshadeIntegration.h"
-#include "../include/ReShadeToggler.h"
+#include "ReshadeIntegration.h"
+#include "ReShadeToggler.h"
+#include "Processor.h"
 
 void ReshadeIntegration::ApplyTechniqueState(bool enableReshade, const TechniqueInfo& info)
 {
@@ -49,14 +50,12 @@ void ReshadeIntegration::ApplySpecificReshadeStates(bool enableReshade, Categori
 		}
 		break;
 	default:
-		g_Logger->info("Invalid option");
+		SKSE::log::error("Invalid option");
 	}
 }
 
 void ReshadeIntegration::ApplyReshadeState(bool enableReshade, const std::string& toggleState)
 {
-	//DEBUG_LOG(g_Logger, "All is enabled! - EnableReshade: {}", enableReshade);
-
 	if (toggleState == "off")
 	{
 		s_pRuntime->set_effects_state(enableReshade);
@@ -65,51 +64,4 @@ void ReshadeIntegration::ApplyReshadeState(bool enableReshade, const std::string
 	{
 		s_pRuntime->set_effects_state(!enableReshade);
 	}
-}
-
-void ReshadeIntegration::EnumerateEffects()
-{
-	const std::filesystem::path shadersDirectory = L"reshade-shaders\\Shaders";
-
-	for (const auto& entry : std::filesystem::recursive_directory_iterator(shadersDirectory))
-	{
-		if (entry.is_regular_file() && entry.path().filename().extension() == ".fx")
-		{
-			g_Effects.push_back(entry.path().filename().string());
-		}
-	}
-	//sort files
-	std::sort(g_Effects.begin(), g_Effects.end());
-}
-
-void ReshadeIntegration::EnumeratePresets()
-{
-	const std::filesystem::path presetDirectory = L"Data\\SKSE\\Plugins\\TogglerConfigs\\";
-
-	for (const auto& preset : std::filesystem::recursive_directory_iterator(presetDirectory))
-	{
-		if (preset.is_regular_file() && preset.path().filename().extension() == ".ini")
-		{
-			g_Presets.push_back(preset.path().filename().string());
-		}
-	}
-	//sort presets
-	std::sort(g_Presets.begin(), g_Presets.end());
-}
-
-void ReshadeIntegration::EnumerateMenus()
-{
-	const auto ui = RE::UI::GetSingleton();
-
-	const auto& menuMap = ui->menuMap;
-
-	for (const auto& menu : menuMap)
-	{
-		const auto& menuName = menu.first;
-		std::string menuNameStr(menuName);
-
-		g_MenuNames.push_back(menuNameStr);
-	}
-
-	std::sort(g_MenuNames.begin(), g_MenuNames.end());
 }

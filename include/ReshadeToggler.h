@@ -1,5 +1,4 @@
 #pragma once
-#include "Globals.h"
 
 class ReshadeToggler
 {
@@ -16,13 +15,11 @@ public:
 	void Setup();
 	void SetupLog();
 	void Load();
-	void LoadINI(const std::string& presetPath);
-	void LoadPreset(const std::string& Preset);
 	void SubmitToMainThread(const std::string& functionName, FunctionToExecute);
 	void ExecuteMainThreadQueue();
 	void Run();
 
 private:
-	std::unordered_map <std::string, FunctionToExecute> m_MainThreadQueue;
-	std::mutex m_MainThreadQueueMutex;
+	std::unordered_map <std::string, FunctionToExecute> m_mainThreadQueue;
+	std::mutex m_mainThreadQueueMutex;
 };

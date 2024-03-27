@@ -1,15 +1,12 @@
 #pragma once
-#include "PCH.h"
-#include "Globals.h"
-#include "ReShadeToggler.h"
 
 class Processor : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
 public:
-	static Processor& GetSingleton()
+	static Processor* GetSingleton()
 	{
 		static Processor singleton;
-		return singleton;
+		return &singleton;
 	}
 
 	RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_source) override;
@@ -28,6 +25,11 @@ private:
 	Processor& operator=(const Processor&) = delete;
 	Processor& operator=(Processor&&) = delete;
 
-	std::unordered_set<std::string> m_OpenMenus;
-	bool m_IsMenuOpen = false;
+	std::unordered_set<std::string> m_openMenus;
+	bool m_isMenuOpen = false;
+
+	std::mutex m_timeMutexTime;
+	std::mutex m_vectorMutexTime;
+	std::mutex m_timeMutexInterior;
+	std::mutex m_timeMutexWeather;
 };
