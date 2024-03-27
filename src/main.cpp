@@ -3,16 +3,13 @@
 #include "Globals.h"
 #include "Menu.h"
 #include "Config.h"
+#include "Thread.h"
 
 #define DLLEXPORT __declspec(dllexport)
 extern "C" DLLEXPORT const char* NAME = "SSE ReShade Effect Toggler";
 extern "C" DLLEXPORT const char* DESCRIPTION = "ReShade Effect Toggler by SkyHorizon and PhilikusHD.";
 reshade::api::effect_runtime* s_pRuntime = nullptr;
 HMODULE g_hModule = nullptr;
-
-using FunctionToExecute = RE::BSEventNotifyControl(*)();
-std::unordered_map <std::string, FunctionToExecute> m_mainThreadQueue;
-std::mutex m_mainThreadQueueMutex;
 
 // Callback when Reshade begins effects
 static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
@@ -58,100 +55,6 @@ void SetupLog()
 	spdlog::set_default_logger(std::move(loggerPtr));
 }
 
-void SubmitToMainThread(const std::string& functionName, FunctionToExecute function)
-{
-	std::scoped_lock<std::mutex> lock(m_mainThreadQueueMutex);
-
-
-	m_mainThreadQueue[functionName] = function;
-	//g_Logger->info("Submit {}", functionName);
-}
-
-void ExecuteMainThreadQueue()
-{
-	std::scoped_lock<std::mutex> lock(m_mainThreadQueueMutex);
-
-	for (const auto& func : m_mainThreadQueue)
-	{
-		//g_Logger->info("Function: {}", func.first.c_str());
-		func.second(); // Funktion ausführen
-	}
-	m_mainThreadQueue.clear();
-
-}
-
-void Run()
-{
-	if (m_mainThreadQueue.find("Weather") != m_mainThreadQueue.end())
-	{
-		//g_Logger->info("Attaching WeatherThread");
-		ExecuteMainThreadQueue();
-	}
-
-	if (m_mainThreadQueue.find("Interior") != m_mainThreadQueue.end())
-	{
-		//g_Logger->info("Attaching InteriorThread");
-		ExecuteMainThreadQueue();
-	}
-
-	if (m_mainThreadQueue.find("Time") != m_mainThreadQueue.end())
-	{
-		//g_Logger->info("Attaching TimeThread");
-		ExecuteMainThreadQueue();
-	}
-
-	if (EnableMenus)
-	{
-		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Processor::GetSingleton());
-	}
-	else
-	{
-		RE::UI::GetSingleton()->RemoveEventSink<RE::MenuOpenCloseEvent>(Processor::GetSingleton());
-	}
-
-}
-
-void RuntimeThread()
-{
-	SKSE::log::info("Attaching RuntimeThread");
-
-	while (isLoaded)
-	{
-
-		if (EnableTime)
-		{
-			//g_Logger->info("Adding Time to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalTime));
-			SubmitToMainThread("Time", []() -> RE::BSEventNotifyControl {
-				return Processor::GetSingleton()->ProcessTimeBasedToggling();
-				});
-		}
-
-		if (EnableInterior)
-		{
-			//g_Logger->info("Adding Interior to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalInterior));
-			SubmitToMainThread("Interior", []() -> RE::BSEventNotifyControl {
-				return Processor::GetSingleton()->ProcessInteriorBasedToggling();
-				});
-		}
-
-		if (EnableWeather && !IsInInteriorCell)
-		{
-
-			//g_Logger->info("Adding Weather to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalWeather));
-			SubmitToMainThread("Weather", []() -> RE::BSEventNotifyControl {
-				return Processor::GetSingleton()->ProcessWeatherBasedToggling();
-				});
-
-		}
-
-		std::this_thread::sleep_for(std::chrono::milliseconds(500));
-		Run();
-	}
-}
-
 // Load Reshade and register events
 bool Load()
 {
@@ -178,7 +81,7 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 		isLoaded = true;
 		if (isLoaded)
 		{
-			std::thread(RuntimeThread).detach();
+			std::thread(Thread::RuntimeThread).detach();
 		}
 		break;
 
@@ -199,7 +102,7 @@ int __stdcall DllMain(HMODULE hModule, uint32_t fdwReason, void*)
 	{
 		if (isLoaded)
 		{
-			std::thread(RuntimeThread).join();
+			std::thread(Thread::RuntimeThread).join();
 		}
 		unregister_addon_events();
 		reshade::unregister_addon(hModule);
