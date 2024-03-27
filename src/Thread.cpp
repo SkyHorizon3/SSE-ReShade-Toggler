@@ -1,7 +1,7 @@
 #include "Thread.h"
 #include "Globals.h"
 
-std::unordered_map<std::string, Thread::ProcessFunction> Thread::m_mainThreadQueue;
+ankerl::unordered_dense::map<std::string, Thread::ProcessFunction> Thread::m_mainThreadQueue;
 std::mutex Thread::m_mainThreadQueueMutex;
 
 void Thread::SubmitToMainThread(const std::string& functionName, ProcessFunction function)
@@ -26,21 +26,9 @@ void Thread::ExecuteMainThreadQueue()
 
 void Thread::Run()
 {
-	if (m_mainThreadQueue.find("Weather") != m_mainThreadQueue.end())
+	if (m_mainThreadQueue.find("Weather") != m_mainThreadQueue.end() || m_mainThreadQueue.find("Interior") != m_mainThreadQueue.end() || m_mainThreadQueue.find("Time") != m_mainThreadQueue.end())
 	{
 		//g_Logger->info("Attaching WeatherThread");
-		ExecuteMainThreadQueue();
-	}
-
-	if (m_mainThreadQueue.find("Interior") != m_mainThreadQueue.end())
-	{
-		//g_Logger->info("Attaching InteriorThread");
-		ExecuteMainThreadQueue();
-	}
-
-	if (m_mainThreadQueue.find("Time") != m_mainThreadQueue.end())
-	{
-		//g_Logger->info("Attaching TimeThread");
 		ExecuteMainThreadQueue();
 	}
 

@@ -14,6 +14,6 @@ private:
 	static void ExecuteMainThreadQueue();
 	static void Run();
 
-	static std::unordered_map<std::string, ProcessFunction> m_mainThreadQueue;
+	static ankerl::unordered_dense::map<std::string, ProcessFunction> m_mainThreadQueue;
 	static std::mutex m_mainThreadQueueMutex;
 };
