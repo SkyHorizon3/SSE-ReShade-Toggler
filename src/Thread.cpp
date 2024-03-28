@@ -28,19 +28,8 @@ void Thread::Run()
 {
 	if (m_mainThreadQueue.find("Weather") != m_mainThreadQueue.end() || m_mainThreadQueue.find("Interior") != m_mainThreadQueue.end() || m_mainThreadQueue.find("Time") != m_mainThreadQueue.end())
 	{
-		//g_Logger->info("Attaching WeatherThread");
 		ExecuteMainThreadQueue();
 	}
-
-	if (m_Conf.EnableMenus)
-	{
-		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Processor::GetSingleton());
-	}
-	else
-	{
-		RE::UI::GetSingleton()->RemoveEventSink<RE::MenuOpenCloseEvent>(Processor::GetSingleton());
-	}
-
 }
 
 void Thread::RuntimeThread()

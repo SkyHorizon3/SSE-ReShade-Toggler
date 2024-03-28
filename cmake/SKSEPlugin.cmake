@@ -71,6 +71,11 @@ target_include_directories("${PROJECT_NAME}" PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/
 target_include_directories("${PROJECT_NAME}" PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Link libraries
-target_link_libraries("${PROJECT_NAME}" PUBLIC CommonLibSSE::CommonLibSSE)
-target_link_libraries("${PROJECT_NAME}" PRIVATE unordered_dense::unordered_dense)
-target_link_libraries("${PROJECT_NAME}" PUBLIC yaml-cpp::yaml-cpp)
+target_link_libraries(
+    "${PROJECT_NAME}" 
+    PUBLIC 
+    CommonLibSSE::CommonLibSSE
+    PRIVATE
+    unordered_dense::unordered_dense
+    yaml-cpp::yaml-cpp
+)

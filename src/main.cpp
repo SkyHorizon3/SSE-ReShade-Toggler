@@ -133,7 +133,6 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 	menu->selectedPresetPath = ini.GetValue("Presets", "PresetPath");
 	menu->selectedPreset = ini.GetValue("Presets", "PresetName");
 
-
 	if (std::filesystem::exists(menu->selectedPresetPath))
 	{
 		Config::GetSingleton()->DeserializePreset(menu->selectedPresetPath);
@@ -142,7 +141,6 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 	{
 		Config::GetSingleton()->DeserializePreset("Data\\SKSE\\Plugins\\TogglerConfigs\\Default.yaml");
 	}
-
 
 	SKSE::GetMessagingInterface()->RegisterListener(MessageListener);
 	SKSE::log::info("{} v{} loaded", Plugin::NAME, Plugin::VERSION);

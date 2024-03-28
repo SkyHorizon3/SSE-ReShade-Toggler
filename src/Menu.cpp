@@ -28,7 +28,7 @@ void Menu::EnumeratePresets()
 
 	for (const auto& preset : std::filesystem::recursive_directory_iterator(presetDirectory))
 	{
-		if (preset.is_regular_file() && preset.path().filename().extension() == ".ini")
+		if (preset.is_regular_file() && preset.path().filename().extension() == ".yaml")
 		{
 			m_Presets.emplace_back(preset.path().filename().string());
 		}

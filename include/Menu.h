@@ -19,7 +19,6 @@ private:
 
 	bool CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags);
 
-	void Save(const std::string& filename);
 	void SaveConfig();
 
 	void RenderInfoPage();
@@ -60,6 +59,6 @@ private:
 
 public:
 
-	std::string selectedPreset = "Default.ini";
-	std::string selectedPresetPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\Default.ini";
+	std::string selectedPreset = "Default.yaml";
+	std::string selectedPresetPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\Default.yaml";
 };
