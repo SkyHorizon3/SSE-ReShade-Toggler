@@ -32,7 +32,7 @@ void Thread::Run()
 		ExecuteMainThreadQueue();
 	}
 
-	if (EnableMenus)
+	if (m_Conf.EnableMenus)
 	{
 		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Processor::GetSingleton());
 	}
@@ -50,24 +50,24 @@ void Thread::RuntimeThread()
 	while (isLoaded)
 	{
 
-		if (EnableTime)
+		if (m_Conf.EnableTime)
 		{
 			//g_Logger->info("Adding Time to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalTime));
+			std::this_thread::sleep_for(std::chrono::seconds(m_Conf.TimeUpdateIntervalTime));
 			SubmitToMainThread("Time", &Processor::ProcessTimeBasedToggling);
 		}
 
-		if (EnableInterior)
+		if (m_Conf.EnableInterior)
 		{
 			//g_Logger->info("Adding Interior to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalInterior));
+			std::this_thread::sleep_for(std::chrono::seconds(m_Conf.TimeUpdateIntervalInterior));
 			SubmitToMainThread("Interior", &Processor::ProcessInteriorBasedToggling);
 		}
 
-		if (EnableWeather && !IsInInteriorCell)
+		if (m_Conf.EnableWeather && !m_Conf.IsInInteriorCell)
 		{
 			//g_Logger->info("Adding Weather to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(TimeUpdateIntervalWeather));
+			std::this_thread::sleep_for(std::chrono::seconds(m_Conf.TimeUpdateIntervalWeather));
 			SubmitToMainThread("Weather", &Processor::ProcessWeatherBasedToggling);
 		}
 

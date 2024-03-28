@@ -125,7 +125,7 @@ void Menu::SettingsMenu()
 		RenderInfoPage();
 	}
 
-	if (EnableMenus)
+	if (m_Conf.EnableMenus)
 	{
 		if (ImGui::CollapsingHeader("Menus", ImGuiTreeNodeFlags_CollapsingHeader))
 		{
@@ -134,7 +134,7 @@ void Menu::SettingsMenu()
 
 	}
 
-	if (EnableTime)
+	if (m_Conf.EnableTime)
 	{
 		if (ImGui::CollapsingHeader("Time", ImGuiTreeNodeFlags_CollapsingHeader))
 		{
@@ -142,7 +142,7 @@ void Menu::SettingsMenu()
 		}
 	}
 
-	if (EnableInterior)
+	if (m_Conf.EnableInterior)
 	{
 		if (ImGui::CollapsingHeader("Interior", ImGuiTreeNodeFlags_CollapsingHeader))
 		{
@@ -150,122 +150,13 @@ void Menu::SettingsMenu()
 		}
 	}
 
-	if (EnableWeather)
+	if (m_Conf.EnableWeather)
 	{
 		if (ImGui::CollapsingHeader("Weather", ImGuiTreeNodeFlags_CollapsingHeader))
 		{
 			RenderWeatherPage();
 		}
 	}
-}
-
-// I LOVE THIS. ALL HAIL SimpleINI!!!!!!
-void Menu::Save(const std::string& filename)
-{
-	std::string configDirectory = "Data\\SKSE\\Plugins\\TogglerConfigs";
-	std::filesystem::create_directories(configDirectory);
-	std::string fullPath = configDirectory + "\\" + filename + ".ini";
-
-	CSimpleIniA ini;
-	ini.SetUnicode(false);
-
-	// Save General section
-	ini.SetBoolValue("General", "EnableMenus", EnableMenus);
-	ini.SetBoolValue("General", "EnableTime", EnableTime);
-	ini.SetBoolValue("General", "EnableInterior", EnableInterior);
-	ini.SetBoolValue("General", "EnableWeather", EnableWeather);
-
-	// MenusGeneral Section
-	ini.SetValue("MenusGeneral", "MenuToggleOption", ToggleStateMenus.c_str());
-	ini.SetValue("MenusGeneral", "MenuToggleAllState", ToggleAllStateMenus.c_str());
-
-	for (size_t i = 0; i < techniqueMenuInfoList.size(); i++)
-	{
-		const auto& menuInfo = techniqueMenuInfoList[i];
-		std::string effectFileKey = "MenuToggleSpecificFile" + std::to_string(i + 1);
-		std::string effectStateKey = "MenuToggleSpecificState" + std::to_string(i + 1);
-		std::string effectMenuKey = "MenuToggleSpecificMenu" + std::to_string(i + 1);
-
-		ini.SetValue("MenusGeneral", effectFileKey.c_str(), menuInfo.filename.c_str());
-		ini.SetValue("MenusGeneral", effectStateKey.c_str(), menuInfo.state.c_str());
-		ini.SetValue("MenusGeneral", effectMenuKey.c_str(), menuInfo.Name.c_str());
-	}
-
-	// Save MenusProcess section
-	for (size_t i = 0; i < menuList.size(); i++)
-	{
-		const auto& menuData = menuList[i];
-		std::string menuKey = "Menu" + std::to_string(i + 1);
-		ini.SetValue("MenusProcess", menuKey.c_str(), menuData.Name.c_str());
-	}
-
-	// Save Time Section
-	ini.SetValue("Time", "TimeUpdateInterval", std::to_string(TimeUpdateIntervalTime).c_str());
-
-	ini.SetValue("Time", "TimeToggleOption", ToggleStateTime.c_str());
-	ini.SetValue("Time", "TimeToggleAllState", ToggleAllStateTime.c_str());
-
-	for (const auto& info : techniqueTimeInfoListAll)
-	{
-		ini.SetDoubleValue("Time", "TimeToggleAllTimeStart", info.startTime);
-		ini.SetDoubleValue("Time", "TimeToggleAllTimeStop", info.stopTime);
-	}
-
-	for (size_t i = 0; i < techniqueTimeInfoList.size(); i++)
-	{
-		const auto& timeInfo = techniqueTimeInfoList[i];
-		std::string effectFileKey = "TimeToggleSpecificFile" + std::to_string(i + 1);
-		std::string effectStateKey = "TimeToggleSpecificState" + std::to_string(i + 1);
-		std::string effectStartTimeKey = "TimeToggleSpecificTimeStart" + std::to_string(i + 1);
-		std::string effectStopTimeKey = "TimeToggleSpecificTimeStop" + std::to_string(i + 1);
-
-		ini.SetValue("Time", effectFileKey.c_str(), timeInfo.filename.c_str());
-		ini.SetValue("Time", effectStateKey.c_str(), timeInfo.state.c_str());
-		ini.SetDoubleValue("Time", effectStartTimeKey.c_str(), timeInfo.startTime);
-		ini.SetDoubleValue("Time", effectStopTimeKey.c_str(), timeInfo.stopTime);
-	}
-
-	// Save Interior section
-	ini.SetValue("Interior", "InteriorUpdateInterval", std::to_string(TimeUpdateIntervalInterior).c_str());
-	ini.SetValue("Interior", "InteriorToggleOption", ToggleStateInterior.c_str());
-	ini.SetValue("Interior", "InteriorToggleAllState", ToggleAllStateInterior.c_str());
-
-	for (size_t i = 0; i < techniqueInteriorInfoList.size(); i++)
-	{
-		const auto& interiorInfo = techniqueInteriorInfoList[i];
-		std::string effectFileKey = "InteriorToggleSpecificFile" + std::to_string(i + 1);
-		std::string effectStateKey = "InteriorToggleSpecificState" + std::to_string(i + 1);
-
-		ini.SetValue("Interior", effectFileKey.c_str(), interiorInfo.filename.c_str());
-		ini.SetValue("Interior", effectStateKey.c_str(), interiorInfo.state.c_str());
-	}
-
-	// Save Weather section
-	ini.SetValue("Weather", "WeatherUpdateInterval", std::to_string(TimeUpdateIntervalWeather).c_str());
-	ini.SetValue("Weather", "WeatherToggleOption", ToggleStateWeather.c_str());
-	ini.SetValue("Weather", "WeatherToggleAllState", ToggleAllStateWeather.c_str());
-
-	for (size_t i = 0; i < techniqueWeatherInfoList.size(); i++)
-	{
-		const auto& weatherInfo = techniqueWeatherInfoList[i];
-		std::string effectFileKey = "WeatherToggleSpecificFile" + std::to_string(i + 1);
-		std::string effectStateKey = "WeatherToggleSpecificState" + std::to_string(i + 1);
-		std::string effectWeatherKey = "WeatherToggleSpecificWeather" + std::to_string(i + 1);
-
-		ini.SetValue("Weather", effectFileKey.c_str(), weatherInfo.filename.c_str());
-		ini.SetValue("Weather", effectStateKey.c_str(), weatherInfo.state.c_str());
-		ini.SetValue("Weather", effectWeatherKey.c_str(), weatherInfo.Name.c_str());
-	}
-
-	// Save WeatherProcess section
-	for (size_t i = 0; i < weatherList.size(); i++)
-	{
-		const auto& weatherData = weatherList[i];
-		std::string weatherKey = "Weather" + std::to_string(i + 1);
-		ini.SetValue("WeatherProcess", weatherKey.c_str(), weatherData.Name.c_str());
-	}
-
-	ini.SaveFile(fullPath.c_str());
 }
 
 void Menu::SaveConfig()
@@ -287,8 +178,9 @@ void Menu::SaveConfig()
 				// Use the provided filename or the default if empty
 				std::string filename = (inputBuffer[0] != '\0') ? inputBuffer : m_SaveFilename;
 
+				auto c = Config::GetSingleton();
 				// Call the Save function with the chosen filename
-				Save(filename);
+				c->SerializePreset(filename);
 
 				//Refresh
 				m_Presets.clear();
@@ -315,9 +207,9 @@ void Menu::SaveConfig()
 
 void Menu::RenderInfoPage()
 {
-	if (ImGui::Checkbox("Enable Menu", &EnableMenus))
+	if (ImGui::Checkbox("Enable Menu", &m_Conf.EnableMenus))
 	{
-		if (EnableMenus)
+		if (m_Conf.EnableMenus)
 		{
 			RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Processor::GetSingleton());
 		}
@@ -327,57 +219,57 @@ void Menu::RenderInfoPage()
 		}
 	}
 
-	if (ImGui::Checkbox("Enable Time", &EnableTime))
+	if (ImGui::Checkbox("Enable Time", &m_Conf.EnableTime))
 	{
-		if (EnableTime && isLoaded)
+		if (m_Conf.EnableTime && isLoaded)
 		{
 			Processor::GetSingleton()->ProcessTimeBasedToggling();
 		}
 	}
 
-	if (ImGui::Checkbox("Enable Interior", &EnableInterior))
+	if (ImGui::Checkbox("Enable Interior", &m_Conf.EnableInterior))
 	{
-		if (EnableInterior && isLoaded)
+		if (m_Conf.EnableInterior && isLoaded)
 		{
 			Processor::GetSingleton()->ProcessInteriorBasedToggling();
 		}
 	}
 
-	if (ImGui::Checkbox("Enable Weather", &EnableWeather))
+	if (ImGui::Checkbox("Enable Weather", &m_Conf.EnableWeather))
 	{
-		if (EnableWeather && isLoaded && !IsInInteriorCell)
+		if (m_Conf.EnableWeather && isLoaded && !m_Conf.IsInInteriorCell)
 		{
 			Processor::GetSingleton()->ProcessWeatherBasedToggling();
 		}
 	}
 
-	if (EnableTime || EnableInterior || EnableWeather)
+	if (m_Conf.EnableTime || m_Conf.EnableInterior || m_Conf.EnableWeather)
 		ImGui::SeparatorText("Update Intervals");
-	if (EnableTime)
-		ImGui::SliderInt("Time Update Interval", &TimeUpdateIntervalTime, 0, 120, "%d");
-	if (EnableInterior)
-		ImGui::SliderInt("Interior Update Interval", &TimeUpdateIntervalInterior, 0, 120, "%d");
-	if (EnableWeather)
-		ImGui::SliderInt("Weather Update Interval", &TimeUpdateIntervalWeather, 0, 120, "%d");
+	if (m_Conf.EnableTime)
+		ImGui::SliderInt("Time Update Interval", &m_Conf.TimeUpdateIntervalTime, 0, 120, "%d");
+	if (m_Conf.EnableInterior)
+		ImGui::SliderInt("Interior Update Interval", &m_Conf.TimeUpdateIntervalInterior, 0, 120, "%d");
+	if (m_Conf.EnableWeather)
+		ImGui::SliderInt("Weather Update Interval", &m_Conf.TimeUpdateIntervalWeather, 0, 120, "%d");
 }
 
 void Menu::RenderMenusPage()
 {
 	ImGui::SeparatorText("Toggle State");
-	CreateCombo("Menu Toggle State", ToggleStateMenus, m_ToggleState, ImGuiComboFlags_None);
+	CreateCombo("Menu Toggle State", m_Conf.ToggleStateMenus, m_ToggleState, ImGuiComboFlags_None);
 
-	if (ToggleStateMenus.find("All") != std::string::npos)
+	if (m_Conf.ToggleStateMenus.find("All") != std::string::npos)
 	{
 		ImGui::SameLine();
-		CreateCombo("MenuAllState", ToggleAllStateMenus, m_EffectState, ImGuiComboFlags_None);
+		CreateCombo("MenuAllState", m_Conf.ToggleAllStateMenus, m_EffectState, ImGuiComboFlags_None);
 
 		// Display all the Menus
 		ImGui::SeparatorText("Menus");
-		if (!menuList.empty())
+		if (!m_Conf.MenuList.empty())
 		{
-			for (int i = 0; i < menuList.size(); i++)
+			for (int i = 0; i < m_Conf.MenuList.size(); i++)
 			{
-				auto& iniMenus = menuList[i];
+				auto& iniMenus = m_Conf.MenuList[i];
 
 				bool valueChanged = false;
 				std::string menuIndexComboID = "Menu" + std::to_string(i + 1);
@@ -393,9 +285,9 @@ void Menu::RenderMenusPage()
 				// Add a button to remove the effect
 				if (ImGui::Button(removeID.c_str()))
 				{
-					if (!menuList.empty())
+					if (!m_Conf.MenuList.empty())
 					{
-						menuList.erase(menuList.begin() + i);
+						m_Conf.MenuList.erase(m_Conf.MenuList.begin() + i);
 						i--;  // Decrement i to stay at the current index after removing the element
 					}
 				}
@@ -420,21 +312,21 @@ void Menu::RenderMenusPage()
 			menu.Index = "";
 			menu.Name = "default";
 
-			menuList.push_back(menu);
+			m_Conf.MenuList.push_back(menu);
 		}
 	}
 
-	if (ToggleStateMenus.find("Specific") != std::string::npos)
+	if (m_Conf.ToggleStateMenus.find("Specific") != std::string::npos)
 	{
 		ImGui::SeparatorText("Effects");
-		if (!techniqueMenuInfoList.empty())
+		if (!m_Conf.TechniqueMenuInfoList.empty())
 		{
 			// For Specific
-			for (int i = 0; i < techniqueMenuInfoList.size(); i++)
+			for (int i = 0; i < m_Conf.TechniqueMenuInfoList.size(); i++)
 			{
-				auto& menuInfo = techniqueMenuInfoList[i];
+				auto& menuInfo = m_Conf.TechniqueMenuInfoList[i];
 
-				if (menuInfo.filename != "" && menuInfo.state != "")
+				if (menuInfo.Filename != "" && menuInfo.State != "")
 				{
 
 					bool valueChanged = false;
@@ -444,8 +336,8 @@ void Menu::RenderMenusPage()
 					std::string removeID = "Remove Effect##Menu" + std::to_string(i);
 					std::string menuID = "Menu##Menu" + std::to_string(i);
 
-					std::string currentEffectFileName = menuInfo.filename;
-					std::string currentEffectState = menuInfo.state;
+					std::string currentEffectFileName = menuInfo.Filename;
+					std::string currentEffectState = menuInfo.State;
 					std::string currentEffectMenu = menuInfo.Name;
 
 					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, m_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
@@ -456,17 +348,17 @@ void Menu::RenderMenusPage()
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
 					{
-						if (!techniqueMenuInfoList.empty())
+						if (!m_Conf.TechniqueMenuInfoList.empty())
 						{
-							techniqueMenuInfoList.erase(techniqueMenuInfoList.begin() + i);
+							m_Conf.TechniqueMenuInfoList.erase(m_Conf.TechniqueMenuInfoList.begin() + i);
 							i--;  // Decrement i to stay at the current index after removing the element
 						}
 					}
 
 					if (valueChanged)
 					{
-						menuInfo.filename = currentEffectFileName;
-						menuInfo.state = currentEffectState;
+						menuInfo.Filename = currentEffectFileName;
+						menuInfo.State = currentEffectState;
 						menuInfo.Name = currentEffectMenu;
 					}
 				}
@@ -479,10 +371,10 @@ void Menu::RenderMenusPage()
 		if (ImGui::Button("Add New Effect"))
 		{
 			TechniqueInfo info;
-			info.filename = "Default.fx";
-			info.state = "off";
+			info.Filename = "Default.fx";
+			info.State = "off";
 
-			techniqueMenuInfoList.push_back(info);
+			m_Conf.TechniqueMenuInfoList.push_back(info);
 		}
 
 	}
@@ -491,21 +383,21 @@ void Menu::RenderMenusPage()
 void Menu::RenderTimePage()
 {
 	ImGui::SeparatorText("Toggle State");
-	CreateCombo("Time Toggle State", ToggleStateTime, m_ToggleState, ImGuiComboFlags_None);
+	CreateCombo("Time Toggle State", m_Conf.ToggleStateTime, m_ToggleState, ImGuiComboFlags_None);
 
-	if (ToggleStateTime.find("All") != std::string::npos)
+	if (m_Conf.ToggleStateTime.find("All") != std::string::npos)
 	{
 		bool valueChanged = false;
-		for (int i = 0; i < techniqueTimeInfoListAll.size(); i++)
+		for (int i = 0; i < m_Conf.TechniqueTimeInfoListAll.size(); i++)
 		{
-			auto& info = techniqueTimeInfoListAll[i];
+			auto& info = m_Conf.TechniqueTimeInfoListAll[i];
 
-			std::string currentEffectState = info.state;
-			double currentStartTime = info.startTime;
-			double currentStopTime = info.stopTime;
+			std::string currentEffectState = info.State;
+			double currentStartTime = info.StartTime;
+			double currentStopTime = info.StopTime;
 
 			ImGui::SameLine();
-			if (CreateCombo("TimeAllState", ToggleAllStateTime, m_EffectState, ImGuiComboFlags_None)) valueChanged = true;
+			if (CreateCombo("TimeAllState", m_Conf.ToggleAllStateTime, m_EffectState, ImGuiComboFlags_None)) valueChanged = true;
 			ImGui::SetNextItemWidth(200.0f);
 			if (ImGui::SliderScalar("Start Time", ImGuiDataType_Double, &currentStartTime, &minTime, &maxTime, "%.2f")) valueChanged = true;
 			ImGui::SameLine();
@@ -514,24 +406,24 @@ void Menu::RenderTimePage()
 
 			if (valueChanged)
 			{
-				info.state = currentEffectState;
-				info.startTime = currentStartTime;
-				info.stopTime = currentStopTime;
+				info.State = currentEffectState;
+				info.StartTime = currentStartTime;
+				info.StopTime = currentStopTime;
 			}
 		}
 	}
 
 	// Wtf happened to this... holy crap this nesting!
-	if (ToggleStateTime.find("Specific") != std::string::npos)
+	if (m_Conf.ToggleStateTime.find("Specific") != std::string::npos)
 	{
 		ImGui::SeparatorText("Effects");
-		if (!techniqueTimeInfoList.empty())
+		if (!m_Conf.TechniqueTimeInfoList.empty())
 		{
-			for (int i = 0; i < techniqueTimeInfoList.size(); i++)
+			for (int i = 0; i < m_Conf.TechniqueTimeInfoList.size(); i++)
 			{
-				auto& timeInfo = techniqueTimeInfoList[i];
+				auto& timeInfo = m_Conf.TechniqueTimeInfoList[i];
 
-				if (timeInfo.filename != "" && timeInfo.state != "")
+				if (timeInfo.Filename != "" && timeInfo.State != "")
 				{
 
 					// Create IDs for every element in the vector that is to be rendered
@@ -541,10 +433,10 @@ void Menu::RenderTimePage()
 					std::string stopTimeID = "StopTime##Time" + std::to_string(i);
 					std::string removeID = "Remove##Time" + std::to_string(i);
 
-					std::string currentEffectFileName = timeInfo.filename;
-					std::string currentEffectState = timeInfo.state;
-					double currentStartTime = timeInfo.startTime;
-					double currentStopTime = timeInfo.stopTime;
+					std::string currentEffectFileName = timeInfo.Filename;
+					std::string currentEffectState = timeInfo.State;
+					double currentStartTime = timeInfo.StartTime;
+					double currentStopTime = timeInfo.StopTime;
 
 					bool valueChanged = false;
 
@@ -560,9 +452,9 @@ void Menu::RenderTimePage()
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
 					{
-						if (!techniqueTimeInfoList.empty())
+						if (!m_Conf.TechniqueTimeInfoList.empty())
 						{
-							techniqueTimeInfoList.erase(techniqueTimeInfoList.begin() + i);
+							m_Conf.TechniqueTimeInfoList.erase(m_Conf.TechniqueTimeInfoList.begin() + i);
 							i--;  // Decrement i to stay at the current index after removing the element
 						}
 					}
@@ -572,10 +464,10 @@ void Menu::RenderTimePage()
 					if (valueChanged)
 					{
 						// Update new values
-						timeInfo.filename = currentEffectFileName;
-						timeInfo.state = currentEffectState;
-						timeInfo.startTime = currentStartTime;
-						timeInfo.stopTime = currentStopTime;
+						timeInfo.Filename = currentEffectFileName;
+						timeInfo.State = currentEffectState;
+						timeInfo.StartTime = currentStartTime;
+						timeInfo.StopTime = currentStopTime;
 
 						//ImGui::Text("New Values for %i: Effect: %s - State: %s - Start: %.2f - Stop: %.2f", i, timeInfo.filename.c_str(), timeInfo.state.c_str(), timeInfo.startTime, timeInfo.stopTime);
 					}
@@ -588,12 +480,12 @@ void Menu::RenderTimePage()
 		{
 			// Fill new info with default values
 			TechniqueInfo info;
-			info.filename = "Default.fx";
-			info.state = "off";
-			info.startTime = 0.0;
-			info.stopTime = 0.0;
+			info.Filename = "Default.fx";
+			info.State = "off";
+			info.StartTime = 0.0;
+			info.StopTime = 0.0;
 
-			techniqueTimeInfoList.push_back(info);
+			m_Conf.TechniqueTimeInfoList.push_back(info);
 		}
 
 	}
@@ -602,34 +494,34 @@ void Menu::RenderTimePage()
 void Menu::RenderInteriorPage()
 {
 	ImGui::SeparatorText("Toggle State");
-	CreateCombo("Interior Toggle State", ToggleStateInterior, m_ToggleState, ImGuiComboFlags_None);
+	CreateCombo("Interior Toggle State", m_Conf.ToggleStateInterior, m_ToggleState, ImGuiComboFlags_None);
 
-	if (ToggleStateInterior.find("All") != std::string::npos)
+	if (m_Conf.ToggleStateInterior.find("All") != std::string::npos)
 	{
 		ImGui::SameLine();
-		CreateCombo("InteriorAllState##", ToggleAllStateInterior, m_EffectState, ImGuiComboFlags_None);
+		CreateCombo("InteriorAllState##", m_Conf.ToggleAllStateInterior, m_EffectState, ImGuiComboFlags_None);
 	}
 
 	bool valueChanged = false;
-	if (ToggleStateInterior.find("Specific") != std::string::npos)
+	if (m_Conf.ToggleStateInterior.find("Specific") != std::string::npos)
 	{
 		ImGui::SeparatorText("Effects");
-		if (!techniqueInteriorInfoList.empty())
+		if (!m_Conf.TechniqueInteriorInfoList.empty())
 		{
 			// For Specific
-			for (int i = 0; i < techniqueInteriorInfoList.size(); i++)
+			for (int i = 0; i < m_Conf.TechniqueInteriorInfoList.size(); i++)
 			{
-				auto& interiorInfo = techniqueInteriorInfoList[i];
+				auto& interiorInfo = m_Conf.TechniqueInteriorInfoList[i];
 
-				if (interiorInfo.filename != "" && interiorInfo.state != "")
+				if (interiorInfo.Filename != "" && interiorInfo.State != "")
 				{
 					// Create IDs for every element in the vector
 					std::string effectComboID = "Effect##Inter" + std::to_string(i);
 					std::string effectStateID = "State##Inter" + std::to_string(i);
 					std::string removeID = "Remove Effect##Inter" + std::to_string(i);
 
-					std::string currentEffectFileName = interiorInfo.filename;
-					std::string currentEffectState = interiorInfo.state;
+					std::string currentEffectFileName = interiorInfo.Filename;
+					std::string currentEffectState = interiorInfo.State;
 
 					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, m_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
 					ImGui::SameLine();
@@ -638,17 +530,17 @@ void Menu::RenderInteriorPage()
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
 					{
-						if (!techniqueInteriorInfoList.empty())
+						if (!m_Conf.TechniqueInteriorInfoList.empty())
 						{
-							techniqueInteriorInfoList.erase(techniqueInteriorInfoList.begin() + i);
+							m_Conf.TechniqueInteriorInfoList.erase(m_Conf.TechniqueInteriorInfoList.begin() + i);
 							i--;  // Decrement i to stay at the current index after removing the element
 						}
 					}
 
 					if (valueChanged)
 					{
-						interiorInfo.filename = currentEffectFileName;
-						interiorInfo.state = currentEffectState;
+						interiorInfo.Filename = currentEffectFileName;
+						interiorInfo.State = currentEffectState;
 					}
 				}
 			}
@@ -660,10 +552,10 @@ void Menu::RenderInteriorPage()
 		if (ImGui::Button("Add New Effect"))
 		{
 			TechniqueInfo info;
-			info.filename = "Default.fx";
-			info.state = "off";
+			info.Filename = "Default.fx";
+			info.State = "off";
 
-			techniqueInteriorInfoList.push_back(info);
+			m_Conf.TechniqueInteriorInfoList.push_back(info);
 		}
 	}
 }
@@ -671,20 +563,20 @@ void Menu::RenderInteriorPage()
 void Menu::RenderWeatherPage()
 {
 	ImGui::SeparatorText("Toggle State");
-	CreateCombo("Weather Toggle State", ToggleStateWeather, m_ToggleState, ImGuiComboFlags_None);
+	CreateCombo("Weather Toggle State", m_Conf.ToggleStateWeather, m_ToggleState, ImGuiComboFlags_None);
 
-	if (ToggleStateWeather.find("All") != std::string::npos)
+	if (m_Conf.ToggleStateWeather.find("All") != std::string::npos)
 	{
 		ImGui::SameLine();
-		CreateCombo("WeatherAllState", ToggleAllStateWeather, m_EffectState, ImGuiComboFlags_None);
+		CreateCombo("WeatherAllState", m_Conf.ToggleAllStateWeather, m_EffectState, ImGuiComboFlags_None);
 
 		// Display all the Weathers
 		ImGui::SeparatorText("Weathers");
-		if (!weatherList.empty())
+		if (!m_Conf.WeatherList.empty())
 		{
-			for (int i = 0; i < weatherList.size(); i++)
+			for (int i = 0; i < m_Conf.WeatherList.size(); i++)
 			{
-				auto& iniWeather = weatherList[i];
+				auto& iniWeather = m_Conf.WeatherList[i];
 
 				bool valueChanged = false;
 				std::string weatherIndexComboID = "Weather" + std::to_string(i + 1);
@@ -700,9 +592,9 @@ void Menu::RenderWeatherPage()
 				// Add a button to remove the effect
 				if (ImGui::Button(removeID.c_str()))
 				{
-					if (!weatherList.empty())
+					if (!m_Conf.WeatherList.empty())
 					{
-						weatherList.erase(weatherList.begin() + i);
+						m_Conf.WeatherList.erase(m_Conf.WeatherList.begin() + i);
 						i--;  // Decrement i to stay at the current index after removing the element
 					}
 				}
@@ -724,22 +616,22 @@ void Menu::RenderWeatherPage()
 			weather.Index = "";
 			weather.Name = "default";
 
-			weatherList.push_back(weather);
+			m_Conf.WeatherList.push_back(weather);
 		}
 	}
 
-	if (ToggleStateWeather.find("Specific") != std::string::npos)
+	if (m_Conf.ToggleStateWeather.find("Specific") != std::string::npos)
 	{
 		ImGui::SeparatorText("Effects");
-		if (!techniqueWeatherInfoList.empty())
+		if (!m_Conf.TechniqueWeatherInfoList.empty())
 		{
 			// For Specific
-			for (int i = 0; i < techniqueWeatherInfoList.size(); i++)
+			for (int i = 0; i < m_Conf.TechniqueWeatherInfoList.size(); i++)
 			{
 				bool valueChanged = false;
-				auto& weatherInfo = techniqueWeatherInfoList[i];
+				auto& weatherInfo = m_Conf.TechniqueWeatherInfoList[i];
 
-				if (weatherInfo.filename != "" && weatherInfo.state != "")
+				if (weatherInfo.Filename != "" && weatherInfo.State != "")
 				{
 					// Create IDs for every element in the vector
 					std::string effectComboID = "Effect##Weather" + std::to_string(i);
@@ -747,8 +639,8 @@ void Menu::RenderWeatherPage()
 					std::string removeID = "Remove Effect##Weather" + std::to_string(i);
 					std::string weatherID = "Weather##Weather" + std::to_string(i);
 
-					std::string currentEffectFileName = weatherInfo.filename;
-					std::string currentEffectState = weatherInfo.state;
+					std::string currentEffectFileName = weatherInfo.Filename;
+					std::string currentEffectState = weatherInfo.State;
 					std::string currentWeatherFlag = weatherInfo.Name;
 
 					if (CreateCombo(effectComboID.c_str(), currentEffectFileName, m_Effects, ImGuiComboFlags_None)) { valueChanged = true; }
@@ -758,17 +650,17 @@ void Menu::RenderWeatherPage()
 					// Add a button to remove the effect
 					if (ImGui::Button(removeID.c_str()))
 					{
-						if (!techniqueWeatherInfoList.empty())
+						if (!m_Conf.TechniqueWeatherInfoList.empty())
 						{
-							techniqueWeatherInfoList.erase(techniqueWeatherInfoList.begin() + i);
+							m_Conf.TechniqueWeatherInfoList.erase(m_Conf.TechniqueWeatherInfoList.begin() + i);
 							i--;  // Decrement i to stay at the current index after removing the element
 						}
 					}
 
 					if (valueChanged)
 					{
-						weatherInfo.filename = currentEffectFileName;
-						weatherInfo.state = currentEffectState;
+						weatherInfo.Filename = currentEffectFileName;
+						weatherInfo.State = currentEffectState;
 						weatherInfo.Name = currentWeatherFlag;
 					}
 				}
@@ -781,10 +673,10 @@ void Menu::RenderWeatherPage()
 		if (ImGui::Button("Add New Effect"))
 		{
 			TechniqueInfo info;
-			info.filename = "Default.fx";
-			info.state = "off";
+			info.Filename = "Default.fx";
+			info.State = "off";
 
-			techniqueWeatherInfoList.push_back(info);
+			m_Conf.TechniqueWeatherInfoList.push_back(info);
 		}
 	}
 }

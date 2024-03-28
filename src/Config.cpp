@@ -1,386 +1,287 @@
+#include "PCH.h"
 #include "Config.h"
 #include "Globals.h"
 
+#include <fstream>
+#include "yaml-cpp/yaml.h"
 
-void Config::LoadINI(const std::string& presetPath)
+bool Config::SerializePreset(const std::string& presetName)
 {
-#ifndef NDEBUG
-	SKSE::log::debug("Starting to load: {}", presetPath.c_str());
-#endif
+	std::string configDirectory = "Data\\SKSE\\Plugins\\TogglerConfigs";
+	std::filesystem::create_directories(configDirectory);
+	std::string fullPath = configDirectory + "\\" + presetName + ".yaml";
 
-	CSimpleIniA ini;
-	ini.SetUnicode(false);
-	ini.LoadFile(presetPath.c_str());
-
-	const char* sectionGeneral = "General";
-	const char* sectionMenusGeneral = "MenusGeneral";
-	const char* sectionMenusProcess = "MenusProcess";
-	const char* sectionTimeGeneral = "Time";
-	const char* sectionInteriorGeneral = "Interior";
-	const char* sectionWeatherGeneral = "Weather";
-	const char* sectionWeatherProcess = "WeatherProcess";
-
-	CSimpleIniA::TNamesDepend MenusGeneral_keys;
-	CSimpleIniA::TNamesDepend MenusProcess_keys;
-	CSimpleIniA::TNamesDepend TimeGeneral_keys;
-	CSimpleIniA::TNamesDepend InteriorGeneral_keys;
-	CSimpleIniA::TNamesDepend WeatherGeneral_keys;
-	CSimpleIniA::TNamesDepend WeatherProcess_keys;
-
-	//General
-	EnableMenus = ini.GetBoolValue(sectionGeneral, "EnableMenus");
-	EnableTime = ini.GetBoolValue(sectionGeneral, "EnableTime");
-	EnableInterior = ini.GetBoolValue(sectionGeneral, "EnableInterior");
-	EnableWeather = ini.GetBoolValue(sectionGeneral, "EnableWeather");
-
-#ifndef NDEBUG
-	SKSE::log::debug("{}: EnableMenus: {} - EnableTime: {} - EnableInterior: {} - EnableWeather: {}", sectionGeneral, EnableMenus, EnableTime, EnableInterior, EnableWeather);
-	SKSE::log::debug("\n");
-#endif
-
-#pragma region Menus
-
-	// MenusGeneral
-	ToggleStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleOption");
-	ToggleAllStateMenus = ini.GetValue(sectionMenusGeneral, "MenuToggleAllState");
-
-#ifndef NDEBUG
-	SKSE::log::debug("General MenuToggleOption:  {} - MenuToggleAllState: {}", ToggleStateMenus, ToggleAllStateMenus);
-#endif
-
-	ini.GetAllKeys(sectionMenusGeneral, MenusGeneral_keys);
-	m_specificMenu.reserve(MenusGeneral_keys.size()); // Reserve space for vector
-
-	const char* togglePrefix01 = "MenuToggleSpecificFile";
-	const char* togglePrefix02 = "MenuToggleSpecificState";
-	const char* togglePrefixMenu = "MenuToggleSpecificMenu";
-
-	for (const auto& key : MenusGeneral_keys)
+	YAML::Emitter out;
 	{
-		if (strcmp(key.pItem, "MenuToggleOption") != 0 && strcmp(key.pItem, "MenuToggleAllState") != 0)
+		out << YAML::BeginMap; // Root
 		{
-			m_specificMenu.emplace_back(key.pItem);
-			//const char* menuItemgeneral = m_SpecificMenu.back().c_str();
+			out << YAML::Key << "General" << YAML::Value;
+			out << YAML::BeginMap; // General
+			out << YAML::Key << "EnableMenus" << YAML::Value << m_Config.EnableMenus;
+			out << YAML::Key << "EnableTime" << YAML::Value << m_Config.EnableTime;
+			out << YAML::Key << "EnableInterior" << YAML::Value << m_Config.EnableInterior;
+			out << YAML::Key << "EnableWeather" << YAML::Value << m_Config.EnableWeather;
+			out << YAML::EndMap; // General
 
-			// Check if the key starts with MenuToggleSpecificFile
-			if (strncmp(key.pItem, togglePrefix01, strlen(togglePrefix01)) == 0)
+			// MenusGeneral Section
+			out << YAML::Key << "MenusGeneral" << YAML::Value;
+			out << YAML::BeginMap; // MenusGeneral
+			out << YAML::Key << "MenuToggleOption" << YAML::Value << m_Config.ToggleStateMenus;
+			out << YAML::Key << "MenuToggleAllState" << YAML::Value << m_Config.ToggleAllStateMenus;
+			for (size_t i = 0; i < m_Config.TechniqueMenuInfoList.size(); i++)
 			{
-				m_itemMenuShaderToToggle = ini.GetValue(sectionMenusGeneral, key.pItem, nullptr);
-				//DEBUG_LOG(g_Logger, "MenuToggleSpecificFile:  {} - Value: {}", menuItemgeneral, itemMenuShaderToToggle);
-
-				// Construct the corresponding key for the state
-				const std::string& stateKeyName = togglePrefix02 + std::to_string(m_specificMenu.size());
-
-				// Retrieve the state using the constructed key
-				m_itemMenuStateValue = ini.GetValue(sectionMenusGeneral, stateKeyName.c_str(), nullptr);
-
-				const std::string& menuKeyName = togglePrefixMenu + std::to_string(m_specificMenu.size());
-				m_itemSpecificMenu = ini.GetValue(sectionMenusGeneral, menuKeyName.c_str(), nullptr);
-
-				// Populate the technique info
-				TechniqueInfo MenuInfo;
-				MenuInfo.filename = m_itemMenuShaderToToggle;
-				MenuInfo.state = m_itemMenuStateValue;
-				MenuInfo.Name = m_itemSpecificMenu;
-				techniqueMenuInfoList.emplace_back(MenuInfo);
-#ifndef NDEBUG
-				SKSE::log::debug("Populated TechniqueMenuInfo: {} - {}", m_itemMenuShaderToToggle, m_itemMenuStateValue);
-#endif
+				const auto& menuInfo = m_Config.TechniqueMenuInfoList[i];
+				out << YAML::Key << "MenuToggleSpecificFile" << i + 1 << YAML::Value << menuInfo.Filename;
+				out << YAML::Key << "MenuToggleSpecificState" << i + 1 << YAML::Value << menuInfo.State;
+				out << YAML::Key << "MenuToggleSpecificMenu" << i + 1 << YAML::Value << menuInfo.Name;
 			}
-		}
-	}
+			out << YAML::EndMap; // MenusGeneral
 
-#ifndef NDEBUG
-	SKSE::log::debug("\n");
-#endif
-
-	//MenusProcess
-	ini.GetAllKeys(sectionMenusProcess, MenusProcess_keys);
-
-	for (const auto& key : MenusProcess_keys)
-	{
-		const char* menuItem = key.pItem;
-		const char* itemValue = ini.GetValue(sectionMenusProcess, menuItem, nullptr);
-
-		menuList.emplace_back(Info{ menuItem, itemValue });
-
-
-#ifndef NDEBUG
-		SKSE::log::debug("Menu:  {} - Value: {}", menuItem, itemValue);
-#endif
-	}
-
-#ifndef NDEBUG
-	SKSE::log::debug("\n");
-#endif
-
-#pragma endregion
-
-#pragma region Time
-	//Time
-	ToggleStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleOption");
-	TimeUpdateIntervalTime = ini.GetLongValue(sectionTimeGeneral, "TimeUpdateInterval");
-
-#ifndef NDEBUG
-	SKSE::log::debug("General TimeToggleOption:  {} - TimeUpdateInterval: {}", ToggleStateTime, TimeUpdateIntervalTime);
-#endif
-
-	// All Time
-	ToggleAllStateTime = ini.GetValue(sectionTimeGeneral, "TimeToggleAllState");
-	m_itemTimeStartHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStart");
-	m_itemTimeStopHourAll = ini.GetDoubleValue(sectionTimeGeneral, "TimeToggleAllTimeStop");
-
-	TechniqueInfo TimeInfoAll;
-	TimeInfoAll.state = ToggleAllStateTime;
-	TimeInfoAll.startTime = m_itemTimeStartHourAll;
-	TimeInfoAll.stopTime = m_itemTimeStopHourAll;
-	techniqueTimeInfoListAll.emplace_back(TimeInfoAll);
-#ifndef NDEBUG
-	SKSE::log::debug("Set all effects to {} from {} - {}", ToggleAllStateTime, m_itemTimeStartHourAll, m_itemTimeStopHourAll);
-#endif
-
-	// Specific Time
-	ini.GetAllKeys(sectionTimeGeneral, TimeGeneral_keys);
-	m_specificTime.reserve(TimeGeneral_keys.size()); // Reserve space for vector
-
-	const char* togglePrefix03 = "TimeToggleSpecificFile";
-	const char* togglePrefix04 = "TimeToggleSpecificState";
-	const char* togglePrefix05 = "TimeToggleSpecificTimeStart";
-	const char* togglePrefix06 = "TimeToggleSpecificTimeStop";
-
-	for (const auto& key : TimeGeneral_keys)
-	{
-		if (strcmp(key.pItem, "TimeToggleOption") != 0 && strcmp(key.pItem, "TimeToggleAllState") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStart") != 0 && strcmp(key.pItem, "TimeToggleAllTimeStop") != 0)
-		{
-			m_specificTime.emplace_back(key.pItem);
-
-			//const char* timeItemGeneral = m_SpecificTime.back().c_str();
-
-			if (strncmp(key.pItem, togglePrefix03, strlen(togglePrefix03)) == 0)
+			// Save MenusProcess section
+			out << YAML::Key << "MenusProcess" << YAML::Value;
+			out << YAML::BeginMap; // MenusProcess
+			for (size_t i = 0; i < m_Config.MenuList.size(); i++)
 			{
-				m_itemTimeShaderToToggle = ini.GetValue(sectionTimeGeneral, key.pItem, nullptr);
-				//DEBUG_LOG(g_Logger, "TimeToggleSpecificFile:  {} - Value: {}", timeItemGeneral, itemTimeShaderToToggle);
-
-				// Construct the corresponding key for the state
-				const std::string& stateKeyName = togglePrefix04 + std::to_string(m_specificTime.size());
-
-				// Retrieve the state using the constructed key
-				m_itemTimeStateValue = ini.GetValue(sectionTimeGeneral, stateKeyName.c_str(), nullptr);
-
-				// Construct the corresponding key for the the start and stop times
-				const std::string& startTimeKey = togglePrefix05 + std::to_string(m_specificTime.size());
-				const std::string& endTimeKey = togglePrefix06 + std::to_string(m_specificTime.size());
-				m_itemTimeStartHour = ini.GetDoubleValue(sectionTimeGeneral, startTimeKey.c_str());
-				m_itemTimeStopHour = ini.GetDoubleValue(sectionTimeGeneral, endTimeKey.c_str());
-#ifndef NDEBUG
-				SKSE::log::debug("startTime: {}; stopTimeKey: {} ", m_itemTimeStartHour, m_itemTimeStopHour);
-#endif
-
-				// Populate the technique info
-				TechniqueInfo TimeInfo;
-				TimeInfo.filename = m_itemTimeShaderToToggle;
-				TimeInfo.state = m_itemTimeStateValue;
-				TimeInfo.startTime = m_itemTimeStartHour;
-				TimeInfo.stopTime = m_itemTimeStopHour;
-				techniqueTimeInfoList.emplace_back(TimeInfo);
-#ifndef NDEBUG
-				SKSE::log::debug("Set effect {} to {} from {} - {}", m_itemTimeShaderToToggle, m_itemTimeStateValue, m_itemTimeStartHour, m_itemTimeStopHour);
-#endif
+				const auto& menuData = m_Config.MenuList[i];
+				out << YAML::Key << "Menu" << i + 1 << YAML::Value << menuData.Name;
 			}
-		}
-	}
+			out << YAML::EndMap; // MenusProcess
 
-#ifndef NDEBUG
-	SKSE::log::debug("\n");
-#endif
-
-#pragma endregion 
-
-#pragma region Interior
-	//Interior
-	ToggleStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleOption");
-	ToggleAllStateInterior = ini.GetValue(sectionInteriorGeneral, "InteriorToggleAllState");
-	TimeUpdateIntervalInterior = ini.GetLongValue(sectionInteriorGeneral, "InteriorUpdateInterval");
-#ifndef NDEBUG
-	SKSE::log::debug("General InteriorToggleOption:  {} - InteriorToggleAllState: {} - InteriorUpdateInterval: {}", ToggleStateInterior, ToggleAllStateInterior, TimeUpdateIntervalInterior);
-#endif
-
-	ini.GetAllKeys(sectionInteriorGeneral, InteriorGeneral_keys);
-	m_specificInterior.reserve(InteriorGeneral_keys.size()); // Reserve space for vector
-
-	const char* togglePrefix07 = "InteriorToggleSpecificFile";
-	const char* togglePrefix08 = "InteriorToggleSpecificState";
-
-	for (const auto& key : InteriorGeneral_keys)
-	{
-		if (strcmp(key.pItem, "InteriorToggleOption") != 0 && strcmp(key.pItem, "InteriorToggleAllState") != 0)
-		{
-			m_specificInterior.emplace_back(key.pItem);
-			//const char* interiorItemgeneral = m_SpecificInterior.back().c_str();
-
-			// Check if the key starts with InteriorToggleSpecificFile
-			if (strncmp(key.pItem, togglePrefix07, strlen(togglePrefix07)) == 0)
+			// Save Time Section
+			out << YAML::Key << "Time" << YAML::Value;
+			out << YAML::BeginMap; // Time
+			out << YAML::Key << "TimeUpdateInterval" << YAML::Value << m_Config.TimeUpdateIntervalTime;
+			out << YAML::Key << "TimeToggleOption" << YAML::Value << m_Config.ToggleStateTime;
+			out << YAML::Key << "TimeToggleAllState" << YAML::Value << m_Config.ToggleAllStateTime;
+			for (const auto& info : m_Config.TechniqueTimeInfoListAll)
 			{
-				m_itemInteriorShaderToToggle = ini.GetValue(sectionInteriorGeneral, key.pItem, nullptr);
-				//DEBUG_LOG(g_Logger, "InteriorToggleSpecificFile:  {} - Value: {}", interiorItemgeneral, itemInteriorShaderToToggle);
-
-				// Construct the corresponding key for the state
-				const std::string& stateKeyName = togglePrefix08 + std::to_string(m_specificInterior.size());
-
-				// Retrieve the state using the constructed key
-				m_itemInteriorStateValue = ini.GetValue(sectionInteriorGeneral, stateKeyName.c_str(), nullptr);
-
-				// Populate the technique info
-				TechniqueInfo InteriorInfo;
-				InteriorInfo.filename = m_itemInteriorShaderToToggle;
-				InteriorInfo.state = m_itemInteriorStateValue;
-				techniqueInteriorInfoList.emplace_back(InteriorInfo);
-#ifndef NDEBUG
-				SKSE::log::debug("Populated TechniqueInteriorInfo: {} - {}", m_itemInteriorShaderToToggle, m_itemInteriorStateValue);
-#endif
+				out << YAML::Key << "TimeToggleAllTimeStart" << YAML::Value << info.StartTime;
+				out << YAML::Key << "TimeToggleAllTimeStop" << YAML::Value << info.StopTime;
 			}
-		}
-	}
-
-#ifndef NDEBUG
-	SKSE::log::debug("\n");
-#endif
-
-#pragma endregion
-
-#pragma region Weather
-	//Weather
-	ToggleStateWeather = ini.GetValue(sectionWeatherGeneral, "WeatherToggleOption");
-	ToggleAllStateWeather = ini.GetValue(sectionWeatherGeneral, "WeatherToggleAllState");
-	TimeUpdateIntervalWeather = ini.GetLongValue(sectionWeatherGeneral, "WeatherUpdateInterval");
-#ifndef NDEBUG
-	SKSE::log::debug("General WeatherToggleOption:  {} - WeatherToggleAllState: {} - WeatherUpdateInterval: {}", ToggleStateWeather, ToggleAllStateWeather, TimeUpdateIntervalWeather);
-#endif
-
-	ini.GetAllKeys(sectionWeatherGeneral, WeatherGeneral_keys);
-	m_specificWeather.reserve(WeatherGeneral_keys.size());
-
-	const char* togglePrefix09 = "WeatherToggleSpecificFile";
-	const char* togglePrefix10 = "WeatherToggleSpecificState";
-	const char* togglePrefixItemWeather = "WeatherToggleSpecificWeather";
-
-	for (const auto& key : WeatherGeneral_keys)
-	{
-		if (strcmp(key.pItem, "WeatherToggleOption") != 0 && strcmp(key.pItem, "WeatherToggleAllState") != 0)
-		{
-			m_specificWeather.emplace_back(key.pItem);
-			//const char* weatherItemgeneral = m_SpecificWeather.back().c_str();
-
-			if (strncmp(key.pItem, togglePrefix09, strlen(togglePrefix09)) == 0)
+			for (size_t i = 0; i < m_Config.TechniqueTimeInfoList.size(); i++)
 			{
-				m_itemWeatherShaderToToggle = ini.GetValue(sectionWeatherGeneral, key.pItem, nullptr);
-				//DEBUG_LOG(g_Logger, "WeatherToggleSpecificFile:  {} - Value: {}", weatherItemgeneral, itemWeatherShaderToToggle);
-
-				const std::string& stateKeyName = togglePrefix10 + std::to_string(m_specificWeather.size());
-
-				m_itemWeatherStateValue = ini.GetValue(sectionWeatherGeneral, stateKeyName.c_str(), nullptr);
-
-				const std::string& weatherKeyName = togglePrefixItemWeather + std::to_string(m_specificWeather.size());
-				m_itemSpecificWeather = ini.GetValue(sectionWeatherGeneral, weatherKeyName.c_str(), nullptr);
-
-				TechniqueInfo WeatherInfo;
-				WeatherInfo.filename = m_itemWeatherShaderToToggle;
-				WeatherInfo.state = m_itemWeatherStateValue;
-				WeatherInfo.Name = m_itemSpecificWeather;
-				techniqueWeatherInfoList.emplace_back(WeatherInfo);
-#ifndef NDEBUG
-				SKSE::log::debug("Populated TechniqueWeatherInfo: {} - {}", m_itemWeatherShaderToToggle, m_itemWeatherStateValue);
-#endif
+				const auto& timeInfo = m_Config.TechniqueTimeInfoList[i];
+				out << YAML::Key << "TimeToggleSpecificFile" << i + 1 << YAML::Value << timeInfo.Filename;
+				out << YAML::Key << "TimeToggleSpecificState" << i + 1 << YAML::Value << timeInfo.State;
+				out << YAML::Key << "TimeToggleSpecificTimeStart" << i + 1 << YAML::Value << timeInfo.StartTime;
+				out << YAML::Key << "TimeToggleSpecificTimeStop" << i + 1 << YAML::Value << timeInfo.StopTime;
 			}
+			out << YAML::EndMap; // Time
+
+			// Save Interior section
+			out << YAML::Key << "Interior" << YAML::Value;
+			out << YAML::BeginMap; // Interior
+			out << YAML::Key << "InteriorUpdateInterval" << YAML::Value << m_Config.TimeUpdateIntervalInterior;
+			out << YAML::Key << "InteriorToggleOption" << YAML::Value << m_Config.ToggleStateInterior;
+			out << YAML::Key << "InteriorToggleAllState" << YAML::Value << m_Config.ToggleAllStateInterior;
+			for (size_t i = 0; i < m_Config.TechniqueInteriorInfoList.size(); i++)
+			{
+				const auto& interiorInfo = m_Config.TechniqueInteriorInfoList[i];
+				out << YAML::Key << "InteriorToggleSpecificFile" << i + 1 << YAML::Value << interiorInfo.Filename;
+				out << YAML::Key << "InteriorToggleSpecificState" << i + 1 << YAML::Value << interiorInfo.State;
+			}
+			out << YAML::EndMap; // Interior
+
+			// Save Weather section
+			out << YAML::Key << "Weather" << YAML::Value;
+			out << YAML::BeginMap; // Weather
+			out << YAML::Key << "WeatherUpdateInterval" << YAML::Value << m_Config.TimeUpdateIntervalWeather;
+			out << YAML::Key << "WeatherToggleOption" << YAML::Value << m_Config.ToggleStateWeather;
+			out << YAML::Key << "WeatherToggleAllState" << YAML::Value << m_Config.ToggleAllStateWeather;
+			for (size_t i = 0; i < m_Config.TechniqueWeatherInfoList.size(); i++)
+			{
+				const auto& weatherInfo = m_Config.TechniqueWeatherInfoList[i];
+				out << YAML::Key << "WeatherToggleSpecificFile" << i + 1 << YAML::Value << weatherInfo.Filename;
+				out << YAML::Key << "WeatherToggleSpecificState" << i + 1 << YAML::Value << weatherInfo.State;
+				out << YAML::Key << "WeatherToggleSpecificWeather" << i + 1 << YAML::Value << weatherInfo.Name;
+			}
+			out << YAML::EndMap; // Weather
+
+			// Save WeatherProcess section
+			out << YAML::Key << "WeatherProcess" << YAML::Value;
+			out << YAML::BeginMap; // WeatherProcess
+			for (size_t i = 0; i < m_Config.WeatherList.size(); i++)
+			{
+				const auto& weatherData = m_Config.WeatherList[i];
+				out << YAML::Key << "Weather" << i + 1 << YAML::Value << weatherData.Name;
+			}
+			out << YAML::EndMap; // WeatherProcess
 		}
+		out << YAML::EndMap; // Root
+
+		std::ofstream fout(fullPath);
+		fout << out.c_str();
+		return true;
 	}
+}
 
-#ifndef NDEBUG
-	SKSE::log::debug("\n");
-#endif
+bool Config::DeserializePreset(const std::string& presetName)
+{
 
-	//WeatherProcess
-	ini.GetAllKeys(sectionWeatherProcess, WeatherProcess_keys);
-
-	for (const auto& key : WeatherProcess_keys)
+	YAML::Node configNode;
+	try
 	{
-		const char* weatherItem = key.pItem;
-		const char* weatheritemValue = ini.GetValue(sectionWeatherProcess, weatherItem, nullptr);
-
-		weatherList.emplace_back(Info{ weatherItem, weatheritemValue });
-
-#ifndef NDEBUG
-		SKSE::log::debug("Weather:  {} - Value: {}", weatherItem, weatheritemValue);
-#endif
+		configNode = YAML::LoadFile(presetName);
+	}
+	catch (const YAML::ParserException& e)
+	{
+		SKSE::log::critical("Failed to Parse: '{0}' \n\t{1}", presetName.c_str(), e.what());
+		return false;
 	}
 
-#ifndef NDEBUG
-	SKSE::log::debug("\n");
-#endif
+	// General section
+	const auto& generalNode = configNode["General"];
+	m_Config.EnableMenus = generalNode["EnableMenus"].as<bool>();
+	m_Config.EnableTime = generalNode["EnableTime"].as<bool>();
+	m_Config.EnableInterior = generalNode["EnableInterior"].as<bool>();
+	m_Config.EnableWeather = generalNode["EnableWeather"].as<bool>();
 
-#pragma endregion
+	// MenusGeneral section
+	const auto& menusGeneralNode = configNode["MenusGeneral"];
+	m_Config.ToggleStateMenus = menusGeneralNode["MenuToggleOption"].as<std::string>();
+	m_Config.ToggleAllStateMenus = menusGeneralNode["MenuToggleAllState"].as<std::string>();
+	size_t menuCount = menusGeneralNode.size() - 2; // Exclude toggle options
+	m_Config.TechniqueMenuInfoList.clear();
+	for (size_t i = 1; i <= menuCount; ++i)
+	{
+		std::string fileKey = "MenuToggleSpecificFile" + std::to_string(i);
+		std::string stateKey = "MenuToggleSpecificState" + std::to_string(i);
+		std::string menuKey = "MenuToggleSpecificMenu" + std::to_string(i);
+		TechniqueInfo menuInfo;
+		menuInfo.Filename = menusGeneralNode[fileKey].as<std::string>();
+		menuInfo.State = menusGeneralNode[stateKey].as<std::string>();
+		menuInfo.Name = menusGeneralNode[menuKey].as<std::string>();
+		m_Config.TechniqueMenuInfoList.push_back(menuInfo);
+	}
 
-	if (TimeUpdateIntervalTime < 0) { TimeUpdateIntervalTime = 0; }
-	if (TimeUpdateIntervalInterior < 0) { TimeUpdateIntervalInterior = 0; }
-	if (TimeUpdateIntervalWeather < 0) { TimeUpdateIntervalWeather = 0; }
+	// Time section
+	const auto& timeNode = configNode["Time"];
+	m_Config.TimeUpdateIntervalTime = timeNode["TimeUpdateInterval"].as<int>();
+	m_Config.ToggleStateTime = timeNode["TimeToggleOption"].as<std::string>();
+	m_Config.ToggleAllStateTime = timeNode["TimeToggleAllState"].as<std::string>();
+
+	// Parse TechniqueTimeInfoListAll
+	const auto& timeToggleAllNode = timeNode["TimeToggleAll"];
+	for (const auto& techniqueNode : timeToggleAllNode)
+	{
+		TechniqueInfo info;
+		info.StartTime = techniqueNode["StartTime"].as<double>();
+		info.StopTime = techniqueNode["StopTime"].as<double>();
+		m_Config.TechniqueTimeInfoListAll.push_back(info);
+	}
+
+	// Parse TechniqueTimeInfoList
+	const auto& timeToggleSpecificNode = timeNode["TimeToggleSpecific"];
+	for (const auto& techniqueNode : timeToggleSpecificNode) 
+	{
+		TechniqueInfo info;
+		info.Filename = techniqueNode["Filename"].as<std::string>();
+		info.State = techniqueNode["State"].as<std::string>();
+		info.StartTime = techniqueNode["StartTime"].as<double>();
+		info.StopTime = techniqueNode["StopTime"].as<double>();
+		m_Config.TechniqueTimeInfoList.push_back(info);
+	}
+
+	// Interior section
+	const auto& interiorNode = configNode["Interior"];
+	m_Config.TimeUpdateIntervalInterior = interiorNode["InteriorUpdateInterval"].as<int>();
+	m_Config.ToggleStateInterior = interiorNode["InteriorToggleOption"].as<std::string>();
+	m_Config.ToggleAllStateInterior = interiorNode["InteriorToggleAllState"].as<std::string>();
+
+	// Parse TechniqueInteriorInfoList
+	const auto& interiorToggleSpecificNode = interiorNode["InteriorToggleSpecific"];
+	for (const auto& techniqueNode : interiorToggleSpecificNode) 
+	{
+		TechniqueInfo info;
+		info.Filename = techniqueNode["Filename"].as<std::string>();
+		info.State = techniqueNode["State"].as<std::string>();
+		m_Config.TechniqueInteriorInfoList.push_back(info);
+	}
+
+	// Weather section
+	const auto& weatherNode = configNode["Weather"];
+	m_Config.TimeUpdateIntervalWeather = weatherNode["WeatherUpdateInterval"].as<int>();
+	m_Config.ToggleStateWeather = weatherNode["WeatherToggleOption"].as<std::string>();
+	m_Config.ToggleAllStateWeather = weatherNode["WeatherToggleAllState"].as<std::string>();
+
+	// Parse TechniqueWeatherInfoList
+	const auto& weatherToggleSpecificNode = weatherNode["WeatherToggleSpecific"];
+	for (const auto& techniqueNode : weatherToggleSpecificNode) 
+	{
+		TechniqueInfo info;
+		info.Filename = techniqueNode["Filename"].as<std::string>();
+		info.State = techniqueNode["State"].as<std::string>();
+		info.Name = techniqueNode["Name"].as<std::string>();
+		m_Config.TechniqueWeatherInfoList.push_back(info);
+	}
+
+	// WeatherProcess section
+	const auto& weatherProcessNode = configNode["WeatherProcess"];
+	m_Config.WeatherList.clear();
+	for (const auto& weatherData : weatherProcessNode) 
+	{
+		Info info;
+		info.Name = weatherData["Name"].as<std::string>();
+		m_Config.WeatherList.push_back(info);
+	}
+
+	return true;
 }
 
 void Config::LoadPreset(const std::string& Preset)
 {
-	const std::string& fullPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\" + Preset;
-
-
 	SKSE::log::info("Starting clear procedure...");
+	std::string fullPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\" + Preset + ".yaml";
 
-	EnableMenus = false;
-	EnableTime = false;
-	EnableInterior = false;
-	EnableWeather = false;
+	m_Config.EnableMenus = false;
+	m_Config.EnableTime = false;
+	m_Config.EnableInterior = false;
+	m_Config.EnableWeather = false;
 
 	// Empty every vector
-	m_specificMenu.clear();
-	techniqueMenuInfoList.clear();
-	menuList.clear();
-	ToggleStateMenus.clear();
-	ToggleAllStateMenus.clear();
-	m_itemMenuShaderToToggle = nullptr;
-	m_itemMenuStateValue = nullptr;
-	m_itemSpecificMenu = nullptr;
+	m_Config.SpecificMenu.clear();
+	m_Config.TechniqueMenuInfoList.clear();
+	m_Config.MenuList.clear();
+	m_Config.ToggleStateMenus.clear();
+	m_Config.ToggleAllStateMenus.clear();
+	m_Config.ItemMenuShaderToToggle = nullptr;
+	m_Config.ItemMenuStateValue = nullptr;
+	m_Config.ItemSpecificMenu = nullptr;
 
-	techniqueTimeInfoList.clear();
-	techniqueTimeInfoListAll.clear();
-	m_specificTime.clear();
-	ToggleStateTime.clear();
-	ToggleAllStateTime.clear();
-	m_itemTimeShaderToToggle = nullptr;
-	m_itemTimeStateValue = nullptr;
-	m_itemTimeStartHour = 0.0;
-	m_itemTimeStopHour = 0.0;
-	m_itemTimeStartHourAll = 0.0;
-	m_itemTimeStopHourAll = 0.0;
-	TimeUpdateIntervalTime = 0;
+	m_Config.TechniqueTimeInfoList.clear();
+	m_Config.TechniqueTimeInfoListAll.clear();
+	m_Config.SpecificTime.clear();
+	m_Config.ToggleStateTime.clear();
+	m_Config.ToggleAllStateTime.clear();
+	m_Config.ItemTimeShaderToToggle = nullptr;
+	m_Config.ItemTimeStateValue = nullptr;
+	m_Config.ItemTimeStartHour = 0.0;
+	m_Config.ItemTimeStopHour = 0.0;
+	m_Config.ItemTimeStartHourAll = 0.0;
+	m_Config.ItemTimeStopHourAll = 0.0;
+	m_Config.TimeUpdateIntervalTime = 0;
 
-	techniqueInteriorInfoList.clear();
-	m_specificInterior.clear();
-	ToggleStateInterior.clear();
-	ToggleAllStateInterior.clear();
-	m_itemInteriorShaderToToggle = nullptr;
-	m_itemInteriorStateValue = nullptr;
-	TimeUpdateIntervalInterior = 0;
+	m_Config.TechniqueInteriorInfoList.clear();
+	m_Config.SpecificInterior.clear();
+	m_Config.ToggleStateInterior.clear();
+	m_Config.ToggleAllStateInterior.clear();
+	m_Config.ItemInteriorShaderToToggle = nullptr;
+	m_Config.ItemInteriorStateValue = nullptr;
+	m_Config.TimeUpdateIntervalInterior = 0;
 
-	m_specificWeather.clear();
-	weatherList.clear();
-	techniqueWeatherInfoList.clear();
-	ToggleStateWeather.clear();
-	ToggleAllStateWeather.clear();
-	weatherflags.clear();
-	m_itemWeatherShaderToToggle = nullptr;
-	m_itemWeatherStateValue = nullptr;
-	m_itemSpecificWeather = nullptr;
-	TimeUpdateIntervalWeather = 0;
+	m_Config.SpecificWeather.clear();
+	m_Config.WeatherList.clear();
+	m_Config.TechniqueWeatherInfoList.clear();
+	m_Config.ToggleStateWeather.clear();
+	m_Config.ToggleAllStateWeather.clear();
+	m_Config.Weatherflags.clear();
+	m_Config.ItemWeatherShaderToToggle = nullptr;
+	m_Config.ItemWeatherStateValue = nullptr;
+	m_Config.ItemSpecificWeather = nullptr;
+	m_Config.TimeUpdateIntervalWeather = 0;
 
 	SKSE::log::info("Finished clearing procedure...");
 
 	// Load the new INI
-	LoadINI(fullPath);
+	DeserializePreset(fullPath);
 }

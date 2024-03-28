@@ -1,4 +1,5 @@
 #pragma once
+#include "Config.h"
 
 class Menu
 {
@@ -54,6 +55,8 @@ private:
 	"kPermAurora",
 	"kAuroraFollowsSun"
 	};
+
+	Configuration m_Conf = Config::GetSingleton()->GetConfig();
 
 public:
 

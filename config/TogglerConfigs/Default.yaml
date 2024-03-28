@@ -1,0 +1,73 @@
+# General settings
+General:
+  # Enable/disable menus
+  EnableMenus: false
+  # Enable/disable time
+  EnableTime: false
+  # Enable/disable interior
+  EnableInterior: false
+  # Enable/disable weather
+  EnableWeather: false
+
+# Settings related to menus
+MenusGeneral:
+  # Toggle option for menus (All/Specific)
+  MenuToggleOption: All
+  # State of toggling all effects on menu open (off/on)
+  MenuToggleAllState: off
+  # Specific file, state, and menu for toggling
+  MenuToggleSpecificFile1: Default.fx
+  MenuToggleSpecificState1: off
+  MenuToggleSpecificMenu1: Default
+
+# Menus process settings
+MenusProcess:
+  # Toggle effect(s) on/off in these menus
+  Menu1: Default
+
+# Time settings
+Time:
+  # Interval for calling time-based toggling in seconds
+  TimeUpdateInterval: 5
+  # Toggle option for time effects (All/Specific)
+  TimeToggleOption: All
+  # State of toggling all effects when start time is reached (off/on)
+  TimeToggleAllState: off
+  # Start and stop time for all effects
+  TimeToggleAllTimeStart: 0.00
+  TimeToggleAllTimeStop: 0.00
+  # Specific file, state, start time, and stop time for time effects
+  TimeToggleSpecificFile1: Default.fx
+  TimeToggleSpecificState1: off
+  TimeToggleSpecificTimeStart1: 0.00
+  TimeToggleSpecificTimeStop1: 0.00
+
+# Interior settings
+Interior:
+  # Interval for updating interior settings
+  InteriorUpdateInterval: 3
+  # Toggle option for interior effects (All/Specific)
+  InteriorToggleOption: All
+  # State of toggling all effects when entering interior cell (off/on)
+  InteriorToggleAllState: off
+  # Specific file and state for interior effects
+  InteriorToggleSpecificState1: off
+  InteriorToggleSpecificFile1: Default.fx
+
+# Weather settings
+Weather:
+  # Interval for updating weather settings
+  WeatherUpdateInterval: 5
+  # Toggle option for weather effects (All/Specific)
+  WeatherToggleOption: All
+  # State of toggling all effects when weather changes (off/on)
+  WeatherToggleAllState: off
+  # Specific file, state, and weather for weather effects
+  WeatherToggleSpecificState1: off
+  WeatherToggleSpecificFile1: Default.fx
+  WeatherToggleSpecificWeather1: kNone
+
+# Weather process settings
+WeatherProcess:
+  # Weather flag
+  WeatherFlag1: kNone

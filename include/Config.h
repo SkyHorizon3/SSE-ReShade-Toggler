@@ -1,5 +1,88 @@
 #pragma once
 
+#include <filesystem>
+#include <vector>
+
+
+struct TechniqueInfo
+{
+	std::string Filename = "";
+	std::string State = "";
+	std::string Name = "";
+	double StartTime = 0.0;
+	double StopTime = 0.0;
+	bool Enable = true;
+};
+
+struct Info
+{
+	std::string Index = "";
+	std::string Name = "";
+};
+
+struct Configuration
+{
+    // General
+    bool EnableMenus = true;
+    bool EnableTime = true;
+    bool EnableInterior = true;
+    bool EnableWeather = true;
+
+    // Menu
+    const char* ItemMenuShaderToToggle;
+    const char* ItemMenuStateValue;
+    const char* ItemSpecificMenu;
+    std::vector<std::string> SpecificMenu;
+
+    // Time
+    const char* ItemTimeShaderToToggle;
+    const char* ItemTimeStateValue;
+    double ItemTimeStartHour;
+    double ItemTimeStopHour;
+    double ItemTimeStartHourAll;
+    double ItemTimeStopHourAll;
+    std::vector<std::string> SpecificTime;
+
+    // Interior
+    const char* ItemInteriorShaderToToggle;
+    const char* ItemInteriorStateValue;
+    std::vector<std::string> SpecificInterior;
+
+    // Weather
+    const char* ItemWeatherShaderToToggle;
+    const char* ItemWeatherStateValue;
+    const char* ItemSpecificWeather;
+    std::vector<std::string> SpecificWeather;
+
+    // Menus
+    std::vector<TechniqueInfo> TechniqueMenuInfoList;
+    std::vector<Info> MenuList;
+    std::string ToggleStateMenus;
+    std::string ToggleAllStateMenus;
+
+    // Time
+    std::vector<TechniqueInfo> TechniqueTimeInfoList;
+    std::vector<TechniqueInfo> TechniqueTimeInfoListAll;
+    std::string ToggleStateTime;
+    std::string ToggleAllStateTime;
+    int TimeUpdateIntervalTime;
+
+    // Interior
+    std::vector<TechniqueInfo> TechniqueInteriorInfoList;
+    std::string ToggleStateInterior;
+    std::string ToggleAllStateInterior;
+    int TimeUpdateIntervalInterior;
+    bool IsInInteriorCell = false;
+
+    // Weather
+    std::vector<Info> WeatherList;
+    std::vector<TechniqueInfo> TechniqueWeatherInfoList;
+    std::string ToggleStateWeather;
+    std::string ToggleAllStateWeather;
+    std::string Weatherflags;
+    int TimeUpdateIntervalWeather;
+};
+
 class Config
 {
 public:
@@ -10,41 +93,13 @@ public:
 		return &s;
 	}
 
-	void LoadINI(const std::string& presetPath);
+	bool SerializePreset(const std::string& presetName);
+	bool DeserializePreset(const std::string& presetName);
 	void LoadPreset(const std::string& Preset);
 
+	Configuration GetConfig() { return m_Config; }
+
 private:
-
-	//Menu
-	const char* m_itemMenuShaderToToggle;
-	const char* m_itemMenuStateValue;
-	const char* m_itemSpecificMenu;
-
-	std::vector<std::string> m_specificMenu;
-
-	//Time
-	const char* m_itemTimeShaderToToggle;
-	const char* m_itemTimeStateValue;
-
-	double m_itemTimeStartHour;
-	double m_itemTimeStopHour;
-	double m_itemTimeStartHourAll;
-	double m_itemTimeStopHourAll;
-
-	std::vector<std::string> m_specificTime;
-
-	//Interior
-	const char* m_itemInteriorShaderToToggle;
-	const char* m_itemInteriorStateValue;
-
-	std::vector<std::string> m_specificInterior;
-
-
-	//Weather
-	const char* m_itemWeatherShaderToToggle;
-	const char* m_itemWeatherStateValue;
-	const char* m_itemSpecificWeather;
-
-	std::vector<std::string> m_specificWeather;
+	Configuration m_Config;
 
 };

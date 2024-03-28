@@ -1,5 +1,6 @@
 #pragma once
 #include "Globals.h"
+#include "Config.h"
 
 extern reshade::api::effect_runtime* s_pRuntime;
 

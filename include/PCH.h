@@ -34,3 +34,4 @@ struct ankerl::unordered_dense::hash<std::string>
 #define IMGUI_DISABLE_INCLUDE_IMCONFIG_H
 #include <ImGui/imgui.h>
 #include <reshade/reshade.hpp>
+#include <yaml-cpp/yaml.h>

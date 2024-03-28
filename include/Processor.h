@@ -1,4 +1,5 @@
 #pragma once
+#include "Config.h"
 
 class Processor : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
 {
@@ -32,4 +33,6 @@ private:
 	std::mutex m_vectorMutexTime;
 	std::mutex m_timeMutexInterior;
 	std::mutex m_timeMutexWeather;
+
+	Configuration m_Conf = Config::GetSingleton()->GetConfig();
 };
