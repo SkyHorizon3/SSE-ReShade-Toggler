@@ -147,7 +147,7 @@ bool Processor::IsTimeWithinRange(double currentTime, double startTime, double e
 	}
 }
 
-RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling()
+RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling() //RELOCATION_ID(13171, 13316) + 0x2E6, 0x46D; RELOCATION_ID(13172, 13317) + 0x2A, 0x1E
 {
 	std::lock_guard<std::mutex> lock(m_timeMutexInterior);
 
@@ -198,7 +198,7 @@ RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling()
 	return RE::BSEventNotifyControl::kContinue;
 }
 
-RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling()
+RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling() // Weatherchange function: RELOCATION_ID(25684, 26231)+ 0x44F, 0x46C
 {
 	std::lock_guard<std::mutex> lock(m_timeMutexWeather);
 

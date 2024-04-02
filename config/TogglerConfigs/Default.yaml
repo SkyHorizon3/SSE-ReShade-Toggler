@@ -16,9 +16,7 @@ MenusGeneral:
   # State of toggling all effects on menu open (off/on)
   MenuToggleAllState: off
   # Specific file, state, and menu for toggling
-  MenuToggleSpecificFile1: Default.fx
-  MenuToggleSpecificState1: off
-  MenuToggleSpecificMenu1: Default
+  MenuToggleSpecificFile1: Default.fx|off|Default
 
 # Menus process settings
 MenusProcess:
@@ -37,12 +35,9 @@ Time:
   TimeToggleAllTimeStart: 0.00
   TimeToggleAllTimeStop: 0.00
   # Specific file, state, start time, and stop time for time effects
-  TimeToggleSpecificFile1: Default.fx
-  TimeToggleSpecificState1: off
-  TimeToggleSpecificTimeStart1: 0.00
-  TimeToggleSpecificTimeStop1: 0.00
+  TimeToggleSpecificFile1: Default.fx|off|0.00|0.00
 
-# Interior settings
+# Interior settingss
 Interior:
   # Interval for updating interior settings
   InteriorUpdateInterval: 3
@@ -51,8 +46,7 @@ Interior:
   # State of toggling all effects when entering interior cell (off/on)
   InteriorToggleAllState: off
   # Specific file and state for interior effects
-  InteriorToggleSpecificState1: off
-  InteriorToggleSpecificFile1: Default.fx
+  InteriorToggleSpecificFile1: Default.fx|off
 
 # Weather settings
 Weather:
@@ -63,9 +57,7 @@ Weather:
   # State of toggling all effects when weather changes (off/on)
   WeatherToggleAllState: off
   # Specific file, state, and weather for weather effects
-  WeatherToggleSpecificState1: off
-  WeatherToggleSpecificFile1: Default.fx
-  WeatherToggleSpecificWeather1: kNone
+  WeatherToggleSpecificFile1: Default.fx|off|kNone
 
 # Weather process settings
 WeatherProcess:

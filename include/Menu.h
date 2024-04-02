@@ -1,5 +1,4 @@
 #pragma once
-#include "Config.h"
 
 class Menu
 {
@@ -17,7 +16,7 @@ public:
 	void EnumerateMenus();
 private:
 
-	bool CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags);
+	void CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags);
 
 	void SaveConfig();
 
@@ -55,10 +54,14 @@ private:
 	"kAuroraFollowsSun"
 	};
 
-	Configuration m_Conf = Config::GetSingleton()->GetConfig();
+	GeneralInformation m_General = Config::GetSingleton()->GetGeneralInformation();
+	MenuInformation m_Menu = Config::GetSingleton()->GetMenuInformation();
+	TimeInformation m_Time = Config::GetSingleton()->GetTimeInformation();
+	InteriorInformation m_Interior = Config::GetSingleton()->GetInteriorInformation();
+	WeatherInformation m_Weather = Config::GetSingleton()->GetWeatherInformation();
 
 public:
 
-	std::string selectedPreset = "Default.yaml";
-	std::string selectedPresetPath = "Data\\SKSE\\Plugins\\TogglerConfigs\\Default.yaml";
+	std::string selectedPreset;
+	std::string selectedPresetPath;
 };

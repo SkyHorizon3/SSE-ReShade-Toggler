@@ -10,73 +10,47 @@ struct TechniqueInfo
 	bool Enable = true;
 };
 
-struct Info
+struct GeneralInformation
 {
-	std::string Index = "";
-	std::string Name = "";
+	bool EnableMenus;
+	bool EnableTime;
+	bool EnableInterior;
+	bool EnableWeather;
 };
 
-struct Configuration
+struct MenuInformation
 {
-	// General
-	bool EnableMenus = true;
-	bool EnableTime = true;
-	bool EnableInterior = true;
-	bool EnableWeather = true;
-
-	// Menu
-	const char* ItemMenuShaderToToggle;
-	const char* ItemMenuStateValue;
-	const char* ItemSpecificMenu;
-	std::vector<std::string> SpecificMenu;
-
-	// Time
-	const char* ItemTimeShaderToToggle;
-	const char* ItemTimeStateValue;
-	double ItemTimeStartHour;
-	double ItemTimeStopHour;
-	double ItemTimeStartHourAll;
-	double ItemTimeStopHourAll;
-	std::vector<std::string> SpecificTime;
-
-	// Interior
-	const char* ItemInteriorShaderToToggle;
-	const char* ItemInteriorStateValue;
-	std::vector<std::string> SpecificInterior;
-
-	// Weather
-	const char* ItemWeatherShaderToToggle;
-	const char* ItemWeatherStateValue;
-	const char* ItemSpecificWeather;
-	std::vector<std::string> SpecificWeather;
-
-	// Menus
+	std::string MenuToggleOption;
+	std::string MenuToggleAllState;
 	std::vector<TechniqueInfo> TechniqueMenuInfoList;
-	std::vector<Info> MenuList;
-	std::string ToggleStateMenus;
-	std::string ToggleAllStateMenus;
+	std::vector<std::string> MenuList;
+};
 
-	// Time
+struct TimeInformation
+{
+	int TimeUpdateInterval;
+	std::string TimeToggleOption;
+	std::string TimeToggleAllState;
+	double TimeToggleAllTimeStart;
+	double TimeToggleAllTimeStop;
 	std::vector<TechniqueInfo> TechniqueTimeInfoList;
-	std::vector<TechniqueInfo> TechniqueTimeInfoListAll;
-	std::string ToggleStateTime;
-	std::string ToggleAllStateTime;
-	int TimeUpdateIntervalTime;
+};
 
-	// Interior
+struct InteriorInformation
+{
+	int InteriorUpdateInterval;
+	std::string InteriorToggleOption;
+	std::string InteriorToggleAllState;
 	std::vector<TechniqueInfo> TechniqueInteriorInfoList;
-	std::string ToggleStateInterior;
-	std::string ToggleAllStateInterior;
-	int TimeUpdateIntervalInterior;
-	bool IsInInteriorCell = false;
+};
 
-	// Weather
-	std::vector<Info> WeatherList;
+struct WeatherInformation
+{
+	int WeatherUpdateInterval;
+	std::string WeatherToggleOption;
+	std::string WeatherToggleAllState;
 	std::vector<TechniqueInfo> TechniqueWeatherInfoList;
-	std::string ToggleStateWeather;
-	std::string ToggleAllStateWeather;
-	std::string Weatherflags;
-	int TimeUpdateIntervalWeather;
+	std::vector<std::string> WeatherList;
 };
 
 class Config
@@ -90,12 +64,27 @@ public:
 	}
 
 	bool SerializePreset(const std::string& presetName);
+
 	bool DeserializePreset(const std::string& presetName);
 	void LoadPreset(const std::string& Preset);
 
-	Configuration GetConfig() { return m_Config; }
+	GeneralInformation GetGeneralInformation() { return m_GeneralInformation; }
+	MenuInformation GetMenuInformation() { return m_MenuInformation; }
+	TimeInformation GetTimeInformation() { return m_TimeInformation; }
+	InteriorInformation GetInteriorInformation() { return m_InteriorInformation; }
+	WeatherInformation GetWeatherInformation() { return m_WeatherInformation; }
 
 private:
-	Configuration m_Config;
 
+	void DeserializeGeneral(YAML::Node preset);
+	void DeserializeMenu(YAML::Node mainNode);
+	void DeserializeTime(YAML::Node mainNode);
+	void DeserializeInterior(YAML::Node mainNode);
+	void DeserializeWeather(YAML::Node mainNode);
+
+	GeneralInformation m_GeneralInformation;
+	MenuInformation m_MenuInformation;
+	TimeInformation m_TimeInformation;
+	InteriorInformation m_InteriorInformation;
+	WeatherInformation m_WeatherInformation;
 };

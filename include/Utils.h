@@ -15,3 +15,18 @@ public:
 private:
 	bool m_Value;
 };
+
+namespace Utils
+{
+	std::vector<std::string> SplitString(const std::string& str, char delimiter)
+	{
+		std::vector<std::string> tokens;
+		std::istringstream iss(str);
+		std::string token;
+		while (std::getline(iss, token, delimiter))
+		{
+			tokens.emplace_back(token);
+		}
+		return tokens;
+	}
+}
