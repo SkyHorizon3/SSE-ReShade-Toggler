@@ -1,6 +1,5 @@
 ﻿#include "ReshadeIntegration.h"
 #include "Processor.h"
-#include "Globals.h"
 #include "Menu.h"
 #include "Config.h"
 #include "Thread.h"
@@ -145,7 +144,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 	SKSE::GetMessagingInterface()->RegisterListener(MessageListener);
 	SKSE::log::info("{} v{} loaded", Plugin::NAME, Plugin::VERSION);
 
-	if (Config::GetSingleton()->GetConfig().EnableMenus)
+	if (Config::GetSingleton()->GetGeneralInformation().EnableMenus)
 	{
 		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Processor::GetSingleton());
 	}

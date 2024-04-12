@@ -17,5 +17,4 @@ private:
 	static ankerl::unordered_dense::map<std::string, ProcessFunction> m_mainThreadQueue;
 	static std::mutex m_mainThreadQueueMutex;
 
-	inline static Configuration m_Conf = Config::GetSingleton()->GetConfig();
 };

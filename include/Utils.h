@@ -18,7 +18,7 @@ private:
 
 namespace Utils
 {
-	std::vector<std::string> SplitString(const std::string& str, char delimiter)
+	inline std::vector<std::string> SplitString(const std::string& str, char delimiter)
 	{
 		std::vector<std::string> tokens;
 		std::istringstream iss(str);

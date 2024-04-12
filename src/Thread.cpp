@@ -1,5 +1,5 @@
 #include "Thread.h"
-#include "Globals.h"
+#include "Config.h"
 
 ankerl::unordered_dense::map<std::string, Thread::ProcessFunction> Thread::m_mainThreadQueue;
 std::mutex Thread::m_mainThreadQueueMutex;
@@ -39,24 +39,27 @@ void Thread::RuntimeThread()
 	while (isLoaded)
 	{
 
-		if (m_Conf.EnableTime)
+		Config config;
+		const auto& info = config.GetGeneralInformation();
+
+		if (info.EnableTime)
 		{
 			//g_Logger->info("Adding Time to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(m_Conf.TimeUpdateIntervalTime));
+			std::this_thread::sleep_for(std::chrono::seconds(config.GetTimeInformation().TimeUpdateInterval));
 			SubmitToMainThread("Time", &Processor::ProcessTimeBasedToggling);
 		}
 
-		if (m_Conf.EnableInterior)
+		if (info.EnableInterior)
 		{
 			//g_Logger->info("Adding Interior to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(m_Conf.TimeUpdateIntervalInterior));
+			std::this_thread::sleep_for(std::chrono::seconds(config.GetInteriorInformation().InteriorUpdateInterval));
 			SubmitToMainThread("Interior", &Processor::ProcessInteriorBasedToggling);
 		}
 
-		if (m_Conf.EnableWeather && !m_Conf.IsInInteriorCell)
+		if (info.EnableWeather)//&& !m_Conf.IsInInteriorCell
 		{
 			//g_Logger->info("Adding Weather to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(m_Conf.TimeUpdateIntervalWeather));
+			std::this_thread::sleep_for(std::chrono::seconds(config.GetWeatherInformation().WeatherUpdateInterval));
 			SubmitToMainThread("Weather", &Processor::ProcessWeatherBasedToggling);
 		}
 

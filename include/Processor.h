@@ -34,5 +34,10 @@ private:
 	std::mutex m_timeMutexInterior;
 	std::mutex m_timeMutexWeather;
 
-	Configuration m_Conf = Config::GetSingleton()->GetConfig();
+	MenuInformation m_Menu = Config::GetSingleton()->GetMenuInformation();
+	TimeInformation m_Time = Config::GetSingleton()->GetTimeInformation();
+	InteriorInformation m_Interior = Config::GetSingleton()->GetInteriorInformation();
+	WeatherInformation m_Weather = Config::GetSingleton()->GetWeatherInformation();
 };
+
+inline bool isLoaded = false;

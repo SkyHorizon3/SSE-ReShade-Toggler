@@ -1,7 +1,5 @@
-#include "PCH.h"
 #include "Processor.h"
 #include "ReshadeIntegration.h"
-#include "Globals.h"
 
 RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_source)
 {
@@ -30,21 +28,21 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* a
 	bool enableReshadeMenu = true;
 
 
-	if (m_Conf.ToggleStateMenus.find("All") != std::string::npos)
+	if (m_Menu.MenuToggleOption.find("All") != std::string::npos)
 	{
-		for (const Info& menu : m_Conf.MenuList)
+		for (const auto& menu : m_Menu.MenuList)
 		{
-			if (m_openMenus.find(menu.Name) != m_openMenus.end())
+			if (m_openMenus.find(menu) != m_openMenus.end())
 			{
 				enableReshadeMenu = false;
 			}
 		}
 
-		ReshadeIntegration::GetSingleton()->ApplyReshadeState(enableReshadeMenu, m_Conf.ToggleAllStateMenus);
+		ReshadeIntegration::GetSingleton()->ApplyReshadeState(enableReshadeMenu, m_Menu.MenuToggleAllState);
 	}
-	else if (m_Conf.ToggleStateMenus.find("Specific") != std::string::npos)
+	else if (m_Menu.MenuToggleOption.find("Specific") != std::string::npos)
 	{
-		for (const TechniqueInfo& info : m_Conf.TechniqueMenuInfoList)
+		for (const TechniqueInfo& info : m_Menu.TechniqueMenuInfoList)
 		{
 			if (m_openMenus.find(info.Name) != m_openMenus.end())
 			{
@@ -92,9 +90,9 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 
 	// Specific
 	std::vector<Bool> enableReshade;
-	if (m_Conf.ToggleStateTime.find("Specific") != std::string::npos)
+	if (m_Time.TimeToggleOption.find("Specific") != std::string::npos)
 	{
-		for (TechniqueInfo& info : m_Conf.TechniqueTimeInfoList)
+		for (TechniqueInfo& info : m_Time.TechniqueTimeInfoList)
 		{
 
 #ifndef NDEBUG
@@ -106,26 +104,24 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 
 	// All
 	bool enableReshadeTime = true;
-	if (m_Conf.ToggleStateTime.find("All") != std::string::npos)
+	if (m_Time.TimeToggleOption.find("All") != std::string::npos)
 	{
-		for (auto& allInfo : m_Conf.TechniqueTimeInfoListAll)
-		{
-			enableReshadeTime = !IsTimeWithinRange(TimecurrentTime, allInfo.StartTime, allInfo.StopTime);
+		enableReshadeTime = !IsTimeWithinRange(TimecurrentTime, m_Time.TimeToggleAllTimeStart, m_Time.TimeToggleAllTimeStop);
 
 #ifndef NDEBUG
-			SKSE::log::debug("State: {} for time: {} - {}. ReshadeBool: {}", allInfo.State, allInfo.StartTime, allInfo.StopTime, enableReshadeTime);
+		SKSE::log::debug("State: {} for time: {} - {}. ReshadeBool: {}", m_Time.TimeToggleAllState, m_Time.TimeToggleAllTimeStart, m_Time.TimeToggleAllTimeStop, enableReshadeTime);
 #endif
-		}
+
 	}
 
 
-	if (m_Conf.ToggleStateTime.find("All") != std::string::npos)
+	if (m_Time.TimeToggleOption.find("All") != std::string::npos)
 	{
-		ReshadeIntegration::GetSingleton()->ApplyReshadeState(enableReshadeTime, m_Conf.ToggleAllStateTime);
+		ReshadeIntegration::GetSingleton()->ApplyReshadeState(enableReshadeTime, m_Time.TimeToggleAllState);
 	}
-	else if (m_Conf.ToggleStateTime.find("Specific") != std::string::npos)
+	else if (m_Time.TimeToggleOption.find("Specific") != std::string::npos)
 	{
-		for (const TechniqueInfo& info : m_Conf.TechniqueTimeInfoList)
+		for (const TechniqueInfo& info : m_Time.TechniqueTimeInfoList)
 		{
 			ReshadeIntegration::GetSingleton()->ApplyTechniqueState(info.Enable, info);
 		}
@@ -169,7 +165,7 @@ RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling() //RELOCATION_
 #ifndef NDEBUG
 					SKSE::log::debug("Player is in interior cell");
 #endif
-					m_Conf.IsInInteriorCell = true;
+					//m_Conf.IsInInteriorCell = true;
 					return false;
 				}
 				else
@@ -177,7 +173,7 @@ RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling() //RELOCATION_
 #ifndef NDEBUG
 					SKSE::log::debug("Player is in exterior cell");
 #endif
-					m_Conf.IsInInteriorCell = false;
+					//m_Conf.IsInInteriorCell = false;
 					return true;
 				}
 
@@ -185,11 +181,11 @@ RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling() //RELOCATION_
 		();
 
 
-		if (m_Conf.ToggleStateInterior.find("All") != std::string::npos)
+		if (m_Interior.InteriorToggleOption.find("All") != std::string::npos)
 		{
-			ReshadeIntegration::GetSingleton()->ApplyReshadeState(enableReshade, m_Conf.ToggleAllStateInterior);
+			ReshadeIntegration::GetSingleton()->ApplyReshadeState(enableReshade, m_Interior.InteriorToggleAllState);
 		}
-		else if (m_Conf.ToggleStateInterior.find("Specific") != std::string::npos)
+		else if (m_Interior.InteriorToggleOption.find("Specific") != std::string::npos)
 		{
 			ReshadeIntegration::GetSingleton()->ApplySpecificReshadeStates(enableReshade, ReshadeIntegration::Categories::Interior);
 		}
@@ -213,29 +209,30 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling() // Weatherchan
 	{
 
 		const auto flags = currentWeather->data.flags;
+		std::string weatherFlag = "";
 
 		switch (flags.get())
 		{
 		case RE::TESWeather::WeatherDataFlag::kNone:
-			m_Conf.Weatherflags = "kNone";
+			weatherFlag = "kNone";
 			break;
 		case RE::TESWeather::WeatherDataFlag::kRainy:
-			m_Conf.Weatherflags = "kRainy";
+			weatherFlag = "kRainy";
 			break;
 		case RE::TESWeather::WeatherDataFlag::kPleasant:
-			m_Conf.Weatherflags = "kPleasant";
+			weatherFlag = "kPleasant";
 			break;
 		case RE::TESWeather::WeatherDataFlag::kCloudy:
-			m_Conf.Weatherflags = "kCloudy";
+			weatherFlag = "kCloudy";
 			break;
 		case RE::TESWeather::WeatherDataFlag::kSnow:
-			m_Conf.Weatherflags = "kSnow";
+			weatherFlag = "kSnow";
 			break;
 		case RE::TESWeather::WeatherDataFlag::kPermAurora:
-			m_Conf.Weatherflags = "kPermAurora";
+			weatherFlag = "kPermAurora";
 			break;
 		case RE::TESWeather::WeatherDataFlag::kAuroraFollowsSun:
-			m_Conf.Weatherflags = "kAuroraFollowsSun";
+			weatherFlag = "kAuroraFollowsSun";
 			break;
 		}
 
@@ -244,26 +241,26 @@ RE::BSEventNotifyControl Processor::ProcessWeatherBasedToggling() // Weatherchan
 		bool enableReshadeWeather = true;
 
 
-		if (m_Conf.ToggleStateWeather.find("All") != std::string::npos)
+		if (m_Weather.WeatherToggleOption.find("All") != std::string::npos)
 		{
-			for (const Info& weather : m_Conf.WeatherList)
+			for (const auto& weather : m_Weather.WeatherList)
 			{
 				//DEBUG_LOG(g_Logger, "weatherToDisable {}", weatherToDisable);
 
-				if (weather.Name == m_Conf.Weatherflags)
+				if (weather == weatherFlag)
 				{
 					enableReshadeWeather = false;
 				}
 
 			}
-			ReshadeIntegration::GetSingleton()->ApplyReshadeState(enableReshadeWeather, m_Conf.ToggleAllStateWeather);
+			ReshadeIntegration::GetSingleton()->ApplyReshadeState(enableReshadeWeather, m_Weather.WeatherToggleAllState);
 
 		}
-		else if (m_Conf.ToggleStateWeather.find("Specific") != std::string::npos)
+		else if (m_Weather.WeatherToggleOption.find("Specific") != std::string::npos)
 		{
-			for (const TechniqueInfo& info : m_Conf.TechniqueWeatherInfoList)
+			for (const TechniqueInfo& info : m_Weather.TechniqueWeatherInfoList)
 			{
-				if (info.Name == m_Conf.Weatherflags)
+				if (info.Name == weatherFlag)
 				{
 					enableReshadeWeather = false;
 				}

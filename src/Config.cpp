@@ -1,6 +1,4 @@
-#include "PCH.h"
 #include "Config.h"
-#include "Globals.h"
 #include "Utils.h"
 
 #include <fstream>
@@ -116,6 +114,7 @@ bool Config::SerializePreset(const std::string& presetName)
 		return true;
 	}
 	*/
+	return true;
 }
 
 void Config::DeserializeGeneral(YAML::Node mainNode)
