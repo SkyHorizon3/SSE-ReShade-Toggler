@@ -1,15 +1,9 @@
 #pragma once
 #include "Config.h"
 
-class Processor : public RE::BSTEventSink<RE::MenuOpenCloseEvent>
+class Processor : public RE::BSTEventSink<RE::MenuOpenCloseEvent>, public ISingleton<Processor>
 {
 public:
-	static Processor* GetSingleton()
-	{
-		static Processor singleton;
-		return &singleton;
-	}
-
 	RE::BSEventNotifyControl ProcessEvent(const RE::MenuOpenCloseEvent* a_event, RE::BSTEventSource<RE::MenuOpenCloseEvent>* a_source) override;
 	RE::BSEventNotifyControl ProcessTimeBasedToggling();
 	RE::BSEventNotifyControl ProcessInteriorBasedToggling();

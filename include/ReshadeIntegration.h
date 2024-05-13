@@ -3,15 +3,9 @@
 
 extern reshade::api::effect_runtime* s_pRuntime;
 
-class ReshadeIntegration
+class ReshadeIntegration : public ISingleton<ReshadeIntegration>
 {
 public:
-
-	static ReshadeIntegration* GetSingleton()
-	{
-		static ReshadeIntegration singleton;
-		return &singleton;
-	}
 
 	enum class Categories
 	{

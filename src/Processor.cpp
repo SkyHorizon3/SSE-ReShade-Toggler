@@ -57,10 +57,8 @@ RE::BSEventNotifyControl Processor::ProcessEvent(const RE::MenuOpenCloseEvent* a
 		}
 	}
 
-#ifndef NDEBUG
 	SKSE::log::debug("Menu {} {}", menuName, opening ? "open" : "closed");
 	SKSE::log::debug("Reshade {}", enableReshadeMenu ? "enabled" : "disabled");
-#endif
 
 	return RE::BSEventNotifyControl::kContinue;
 
@@ -76,17 +74,13 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 		return RE::BSEventNotifyControl::kContinue;
 	}
 
-#ifndef NDEBUG
 	SKSE::log::debug("Started ProcessTimeBasedToggling");
-#endif
 
 	const auto time = RE::Calendar::GetSingleton();
 
 	float TimecurrentTime = time->GetHour();
 
-#ifndef NDEBUG
 	SKSE::log::debug("currentTime: {} ", TimecurrentTime);
-#endif
 
 	// Specific
 	std::vector<Bool> enableReshade;
@@ -94,10 +88,8 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 	{
 		for (TechniqueInfo& info : m_Time.TechniqueTimeInfoList)
 		{
-
-#ifndef NDEBUG
 			SKSE::log::debug("info.startTime: {} - info.stopTime: {}", info.StartTime, info.StopTime);
-#endif
+
 			info.Enable = !IsTimeWithinRange(TimecurrentTime, info.StartTime, info.StopTime);
 		}
 	}
@@ -108,10 +100,7 @@ RE::BSEventNotifyControl Processor::ProcessTimeBasedToggling()
 	{
 		enableReshadeTime = !IsTimeWithinRange(TimecurrentTime, m_Time.TimeToggleAllTimeStart, m_Time.TimeToggleAllTimeStop);
 
-#ifndef NDEBUG
 		SKSE::log::debug("State: {} for time: {} - {}. ReshadeBool: {}", m_Time.TimeToggleAllState, m_Time.TimeToggleAllTimeStart, m_Time.TimeToggleAllTimeStop, enableReshadeTime);
-#endif
-
 	}
 
 
@@ -162,17 +151,13 @@ RE::BSEventNotifyControl Processor::ProcessInteriorBasedToggling() //RELOCATION_
 			{
 				if (cell->IsInteriorCell())
 				{
-#ifndef NDEBUG
 					SKSE::log::debug("Player is in interior cell");
-#endif
 					//m_Conf.IsInInteriorCell = true;
 					return false;
 				}
 				else
 				{
-#ifndef NDEBUG
 					SKSE::log::debug("Player is in exterior cell");
-#endif
 					//m_Conf.IsInInteriorCell = false;
 					return true;
 				}

@@ -1,15 +1,9 @@
 #pragma once
 #include "Config.h"
 
-class Menu
+class Menu : public ISingleton<Menu>
 {
 public:
-	static Menu* GetSingleton()
-	{
-		static Menu menu;
-		return &menu;
-	}
-
 	void SettingsMenu();
 
 	void EnumerateEffects();

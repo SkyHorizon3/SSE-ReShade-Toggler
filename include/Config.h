@@ -53,16 +53,9 @@ struct WeatherInformation
 	std::vector<std::string> WeatherList;
 };
 
-class Config
+class Config : public ISingleton<Config>
 {
 public:
-
-	static Config* GetSingleton()
-	{
-		static Config s;
-		return &s;
-	}
-
 	bool SerializePreset(const std::string& presetName);
 
 	bool DeserializePreset(const std::string& presetName);
