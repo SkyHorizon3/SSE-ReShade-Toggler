@@ -12,14 +12,6 @@ public:
 private:
 	bool IsTimeWithinRange(double currentTime, double startTime, double endTime);
 
-
-	Processor() = default;
-	~Processor() = default;
-	Processor(const Processor&) = delete;
-	Processor(Processor&&) = delete;
-	Processor& operator=(const Processor&) = delete;
-	Processor& operator=(Processor&&) = delete;
-
 	ankerl::unordered_dense::set<std::string> m_openMenus;
 	bool m_isMenuOpen = false;
 
@@ -27,11 +19,6 @@ private:
 	std::mutex m_vectorMutexTime;
 	std::mutex m_timeMutexInterior;
 	std::mutex m_timeMutexWeather;
-
-	MenuInformation m_Menu = Config::GetSingleton()->GetMenuInformation();
-	TimeInformation m_Time = Config::GetSingleton()->GetTimeInformation();
-	InteriorInformation m_Interior = Config::GetSingleton()->GetInteriorInformation();
-	WeatherInformation m_Weather = Config::GetSingleton()->GetWeatherInformation();
 };
 
 inline bool isLoaded = false;

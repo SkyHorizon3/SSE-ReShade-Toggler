@@ -20,30 +20,29 @@ void ReshadeIntegration::ApplyTechniqueState(bool enableReshade, const Technique
 void ReshadeIntegration::ApplySpecificReshadeStates(bool enableReshade, Categories ProcessState)
 {
 	//DEBUG_LOG(g_Logger, "Specific is enabled! - EnableReshade: {}", enableReshade);
-	const auto config = Config::GetSingleton();
 	switch (ProcessState)
 	{
 	case Categories::Menu:
-		for (const TechniqueInfo& info : config->GetMenuInformation().TechniqueMenuInfoList)
+		for (const TechniqueInfo& info : Config::m_MenuInformation.TechniqueMenuInfoList)
 		{
 			ApplyTechniqueState(enableReshade, info);
 		}
 		break;
 		// Kind of redundant, but we'll keep it in here for now, might need later
 	case Categories::Time:
-		for (const TechniqueInfo& info : config->GetTimeInformation().TechniqueTimeInfoList)
+		for (const TechniqueInfo& info : Config::m_TimeInformation.TechniqueTimeInfoList)
 		{
 			ApplyTechniqueState(enableReshade, info);
 		}
 		break;
 	case Categories::Interior:
-		for (const TechniqueInfo& info : config->GetInteriorInformation().TechniqueInteriorInfoList)
+		for (const TechniqueInfo& info : Config::m_InteriorInformation.TechniqueInteriorInfoList)
 		{
 			ApplyTechniqueState(enableReshade, info);
 		}
 		break;
 	case Categories::Weather:
-		for (const TechniqueInfo& info : config->GetWeatherInformation().TechniqueWeatherInfoList)
+		for (const TechniqueInfo& info : Config::m_WeatherInformation.TechniqueWeatherInfoList)
 		{
 			ApplyTechniqueState(!enableReshade, info);
 		}

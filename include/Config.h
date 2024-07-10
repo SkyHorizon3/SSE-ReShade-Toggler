@@ -53,31 +53,25 @@ struct WeatherInformation
 	std::vector<std::string> WeatherList;
 };
 
-class Config : public ISingleton<Config>
+class Config
 {
 public:
-	bool SerializePreset(const std::string& presetName);
+	static bool SerializePreset(const std::string& presetName);
 
-	bool DeserializePreset(const std::string& presetName);
-	void LoadPreset(const std::string& Preset);
+	static bool DeserializePreset(const std::string& presetName);
+	static void LoadPreset(const std::string& Preset);
 
-	GeneralInformation GetGeneralInformation() { return m_GeneralInformation; }
-	MenuInformation GetMenuInformation() { return m_MenuInformation; }
-	TimeInformation GetTimeInformation() { return m_TimeInformation; }
-	InteriorInformation GetInteriorInformation() { return m_InteriorInformation; }
-	WeatherInformation GetWeatherInformation() { return m_WeatherInformation; }
+	static GeneralInformation m_GeneralInformation;
+	static MenuInformation m_MenuInformation;
+	static TimeInformation m_TimeInformation;
+	static InteriorInformation m_InteriorInformation;
+	static WeatherInformation m_WeatherInformation;
 
 private:
 
-	void DeserializeGeneral(YAML::Node preset);
-	void DeserializeMenu(YAML::Node mainNode);
-	void DeserializeTime(YAML::Node mainNode);
-	void DeserializeInterior(YAML::Node mainNode);
-	void DeserializeWeather(YAML::Node mainNode);
-
-	GeneralInformation m_GeneralInformation;
-	MenuInformation m_MenuInformation;
-	TimeInformation m_TimeInformation;
-	InteriorInformation m_InteriorInformation;
-	WeatherInformation m_WeatherInformation;
+	static void DeserializeGeneral(YAML::Node preset);
+	static void DeserializeMenu(YAML::Node mainNode);
+	static void DeserializeTime(YAML::Node mainNode);
+	static void DeserializeInterior(YAML::Node mainNode);
+	static void DeserializeWeather(YAML::Node mainNode);
 };

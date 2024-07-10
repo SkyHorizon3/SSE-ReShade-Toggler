@@ -1,12 +1,16 @@
 #include "Config.h"
 #include "Utils.h"
-
-#include <fstream>
 #include "yaml-cpp/yaml.h"
+
+GeneralInformation Config::m_GeneralInformation;
+MenuInformation Config::m_MenuInformation;
+TimeInformation Config::m_TimeInformation;
+InteriorInformation Config::m_InteriorInformation;
+WeatherInformation Config::m_WeatherInformation;
 
 bool Config::SerializePreset(const std::string& presetName)
 {
-	std::string configDirectory = "Data\\SKSE\\Plugins\\TogglerConfigs";
+	const std::string configDirectory = "Data\\SKSE\\Plugins\\TogglerConfigs";
 	std::filesystem::create_directories(configDirectory);
 	const std::string& fullPath = configDirectory + "\\" + presetName + ".yaml";
 

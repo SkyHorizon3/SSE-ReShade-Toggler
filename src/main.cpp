@@ -141,17 +141,17 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 
 	if (std::filesystem::exists(menu->selectedPresetPath))
 	{
-		Config::GetSingleton()->DeserializePreset(menu->selectedPresetPath);
+		Config::DeserializePreset(menu->selectedPresetPath);
 	}
 	else
 	{
-		Config::GetSingleton()->DeserializePreset("Data\\SKSE\\Plugins\\TogglerConfigs\\Default.yaml");
+		Config::DeserializePreset("Data\\SKSE\\Plugins\\TogglerConfigs\\Default.yaml");
 	}
 
 	SKSE::GetMessagingInterface()->RegisterListener(MessageListener);
 	SKSE::log::info("{} v{} loaded", Plugin::NAME, Plugin::VERSION);
 
-	if (Config::GetSingleton()->GetGeneralInformation().EnableMenus)
+	if (Config::m_GeneralInformation.EnableMenus)
 	{
 		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Processor::GetSingleton());
 	}

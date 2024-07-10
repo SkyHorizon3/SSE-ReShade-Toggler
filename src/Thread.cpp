@@ -39,27 +39,24 @@ void Thread::RuntimeThread()
 	while (isLoaded)
 	{
 
-		Config config;
-		const auto& info = config.GetGeneralInformation();
-
-		if (info.EnableTime)
+		if (Config::m_GeneralInformation.EnableTime)
 		{
 			//g_Logger->info("Adding Time to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(config.GetTimeInformation().TimeUpdateInterval));
+			std::this_thread::sleep_for(std::chrono::seconds(Config::m_TimeInformation.TimeUpdateInterval));
 			SubmitToMainThread("Time", &Processor::ProcessTimeBasedToggling);
 		}
 
-		if (info.EnableInterior)
+		if (Config::m_GeneralInformation.EnableInterior)
 		{
 			//g_Logger->info("Adding Interior to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(config.GetInteriorInformation().InteriorUpdateInterval));
+			std::this_thread::sleep_for(std::chrono::seconds(Config::m_InteriorInformation.InteriorUpdateInterval));
 			SubmitToMainThread("Interior", &Processor::ProcessInteriorBasedToggling);
 		}
 
-		if (info.EnableWeather)//&& !m_Conf.IsInInteriorCell
+		if (Config::m_GeneralInformation.EnableWeather)//&& !m_Conf.IsInInteriorCell
 		{
 			//g_Logger->info("Adding Weather to Mainqueue");
-			std::this_thread::sleep_for(std::chrono::seconds(config.GetWeatherInformation().WeatherUpdateInterval));
+			std::this_thread::sleep_for(std::chrono::seconds(Config::m_WeatherInformation.WeatherUpdateInterval));
 			SubmitToMainThread("Weather", &Processor::ProcessWeatherBasedToggling);
 		}
 

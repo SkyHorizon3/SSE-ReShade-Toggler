@@ -25,7 +25,7 @@ private:
 	double minTime = 0.0;
 	double maxTime = 23.59;
 
-	std::string m_SaveFilename = "Default2"; // Default filename
+	const std::string m_SaveFilename = "Default2"; // Default filename
 
 	bool saveConfigPopupOpen = false; // Flag to control the visibility of the Save Config popup
 	char inputBuffer[256] = { 0 };    // Initialize the input buffer
@@ -48,12 +48,6 @@ private:
 	"kPermAurora",
 	"kAuroraFollowsSun"
 	};
-
-	GeneralInformation m_General = Config::GetSingleton()->GetGeneralInformation();
-	MenuInformation m_Menu = Config::GetSingleton()->GetMenuInformation();
-	TimeInformation m_Time = Config::GetSingleton()->GetTimeInformation();
-	InteriorInformation m_Interior = Config::GetSingleton()->GetInteriorInformation();
-	WeatherInformation m_Weather = Config::GetSingleton()->GetWeatherInformation();
 
 public:
 
