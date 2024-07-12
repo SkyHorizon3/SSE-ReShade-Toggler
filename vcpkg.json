@@ -1,13 +1,11 @@
 {
-  "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
   "name": "reshadeeffecttoggler",
-  "version-string": "3.0.1",
+  "version-semver": "4.0.0",
+  "description": "",
+  "license": "GPL-3.0",
   "dependencies": [
-    "simpleini",
     "spdlog",
-    "directxtk",
-    "catch2",
-    "rapidcsv",
-    "imgui"
-  ]
+    "rapidcsv"
+  ],
+  "builtin-baseline": "62aa44929954469878eb8fc562af706a8f5615a5"
 }

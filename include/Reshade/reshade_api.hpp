@@ -32,11 +32,48 @@ namespace reshade { namespace api
 	RESHADE_DEFINE_HANDLE(effect_uniform_variable);
 
 	/// <summary>
+	/// Input source for events triggered by user input.
+	/// </summary>
+	enum class input_source
+	{
+		none = 0,
+		mouse = 1,
+		keyboard = 2,
+		gamepad = 3,
+		clipboard = 4,
+	};
+
+	/// <summary>
 	/// A post-processing effect runtime, used to control effects.
 	/// <para>ReShade associates an independent post-processing effect runtime with most swap chains.</para>
 	/// </summary>
-	struct __declspec(novtable) effect_runtime : public swapchain
+	struct __declspec(novtable) effect_runtime : public device_object
 	{
+		/// <summary>
+		/// Gets the handle of the window associated with this effect runtime.
+		/// </summary>
+		virtual void *get_hwnd() const = 0;
+
+		/// <summary>
+		/// Gets the back buffer resource at the specified <paramref name="index"/> in the swap chain associated with this effect runtime.
+		/// </summary>
+		/// <param name="index">Index of the back buffer. This has to be between zero and the value returned by <see cref="get_back_buffer_count"/>.</param>
+		virtual resource get_back_buffer(uint32_t index) = 0;
+
+		/// <summary>
+		/// Gets the number of back buffer resources in the swap chain associated with this effect runtime.
+		/// </summary>
+		virtual uint32_t get_back_buffer_count() const = 0;
+
+		/// <summary>
+		/// Gets the current back buffer resource.
+		/// </summary>
+		inline  resource get_current_back_buffer() { return get_back_buffer(get_current_back_buffer_index()); }
+		/// <summary>
+		/// Gets the index of the back buffer resource that can currently be rendered into.
+		/// </summary>
+		virtual uint32_t get_current_back_buffer_index() const = 0;
+
 		/// <summary>
 		/// Gets the main graphics command queue associated with this effect runtime.
 		/// This may potentially be different from the presentation queue and should be used to execute graphics commands on.
@@ -58,10 +95,10 @@ namespace reshade { namespace api
 		virtual void render_effects(command_list *cmd_list, resource_view rtv, resource_view rtv_srgb) = 0;
 
 		/// <summary>
-		/// Captures a screenshot of the current back buffer resource and returns its image data in 32 bits-per-pixel RGBA format.
+		/// Captures a screenshot of the current back buffer resource and returns its image data.
 		/// </summary>
-		/// <param name="pixels">Pointer to an array of <c>width * height * 4</c> bytes the image data is written to.</param>
-		virtual bool capture_screenshot(uint8_t *pixels) = 0;
+		/// <param name="pixels">Pointer to an array of <c>width * height * bpp</c> bytes the image data is written to (where <c>bpp</c> is the number of bytes per pixel of the back buffer format).</param>
+		virtual bool capture_screenshot(void *pixels) = 0;
 
 		/// <summary>
 		/// Gets the current buffer dimensions of the swap chain.
@@ -453,13 +490,13 @@ namespace reshade { namespace api
 		}
 
 		/// <summary>
-		/// Uploads 32 bits-per-pixel RGBA image data to the specified texture <paramref name="variable"/>.
+		/// Uploads image data to the specified texture <paramref name="variable"/>.
 		/// </summary>
 		/// <param name="variable">Opaque handle to the texture variable.</param>
 		/// <param name="width">Width of the image data.</param>
 		/// <param name="height">Height of the image data.</param>
-		/// <param name="pixels">Pointer to an array of <c>width * height * 4</c> bytes the image data is read from.</param>
-		virtual void update_texture(effect_texture_variable variable, const uint32_t width, const uint32_t height, const uint8_t *pixels) = 0;
+		/// <param name="pixels">Pointer to an array of <c>width * height * bpp</c> bytes the image data is read from (where <c>bpp</c> is the number of bytes per pixel of the texture format).</param>
+		virtual void update_texture(effect_texture_variable variable, const uint32_t width, const uint32_t height, const void *pixels) = 0;
 
 		/// <summary>
 		/// Gets the shader resource view that is bound to the specified texture <paramref name="variable"/>.
@@ -743,5 +780,24 @@ namespace reshade { namespace api
 		/// <param name="name">Name of the definition.</param>
 		/// <param name="value">Value of the definition.</param>
 		virtual void set_preprocessor_definition_for_effect(const char *effect_name, const char *name, const char *value) = 0;
+
+		/// <summary>
+		/// Open or close the ReShade overlay.
+		/// </summary>
+		/// <param name="open">Requested overlay state.</param>
+		/// <param name="source">Source of this request.</param>
+		/// <returns><see langword="true"/> if the overlay state was changed, <see langword="false"/> otherwise.</returns>
+		virtual bool open_overlay(bool open, input_source source) = 0;
+
+		/// <summary>
+		/// Overrides the color space used for presentation.
+		/// </summary>
+		virtual void set_color_space(color_space color_space) = 0;
+
+		/// <summary>
+		/// Resets the value of the specified uniform <paramref name="variable"/>.
+		/// </summary>
+		/// <param name="variable">Opaque handle to the uniform variable.</param>
+		virtual void reset_uniform_value(effect_uniform_variable variable) = 0;
 	};
 } }
