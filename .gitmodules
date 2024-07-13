@@ -2,3 +2,9 @@
 	path = extern/CommonLibSSE-NG
 	url = https://github.com/SkyHorizon3/CommonLibVR.git
 	branch = ng
+[submodule "extern/spdlog"]
+	path = extern/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "extern/rapidcsv"]
+	path = extern/rapidcsv
+	url = https://github.com/d99kris/rapidcsv.git
