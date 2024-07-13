@@ -1,7 +1,3 @@
-[submodule "extern/CommonLibSSE-NG"]
-	path = extern/CommonLibSSE-NG
-	url = https://github.com/SkyHorizon3/CommonLibVR.git
-	branch = ng
 [submodule "extern/spdlog"]
 	path = extern/spdlog
 	url = https://github.com/gabime/spdlog.git
