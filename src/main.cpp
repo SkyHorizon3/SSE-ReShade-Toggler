@@ -1,3 +1,5 @@
+#include "Hooks.h"
+#include "Event.h"
 
 void SetupLog()
 {
@@ -72,7 +74,8 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 		// https://github.com/ianpatt/skse64/blob/09f520a2433747f33ae7d7c15b1164ca198932c3/skse64/PluginAPI.h#L193-L212
 	case SKSE::MessagingInterface::kPostPostLoad:
 	{
-
+		Hook::Install();
+		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Menu::GetSingleton());
 	}
 	break;
 	case SKSE::MessagingInterface::kDataLoaded:
@@ -131,9 +134,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 	SetupLog();
 
 	if (!Load())
-	{
 		return false;
-	}
 
 	SKSE::GetMessagingInterface()->RegisterListener(MessageListener);
 	SKSE::log::info("{} v{} loaded", Plugin::NAME, Plugin::VERSION);
