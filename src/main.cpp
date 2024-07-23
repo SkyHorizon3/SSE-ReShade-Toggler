@@ -1,5 +1,5 @@
 #include "Hooks.h"
-#include "Event.h"
+#include "Events.h"
 
 void SetupLog()
 {

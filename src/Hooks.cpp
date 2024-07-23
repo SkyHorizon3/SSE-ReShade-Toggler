@@ -4,6 +4,13 @@ namespace Hook
 {
 	struct MainUpdate
 	{
+		static float GetCurrentGameTime()
+		{
+			using func_t = decltype(&GetCurrentGameTime);
+			REL::Relocation<func_t> funct{ REL::VariantID(56475, 56832, 0x9F3290) };
+			return funct();
+		}
+
 		static void thunk()
 		{
 			/*
