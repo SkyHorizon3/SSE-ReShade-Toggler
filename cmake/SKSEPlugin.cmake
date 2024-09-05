@@ -62,10 +62,16 @@ endif()
 
 # Find required packages (adjust as needed)
 add_subdirectory(${CMAKE_SOURCE_DIR}/extern/CommonLibSSE-NG CommonLibSSE)
+add_subdirectory(${CMAKE_SOURCE_DIR}/extern/glaze glaze)
 
 # Include directories and libraries
 target_include_directories("${PROJECT_NAME}" PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories("${PROJECT_NAME}" PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/cmake ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 # Link libraries
-target_link_libraries("${PROJECT_NAME}" PUBLIC CommonLibSSE::CommonLibSSE)
+target_link_libraries("${PROJECT_NAME}" 
+PUBLIC 
+CommonLibSSE::CommonLibSSE
+PRIVATE
+glaze::glaze
+)

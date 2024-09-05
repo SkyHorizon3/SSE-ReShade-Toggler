@@ -1,5 +1,6 @@
 #include "Hooks.h"
 #include "Events.h"
+#include "Manager.h"
 
 void SetupLog()
 {
@@ -76,12 +77,13 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 	{
 		Hook::Install();
 		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Menu::GetSingleton());
+
+		Manager::GetSingleton()->SerializeJSONPreset("testPreset");
+
 	}
 	break;
 	case SKSE::MessagingInterface::kDataLoaded:
 	{
-
-
 	}
 	break;
 

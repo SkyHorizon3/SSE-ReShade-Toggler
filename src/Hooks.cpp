@@ -7,7 +7,7 @@ namespace Hook
 		static float GetCurrentGameTime()
 		{
 			using func_t = decltype(&GetCurrentGameTime);
-			REL::Relocation<func_t> funct{ REL::VariantID(56475, 56832, 0x9F3290) };
+			static REL::Relocation<func_t> funct{ REL::VariantID(56475, 56832, 0x9F3290) };
 			return funct();
 		}
 
@@ -29,7 +29,7 @@ namespace Hook
 
 		static void Install()
 		{
-			bool marketplace = REL::Module::get().version() >= SKSE::RUNTIME_SSE_1_6_1130;
+			const bool marketplace = REL::Module::get().version() >= SKSE::RUNTIME_SSE_1_6_1130;
 			REL::Relocation<std::uintptr_t> target1{ RELOCATION_ID(35565, 36564), REL::Relocate(0x748, (marketplace ? 0xC2b : 0xC26), 0x7EE) };
 			stl::write_thunk_call<MainUpdate>(target1.address());
 		}
