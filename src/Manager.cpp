@@ -68,16 +68,14 @@ std::string Manager::serializeVector(const std::string& key, const std::vector<T
 template <typename... Args>
 std::string Manager::serializeArbitraryVector(const Args&... args)
 {
-	std::string jsonStr = "{ ";
+	std::stringstream jsonStream;
+	jsonStream << "{ ";
 
-	((jsonStr += serializeVector(args.first, args.second) + ", "), ...);
+	bool first = true;
+	((jsonStream << (first ? (first = false, "") : ", ") << serializeVector(args.first, args.second)), ...);
 
-	// Remove the trailing comma and space, then close the JSON object
-	if (!jsonStr.empty()) {
-		jsonStr.pop_back();
-		jsonStr.pop_back();
-	}
-	jsonStr += " }";
 
-	return jsonStr;
+	jsonStream << " }";
+
+	return jsonStream.str();
 }
