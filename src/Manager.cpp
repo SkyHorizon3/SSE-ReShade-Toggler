@@ -21,17 +21,13 @@ void Manager::SerializeJSONPreset(const std::string& presetName)
 	}
 
 	std::vector<int> test = { 1,2,2,2,2,2,2 };
+	std::string buffer = serializeArbitraryVector(
+		std::make_pair(std::string("Menu"), m_menuToggleInfo),
+		std::make_pair(std::string("Numbers"), test)
+	);
 
-
-	std::unordered_map<std::string, std::vector<MenuToggleInformation>> menuData;
-	menuData.emplace("Menu", m_menuToggleInfo);
-	std::string buffer = glz::write_json(menuData).value_or("error");
-
-	std::unordered_map<std::string, std::vector<int>> testData;
-	testData.emplace("Numbers", test);
-
-	buffer += glz::write_json(testData).value_or("error");
-
+	// TODO: investigate why no good looking json. This is kinda irrelevant tho
+	// std::string beautifulJson = glz::prettify_json(buffer);
 	outFile << buffer;
 	outFile.close();
 }
@@ -55,3 +51,33 @@ void Manager::ToggleEffect(const char* effect, const bool state) const
 		});
 }
 
+template <typename T>
+std::string Manager::serializeVector(const std::string& key, const std::vector<T>& vec)
+{
+	std::string vecJson;
+	auto result = glz::write_json(vec, vecJson);  // Serialize the vector
+	if (result) {
+		std::string descriptive_error = glz::format_error(result, vecJson);
+		SKSE::log::error("Error serializing vector: {}", descriptive_error);
+	}
+
+	std::string jsonStr = "\"" + key + "\": " + vecJson;
+	return jsonStr;
+}
+
+template <typename... Args>
+std::string Manager::serializeArbitraryVector(const Args&... args)
+{
+	std::string jsonStr = "{ ";
+
+	((jsonStr += serializeVector(args.first, args.second) + ", "), ...);
+
+	// Remove the trailing comma and space, then close the JSON object
+	if (!jsonStr.empty()) {
+		jsonStr.pop_back();
+		jsonStr.pop_back();
+	}
+	jsonStr += " }";
+
+	return jsonStr;
+}
