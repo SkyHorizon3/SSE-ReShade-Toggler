@@ -95,17 +95,6 @@ std::string Manager::getPresetPath(std::string presetName)
 	if (!std::filesystem::exists(configDirectory))
 		std::filesystem::create_directories(configDirectory);
 
-	if (presetName.empty())
-	{
-		int presetNumber = 0;
-
-		do
-		{
-			presetName = "Default" + std::to_string(presetNumber) + ".json";
-			presetNumber++;
-		} while (std::filesystem::exists(std::string(configDirectory) + "\\" + presetName));
-	}
-
 	return std::string(configDirectory) + "\\" + presetName;
 }
 
