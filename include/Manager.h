@@ -13,6 +13,8 @@ public:
 
 	void toggleEffectMenu(const std::set<std::string>& openMenus);
 
+	std::vector<std::string> EnumeratePresets();
+
 	struct MenuToggleInformation
 	{
 		std::string effectName{};

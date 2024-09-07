@@ -1,6 +1,7 @@
 #include "Hooks.h"
 #include "Events.h"
 #include "Manager.h"
+#include "Menu.h"
 
 void SetupLog()
 {
@@ -37,7 +38,7 @@ static void on_reshade_begin_effects(reshade::api::effect_runtime* runtime)
 
 static void DrawMenu(reshade::api::effect_runtime*)
 {
-	//Menu::GetSingleton()->SettingsMenu();
+	Menu::GetSingleton()->SettingsMenu();
 }
 
 // Register and unregister addon events
@@ -77,9 +78,12 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 	{
 		Hook::Install();
 		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Event::GetSingleton());
+		<<<<<< < HEAD
 
-		Manager::GetSingleton()->parseJSONPreset("D:\\Bethesda\\Skyrim SE\\1.5.97 Test\\MO2\\overwrite\\SKSE\\Plugins\\ReShadeEffectTogglerPresets\\testPreset.json");
+			Manager::GetSingleton()->parseJSONPreset("D:\\Bethesda\\Skyrim SE\\1.5.97 Test\\MO2\\overwrite\\SKSE\\Plugins\\ReShadeEffectTogglerPresets\\testPreset.json");
 		//Manager::GetSingleton()->serializeJSONPreset("testPreset");
+		====== =
+			>>>>>> > 1e4ac7c(Added: Basic Menu and themeing)
 	}
 	break;
 	case SKSE::MessagingInterface::kDataLoaded:

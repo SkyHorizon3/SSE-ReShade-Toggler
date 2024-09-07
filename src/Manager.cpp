@@ -1,44 +1,8 @@
 #include "Manager.h"
 #include "glaze/glaze.hpp"
 
-void Manager::parseJSONPreset(const std::string& path)
+void Manager::ParseJSONPreset(const std::string& path)
 {
-	std::ifstream openFile(path);
-	if (!openFile.is_open())
-	{
-		SKSE::log::error("Couldn't load preset {}!", path);
-		return;
-	}
-
-	std::stringstream buffer;
-	buffer << openFile.rdbuf();
-
-	glz::json_t json{};
-	SKSE::log::info("Buffer: {}", buffer.str());
-	std::ignore = glz::read_json(json, buffer.str());
-
-	const std::string key = "Menu";
-	std::vector<MenuToggleInformation> vec;
-	if (json.contains(key))
-	{
-		SKSE::log::info("Found");
-
-		auto& jsonArray = json[key].get_array();
-		//vec.clear();
-		//vec.reserve(jsonArray.size());
-
-		SKSE::log::info("Array size: {}", jsonArray.size());
-		//SKSE::log::info("first: {}", jsonArray[0].as<std::string>());
-
-
-		/*
-		for (auto it = jsonArray.begin(); it != jsonArray.end();)
-		{
-			const auto& member = *it;
-
-			SKSE::log::info("Member: {}", member.as<std::string>());
-			/*
-			MenuToggleInformation type;
 
 			glz::read_json(type, member.as<std::string>());
 			vec.emplace_back(type);
@@ -122,7 +86,26 @@ void Manager::toggleEffectMenu(const std::set<std::string>& openMenus)
 	}
 }
 
-void Manager::toggleEffect(const char* effect, const bool state) const
+std::vector<std::string> Manager::EnumeratePresets()
+{
+	std::vector<std::string> presets;
+	const std::filesystem::path presetDirectory = L"Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
+	if (!std::filesystem::exists(presetDirectory))
+		std::filesystem::create_directories(presetDirectory);
+
+	for (const auto& preset : std::filesystem::recursive_directory_iterator(presetDirectory))
+	{
+		if (preset.is_regular_file() && preset.path().filename().extension() == ".json")
+		{
+			presets.push_back(preset.path().filename().string());
+		}
+	}
+
+	std::sort(presets.begin(), presets.end());
+	return presets;
+}
+
+void Manager::ToggleEffect(const char* effect, const bool state) const
 {
 	s_pRuntime->enumerate_techniques(effect, [&state](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
 		{
