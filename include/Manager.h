@@ -26,7 +26,7 @@ private:
 	void toggleEffect(const char* technique, bool state) const;
 
 
-	std::vector<MenuToggleInformation> m_menuToggleInfo = { {"hi","bye", true},{"one","two", false}, {"hamster","rabbit", false} };;
+	std::vector<MenuToggleInformation> m_menuToggleInfo = { {"hi","bye", true},{"one","two", false}, {"hamster","rabbit", false} };
 
 private:
 	template<typename T>

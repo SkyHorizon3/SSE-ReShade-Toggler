@@ -3,40 +3,47 @@
 
 void Manager::parseJSONPreset(const std::string& path)
 {
-	/*
-	for (const auto& item : jsonArray) {
-		typename std::decay_t<decltype(vec)>::value_type value;
-		auto readResult = glz::read_json(value, item);
-		if (!readResult) {
-			const std::string descriptive_error = glz::format_error(readResult);
-			SKSE::log::error("Error deserializing vector item for key '{}': {}", key, descriptive_error);
-		}
-		else {
-			vec.emplace_back(value);
-		}
+
+	std::ifstream openFile(path);
+	if (!openFile.is_open())
+	{
+		SKSE::log::error("Couldn't load preset {}!", path);
+		return;
 	}
-	*/
 
-	/*
-	auto& jsonArray = json.at(key).get_array();
+	std::stringstream buffer;
+	buffer << openFile.rdbuf();
 
-	vec.clear();
-	vec.reserve(jsonArray.size());
+	glz::json_t json{};
+	SKSE::log::info("Buffer: {}", buffer.str());
+	std::ignore = glz::read_json(json, buffer.str());
 
-	auto arrayResult = glz::read_json(vec, jsonArray);
-	if (!arrayResult) {
-		const std::string error = glz::format_error(arrayResult);
-		SKSE::log::error("Error parsing JSON array: {}", error);
+	const std::string key = "Numbers";
+	std::vector<int> vec;
+	if (json.contains(key))
+	{
+		SKSE::log::info("Found");
+
+		auto& jsonArray = json[key].get_array();
+		vec.clear();
+		vec.reserve(jsonArray.size());
+
+		std::string newBuffer;
+		std::ignore = glz::write_json(jsonArray, newBuffer); // maybe dont ignore all of them 
+
+		SKSE::log::info("newBuffer: {}", newBuffer);
+		std::ignore = glz::read_json(vec, newBuffer);
+
+		for (const auto& member : vec)
+		{
+			SKSE::log::info("Number: {}", member);
+		}
+
 	}
-	*/
-
-
-	/*
-	* The idea
-	deserializeArbitraryVector(buffer.str(),
-		std::make_pair("Numbers", m_menuToggleInfo),
-		std::make_pair("Menu", m_numbers));
-	*/
+	else
+	{
+		SKSE::log::error("Key '{}' not found in JSON.", key);
+	}
 }
 
 void Manager::serializeJSONPreset(const std::string& presetName)
@@ -78,7 +85,7 @@ void Manager::toggleEffectMenu(const std::set<std::string>& openMenus)
 std::vector<std::string> Manager::EnumeratePresets()
 {
 	std::vector<std::string> presets;
-	const std::filesystem::path presetDirectory = L"Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
+	constexpr auto presetDirectory = L"Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
 	if (!std::filesystem::exists(presetDirectory))
 		std::filesystem::create_directories(presetDirectory);
 
