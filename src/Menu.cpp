@@ -11,71 +11,20 @@ void Menu::SettingsMenu()
 	{
 		// TODO: ensure that we are only putting the colors onto our own window and its subwindows
 		SetColors();
-		ImGuiWindowFlags flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
 
 		// Create the main settings window with docking enabled
-		ImGui::Begin("[PH] Settings Window", &m_openSettingsMenu, flags);
+		ImGui::Begin("[PH] Settings Window", &m_openSettingsMenu);
 		// Create a DockSpace inside the main settings window
 		ImGuiID dockspaceId = ImGui::GetID("SettingsDockspace");
 		ImGui::DockSpace(dockspaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 
-		if (ImGui::BeginMenuBar())
-		{
-			if (ImGui::BeginMenu("File"))
-			{
-				if (ImGui::MenuItem("Save"))
-				{
-					Manager::GetSingleton()->serializeJSONPreset("testPreset");
-				}
-				if (ImGui::MenuItem("Load"))
-				{
-					Manager::GetSingleton()->parseJSONPreset("testPreset");
-				}
-
-				ImGui::EndMenu();
-			}
-
-			if (ImGui::BeginMenu("View"))
-			{
-				if (ImGui::MenuItem("Edit Menu Toggling"))
-				{
-					m_showMenuSettings = true;
-				}
-
-				if (ImGui::MenuItem("Edit Time Toggling"))
-				{
-					m_showTimeSettings = true;
-				}
-
-				if (ImGui::MenuItem("Edit Interior Toggling"))
-				{
-					m_showInteriorSettings = true;
-				}
-
-				if (ImGui::MenuItem("Edit Weather Toggling"))
-				{
-					m_showWeatherSettings = true;
-				}
-
-				ImGui::EndMenu();
-			}
-
-			ImGui::EndMenuBar();
-		}
-
-		ImGui::End();
-
-		if (m_showMenuSettings)
-			SpawnMenuSettings(dockspaceId);
-		if (m_showTimeSettings)
-			SpawnTimeSettings(dockspaceId);
-		if (m_showInteriorSettings)
-			SpawnInteriorSettings(dockspaceId);
-		if (m_showWeatherSettings)
-			SpawnWeatherSettings(dockspaceId);
-
 		SpawnMainPage(dockspaceId);
-		//RemoveColors();
+		SpawnMenuSettings(dockspaceId);
+		SpawnTimeSettings(dockspaceId);
+		SpawnInteriorSettings(dockspaceId);
+		SpawnWeatherSettings(dockspaceId);
+
+		RemoveColors();
 	}
 }
 
@@ -235,9 +184,9 @@ void Menu::SetColors()
 	colors[ImGuiCol_HeaderActive] = ImGui::ColorConvertU32ToFloat4(Colors::Theme::groupHeader);
 
 	// Buttons
-	colors[ImGuiCol_Button] = ImColor(1, 0, 0, 115);
-	colors[ImGuiCol_ButtonHovered] = ImColor(19, 19, 19, 115);
-	colors[ImGuiCol_ButtonActive] = ImColor(20, 22, 23, 120);
+	colors[ImGuiCol_Button] = ImColor(56, 56, 56, 200);
+	colors[ImGuiCol_ButtonHovered] = ImColor(70, 70, 70, 255);
+	colors[ImGuiCol_ButtonActive] = ImColor(56, 56, 56, 150);
 
 	// Frame BG
 	colors[ImGuiCol_FrameBg] = ImGui::ColorConvertU32ToFloat4(Colors::Theme::propertyField);
@@ -254,25 +203,25 @@ void Menu::SetColors()
 	// Title
 	colors[ImGuiCol_TitleBg] = ImGui::ColorConvertU32ToFloat4(Colors::Theme::titlebar);
 	colors[ImGuiCol_TitleBgActive] = ImGui::ColorConvertU32ToFloat4(Colors::Theme::titlebar);
-	colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.10f, 0.105f, 0.124f, 1.0f };
+	colors[ImGuiCol_TitleBgCollapsed] = ImVec4{ 0.15f, 0.1505f, 0.151f, 1.0f };
 
 	// Resize Grip
-	colors[ImGuiCol_ResizeGrip] = ImVec4(0.28f, 0.28f, 0.28f, 0.29f);
-	colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.44f, 0.44f, 0.44f, 0.29f);
-	colors[ImGuiCol_ResizeGripActive] = ImVec4(0.40f, 0.44f, 0.47f, 1.00f);
+	colors[ImGuiCol_ResizeGrip] = ImVec4(0.91f, 0.91f, 0.91f, 0.25f);
+	colors[ImGuiCol_ResizeGripHovered] = ImVec4(0.81f, 0.81f, 0.81f, 0.67f);
+	colors[ImGuiCol_ResizeGripActive] = ImVec4(0.46f, 0.46f, 0.46f, 0.95f);
 
 	// Scrollbar
-	colors[ImGuiCol_ScrollbarBg] = ImVec4(0.05f, 0.05f, 0.05f, 0.54f);
-	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.34f, 0.34f, 0.34f, 0.54f);
-	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.40f, 0.40f, 0.40f, 0.54f);
-	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.56f, 0.56f, 0.56f, 0.54f);
+	colors[ImGuiCol_ScrollbarBg] = ImVec4(0.02f, 0.02f, 0.02f, 0.53f);
+	colors[ImGuiCol_ScrollbarGrab] = ImVec4(0.31f, 0.31f, 0.31f, 1.0f);
+	colors[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.41f, 0.41f, 0.41f, 1.0f);
+	colors[ImGuiCol_ScrollbarGrabActive] = ImVec4(0.51f, 0.51f, 0.51f, 1.0f);
 
 	// Check Mark
-	colors[ImGuiCol_CheckMark] = ImVec4(0.34f, 0.67f, 0.86f, 1.00f);
+	colors[ImGuiCol_CheckMark] = ImColor(200, 200, 200, 255);
 
 	// Slider
-	colors[ImGuiCol_SliderGrab] = ImVec4(0.34f, 0.34f, 0.34f, 0.54f);
-	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.56f, 0.56f, 0.56f, 0.54f);
+	colors[ImGuiCol_SliderGrab] = ImVec4(0.51f, 0.51f, 0.51f, 0.7f);
+	colors[ImGuiCol_SliderGrabActive] = ImVec4(0.66f, 0.66f, 0.66f, 1.0f);
 
 	// Text
 	colors[ImGuiCol_Text] = ImGui::ColorConvertU32ToFloat4(Colors::Theme::text);
@@ -296,7 +245,7 @@ void Menu::SetColors()
 	colors[ImGuiCol_TableBorderLight] = ImGui::ColorConvertU32ToFloat4(Colors::Theme::backgroundDark);
 
 	// Menubar
-	colors[ImGuiCol_MenuBarBg] = ImVec4(0.0f, 0.0f, 0.0f, 0.0f);
+	colors[ImGuiCol_MenuBarBg] = ImVec4{ 0.0f, 0.0f, 0.0f, 0.0f };
 
 	//========================================================
 	/// Style
