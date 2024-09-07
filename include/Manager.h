@@ -23,8 +23,9 @@ public:
 	};
 
 private:
-	void toggleEffect(const char* technique, bool state) const;
+	std::string getPresetPath(std::string presetName);
 
+	void toggleEffect(const char* technique, bool state) const;
 
 	std::vector<MenuToggleInformation> m_menuToggleInfo; // = { {"hi","bye", true},{"one","two", false}, {"hamster","rabbit", false} };
 	std::vector<int> m_test; //= { 1,2,2,2,2,2,2 };

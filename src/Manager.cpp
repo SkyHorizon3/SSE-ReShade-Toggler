@@ -3,9 +3,7 @@
 
 void Manager::parseJSONPreset(const std::string& presetName)
 {
-	constexpr const char* configDirectory = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
-	std::filesystem::create_directories(configDirectory);
-	const std::string fullPath = std::string(configDirectory) + "\\" + presetName;
+	const std::string fullPath = getPresetPath(presetName);
 
 	std::ifstream openFile(fullPath);
 	if (!openFile.is_open())
@@ -17,8 +15,8 @@ void Manager::parseJSONPreset(const std::string& presetName)
 	std::stringstream buffer;
 	buffer << openFile.rdbuf();
 
-	auto menuPair = std::make_pair("Menu", std::ref(m_menuToggleInfo));
-	auto numbersPair = std::make_pair("Numbers", std::ref(m_test));
+	const auto menuPair = std::make_pair("Menu", std::ref(m_menuToggleInfo));
+	const auto numbersPair = std::make_pair("Numbers", std::ref(m_test));
 
 	deserializeArbitraryVector(buffer.str(),
 		menuPair,
@@ -40,9 +38,7 @@ void Manager::parseJSONPreset(const std::string& presetName)
 
 void Manager::serializeJSONPreset(const std::string& presetName)
 {
-	constexpr const char* configDirectory = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
-	std::filesystem::create_directories(configDirectory);
-	const std::string fullPath = std::string(configDirectory) + "\\" + presetName;
+	const std::string fullPath = getPresetPath(presetName);
 
 	std::ofstream outFile(fullPath);
 	if (!outFile.is_open())
@@ -84,12 +80,33 @@ std::vector<std::string> Manager::EnumeratePresets()
 	{
 		if (preset.is_regular_file() && preset.path().filename().extension() == ".json")
 		{
-			presets.push_back(preset.path().filename().string());
+			presets.emplace_back(preset.path().filename().string());
 		}
 	}
 
 	std::sort(presets.begin(), presets.end());
 	return presets;
+}
+
+std::string Manager::getPresetPath(std::string presetName)
+{
+	constexpr const char* configDirectory = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
+
+	if (!std::filesystem::exists(configDirectory))
+		std::filesystem::create_directories(configDirectory);
+
+	if (presetName.empty())
+	{
+		int presetNumber = 0;
+
+		do
+		{
+			presetName = "Default" + std::to_string(presetNumber) + ".json";
+			presetNumber++;
+		} while (std::filesystem::exists(std::string(configDirectory) + "\\" + presetName));
+	}
+
+	return std::string(configDirectory) + "\\" + presetName;
 }
 
 void Manager::toggleEffect(const char* effect, const bool state) const
@@ -141,7 +158,7 @@ void Manager::deserializeArbitraryVector(const std::string& buf, Args& ...args)
 
 		if (json.contains(key))
 		{
-			SKSE::log::info("Found");
+			//SKSE::log::info("Found");
 
 			auto& jsonArray = json[key].get_array();
 			vec.clear();
@@ -156,7 +173,7 @@ void Manager::deserializeArbitraryVector(const std::string& buf, Args& ...args)
 		{
 			SKSE::log::error("Key '{}' not found in JSON.", key);
 		}
-	};
+		};
 
 	// Apply the lambda function to each argument pair
 	(process_pair(args), ...);
