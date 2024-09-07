@@ -78,9 +78,6 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 	{
 		Hook::Install();
 		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Event::GetSingleton());
-
-		Manager::GetSingleton()->parseJSONPreset("testPreset.json");
-		//Manager::GetSingleton()->serializeJSONPreset("testPreset");
 	}
 	break;
 	case SKSE::MessagingInterface::kDataLoaded:

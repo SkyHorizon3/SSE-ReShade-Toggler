@@ -7,9 +7,9 @@ class Manager : public ISingleton<Manager>
 	// class for main functions used for all features
 
 public:
-	void parseJSONPreset(const std::string& path);
+	void parseJSONPreset(const std::string& presetName);
 
-	void serializeJSONPreset(const std::string& path);
+	void serializeJSONPreset(const std::string& presetName);
 
 	void toggleEffectMenu(const std::set<std::string>& openMenus);
 
@@ -26,7 +26,8 @@ private:
 	void toggleEffect(const char* technique, bool state) const;
 
 
-	std::vector<MenuToggleInformation> m_menuToggleInfo = { {"hi","bye", true},{"one","two", false}, {"hamster","rabbit", false} };
+	std::vector<MenuToggleInformation> m_menuToggleInfo; // = { {"hi","bye", true},{"one","two", false}, {"hamster","rabbit", false} };
+	std::vector<int> m_test; //= { 1,2,2,2,2,2,2 };
 
 private:
 	template<typename T>
@@ -34,6 +35,9 @@ private:
 
 	template<typename... Args>
 	std::string serializeArbitraryVector(const Args&... args);
+
+	template<typename... Args>
+	void deserializeArbitraryVector(const std::string& buf, Args&... args);
 
 };
 

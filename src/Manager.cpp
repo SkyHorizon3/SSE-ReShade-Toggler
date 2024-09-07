@@ -1,48 +1,40 @@
 #include "Manager.h"
 #include "glaze/glaze.hpp"
 
-void Manager::parseJSONPreset(const std::string& path)
+void Manager::parseJSONPreset(const std::string& presetName)
 {
+	constexpr const char* configDirectory = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
+	std::filesystem::create_directories(configDirectory);
+	const std::string fullPath = std::string(configDirectory) + "\\" + presetName;
 
-	std::ifstream openFile(path);
+	std::ifstream openFile(fullPath);
 	if (!openFile.is_open())
 	{
-		SKSE::log::error("Couldn't load preset {}!", path);
+		SKSE::log::error("Couldn't load preset {}!", fullPath);
 		return;
 	}
 
 	std::stringstream buffer;
 	buffer << openFile.rdbuf();
 
-	glz::json_t json{};
-	SKSE::log::info("Buffer: {}", buffer.str());
-	std::ignore = glz::read_json(json, buffer.str());
+	auto menuPair = std::make_pair("Menu", std::ref(m_menuToggleInfo));
+	auto numbersPair = std::make_pair("Numbers", std::ref(m_test));
 
-	const std::string key = "Numbers";
-	std::vector<int> vec;
-	if (json.contains(key))
+	deserializeArbitraryVector(buffer.str(),
+		menuPair,
+		numbersPair
+	);
+
+	SKSE::log::info("Menu:");
+	for (const auto& member : m_menuToggleInfo)
 	{
-		SKSE::log::info("Found");
-
-		auto& jsonArray = json[key].get_array();
-		vec.clear();
-		vec.reserve(jsonArray.size());
-
-		std::string newBuffer;
-		std::ignore = glz::write_json(jsonArray, newBuffer); // maybe dont ignore all of them 
-
-		SKSE::log::info("newBuffer: {}", newBuffer);
-		std::ignore = glz::read_json(vec, newBuffer);
-
-		for (const auto& member : vec)
-		{
-			SKSE::log::info("Number: {}", member);
-		}
-
+		SKSE::log::info("\t{}, {}, {}", member.effectName, member.menuName, member.state);
 	}
-	else
+
+	SKSE::log::info("Numbers:");
+	for (const auto& member : m_test)
 	{
-		SKSE::log::error("Key '{}' not found in JSON.", key);
+		SKSE::log::info("\t{}", member);
 	}
 }
 
@@ -50,7 +42,7 @@ void Manager::serializeJSONPreset(const std::string& presetName)
 {
 	constexpr const char* configDirectory = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
 	std::filesystem::create_directories(configDirectory);
-	const std::string fullPath = std::string(configDirectory) + "\\" + presetName + ".json";
+	const std::string fullPath = std::string(configDirectory) + "\\" + presetName;
 
 	std::ofstream outFile(fullPath);
 	if (!outFile.is_open())
@@ -59,10 +51,9 @@ void Manager::serializeJSONPreset(const std::string& presetName)
 		return;
 	}
 
-	std::vector<int> test = { 1,2,2,2,2,2,2 };
 	std::string buffer = serializeArbitraryVector(
 		std::make_pair(std::string("Menu"), m_menuToggleInfo),
-		std::make_pair(std::string("Numbers"), test)
+		std::make_pair(std::string("Numbers"), m_test)
 	);
 
 	// TODO: investigate why no good looking json. This is kinda irrelevant tho
@@ -136,4 +127,37 @@ std::string Manager::serializeArbitraryVector(const Args&... args)
 	jsonStream << " }";
 
 	return jsonStream.str();
+}
+
+template<typename ...Args>
+void Manager::deserializeArbitraryVector(const std::string& buf, Args& ...args)
+{
+	glz::json_t json{};
+	std::ignore = glz::read_json(json, buf);
+
+	auto process_pair = [&](const auto& pair) {
+		const auto& key = pair.first;
+		auto& vec = pair.second;
+
+		if (json.contains(key))
+		{
+			SKSE::log::info("Found");
+
+			auto& jsonArray = json[key].get_array();
+			vec.clear();
+			vec.reserve(jsonArray.size());
+
+			// Serialize the array to a string and then deserialize into the vector
+			std::string newBuffer;
+			std::ignore = glz::write_json(jsonArray, newBuffer);
+			std::ignore = glz::read_json(vec, newBuffer);
+		}
+		else
+		{
+			SKSE::log::error("Key '{}' not found in JSON.", key);
+		}
+	};
+
+	// Apply the lambda function to each argument pair
+	(process_pair(args), ...);
 }

@@ -25,11 +25,11 @@ void Menu::SettingsMenu()
 			{
 				if (ImGui::MenuItem("Save"))
 				{
-					Manager::GetSingleton()->SerializeJSONPreset("testPreset");
+					Manager::GetSingleton()->serializeJSONPreset("testPreset");
 				}
 				if (ImGui::MenuItem("Load"))
 				{
-					Manager::GetSingleton()->ParseJSONPreset("testPreset");
+					Manager::GetSingleton()->parseJSONPreset("testPreset");
 				}
 
 				ImGui::EndMenu();
@@ -98,7 +98,7 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 		std::string selectedPresetPath = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets\\" + m_selectedPreset;
 		if (std::filesystem::exists(selectedPresetPath))
 		{
-			Manager::GetSingleton()->ParseJSONPreset(m_selectedPreset);
+			Manager::GetSingleton()->parseJSONPreset(m_selectedPreset);
 		}
 		else
 		{
@@ -197,7 +197,7 @@ void Menu::SaveFile()
 				// Use the provided filename or the default if empty
 				std::string filename = (m_inputBuffer[0] != '\0') ? m_inputBuffer : "NewPreset";
 
-				Manager::GetSingleton()->SerializeJSONPreset(filename);
+				Manager::GetSingleton()->serializeJSONPreset(filename);
 
 				//Refresh
 				m_presets.clear();
