@@ -76,7 +76,7 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 	case SKSE::MessagingInterface::kPostPostLoad:
 	{
 		Hook::Install();
-		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Menu::GetSingleton());
+		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Event::GetSingleton());
 
 		Manager::GetSingleton()->SerializeJSONPreset("testPreset");
 
@@ -136,7 +136,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 	SetupLog();
 
 	if (!Load())
-		return false;
+		SKSE::stl::report_and_fail("ReShade not present!\nIf you want to use ReShade Effect Toggler, please install ReShade."sv);
 
 	SKSE::GetMessagingInterface()->RegisterListener(MessageListener);
 	SKSE::log::info("{} v{} loaded", Plugin::NAME, Plugin::VERSION);
