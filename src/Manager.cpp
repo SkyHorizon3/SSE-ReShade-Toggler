@@ -1,16 +1,8 @@
 #include "Manager.h"
 #include "glaze/glaze.hpp"
 
-void Manager::ParseJSONPreset(const std::string& path)
+void Manager::parseJSONPreset(const std::string& path)
 {
-
-			glz::read_json(type, member.as<std::string>());
-			vec.emplace_back(type);
-
-	}
-	*/
-
-
 	/*
 	for (const auto& item : jsonArray) {
 		typename std::decay_t<decltype(vec)>::value_type value;
@@ -37,10 +29,7 @@ void Manager::ParseJSONPreset(const std::string& path)
 		SKSE::log::error("Error parsing JSON array: {}", error);
 	}
 	*/
-	}
-	else {
-		SKSE::log::error("Key '{}' not found in JSON.", key);
-	}
+
 
 	/*
 	* The idea
@@ -105,7 +94,7 @@ std::vector<std::string> Manager::EnumeratePresets()
 	return presets;
 }
 
-void Manager::ToggleEffect(const char* effect, const bool state) const
+void Manager::toggleEffect(const char* effect, const bool state) const
 {
 	s_pRuntime->enumerate_techniques(effect, [&state](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
 		{
