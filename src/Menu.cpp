@@ -14,15 +14,49 @@ void Menu::SettingsMenu()
 
 		// Create the main settings window with docking enabled
 		ImGui::Begin("[PH] Settings Window", &m_openSettingsMenu);
-		// Create a DockSpace inside the main settings window
+		static int currentTab = 0;
+
+
+		if (ImGui::BeginTabBar("SettingsTabBar"))
+		{
+			if (ImGui::BeginTabItem("Main Page"))
+			{
+				currentTab = 0;
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Menu Settings"))
+			{
+				currentTab = 1;
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Time Settings"))
+			{
+				currentTab = 2;
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Interior Settings"))
+			{
+				currentTab = 3;
+				ImGui::EndTabItem();
+			}
+			if (ImGui::BeginTabItem("Weather Settings"))
+			{
+				currentTab = 4;
+				ImGui::EndTabItem();
+			}
+		}
+
 		ImGuiID dockspaceId = ImGui::GetID("SettingsDockspace");
 		ImGui::DockSpace(dockspaceId, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 
-		SpawnMainPage(dockspaceId);
-		SpawnMenuSettings(dockspaceId);
-		SpawnTimeSettings(dockspaceId);
-		SpawnInteriorSettings(dockspaceId);
-		SpawnWeatherSettings(dockspaceId);
+		switch (currentTab)
+		{
+		case 0: SpawnMainPage(dockspaceId); break;
+		case 1: SpawnMenuSettings(dockspaceId); break;
+		case 2: SpawnTimeSettings(dockspaceId); break;
+		case 3: SpawnInteriorSettings(dockspaceId); break;
+		case 4: SpawnWeatherSettings(dockspaceId); break;
+		}
 
 		RemoveColors();
 	}
