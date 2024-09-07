@@ -17,7 +17,7 @@ RE::BSEventNotifyControl Event::ProcessEvent(const RE::MenuOpenCloseEvent* a_eve
 	if (m_openMenus.empty())
 		return RE::BSEventNotifyControl::kContinue;
 
-	Manager::GetSingleton()->ToggleEffectMenu(m_openMenus);
+	Manager::GetSingleton()->toggleEffectMenu(m_openMenus);
 
 	return RE::BSEventNotifyControl::kContinue;
 }

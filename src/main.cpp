@@ -78,8 +78,8 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 		Hook::Install();
 		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Event::GetSingleton());
 
-		Manager::GetSingleton()->SerializeJSONPreset("testPreset");
-
+		Manager::GetSingleton()->parseJSONPreset("D:\\Bethesda\\Skyrim SE\\1.5.97 Test\\MO2\\overwrite\\SKSE\\Plugins\\ReShadeEffectTogglerPresets\\testPreset.json");
+		//Manager::GetSingleton()->serializeJSONPreset("testPreset");
 	}
 	break;
 	case SKSE::MessagingInterface::kDataLoaded:
