@@ -18,8 +18,9 @@ bool Manager::parseJSONPreset(const std::string& presetName)
 
 	const auto menuPair = std::make_pair("Menu", std::ref(m_menuToggleInfo));
 	const auto timePair = std::make_pair("Time", std::ref(m_timeToggleInfo));
+	const auto weatherPair = std::make_pair("Weather", std::ref(m_weatherToggleInfo));
 
-	return deserializeArbitraryVector(buffer.str(), menuPair, timePair);
+	return deserializeArbitraryData(buffer.str(), menuPair, timePair, weatherPair);
 }
 
 bool Manager::serializeJSONPreset(const std::string& presetName)
@@ -34,7 +35,10 @@ bool Manager::serializeJSONPreset(const std::string& presetName)
 	}
 
 	std::string buffer;
-	if (!serializeArbitraryVector(buffer, std::make_pair("Menu", m_menuToggleInfo), std::make_pair("Time", m_timeToggleInfo)))
+	if (!serializeArbitraryData(buffer, 
+		std::make_pair("Menu", m_menuToggleInfo), 
+		std::make_pair("Time", m_timeToggleInfo),
+		std::make_pair("Weather", m_weatherToggleInfo)))
 	{
 		SKSE::log::error("Failed to serialize preset {}!", presetName);
 		return false;
@@ -125,8 +129,6 @@ std::vector<std::string> Manager::enumerateWorldSpaces()
 
 	return worldSpaces;
 }
-
-
 
 std::string Manager::getPresetPath(const std::string& presetName)
 {
@@ -244,8 +246,32 @@ bool Manager::serializeVector(const std::string& key, const std::vector<T>& vec,
 	return true;
 }
 
+template<typename T>
+bool Manager::serializeMap(const std::string& key, const std::unordered_map<std::string, std::vector<T>>& map, std::string& output)
+{
+	std::stringstream mapJson;
+	mapJson << "{ ";
+
+	bool first = true;
+	for (const auto& pair : map) {
+		std::string vecJson;
+		const auto result = glz::write_json(pair.second, vecJson);
+		if (result) {
+			const std::string descriptive_error = glz::format_error(result, vecJson);
+			SKSE::log::error("Error serializing vector for key {}: {}", pair.first, descriptive_error);
+			return false;
+		}
+
+		mapJson << (first ? (first = false, "") : ", ") << "\"" << pair.first << "\": " << vecJson;
+	}
+
+	mapJson << " }";
+	output = "\"" + key + "\": " + mapJson.str();
+	return true;
+}
+
 template <typename... Args>
-bool Manager::serializeArbitraryVector(std::string& output, const Args&... args)
+bool Manager::serializeArbitraryData(std::string& output, const Args&... args)
 {
 	std::stringstream jsonStream;
 	jsonStream << "{ ";
@@ -255,10 +281,26 @@ bool Manager::serializeArbitraryVector(std::string& output, const Args&... args)
 
 	auto processArg = [&](const auto& pair) {
 		std::string serialized;
-		if (serializeVector(pair.first, pair.second, serialized)) {
-			jsonStream << (first ? (first = false, "") : ", ") << serialized;
+		if constexpr (std::is_same_v<std::decay_t<decltype(pair.second)>, std::vector<typename std::decay_t<decltype(pair.second)>::value_type>>) {
+			// Handle vector case
+			if (serializeVector(pair.first, pair.second, serialized)) {
+				jsonStream << (first ? (first = false, "") : ", ") << serialized;
+			}
+			else {
+				success = false;
+			}
+		}
+		else if constexpr (std::is_same_v<std::decay_t<decltype(pair.second)>, std::unordered_map<std::string, std::vector<typename std::decay_t<decltype(pair.second)>::mapped_type::value_type>>>) {
+			// Handle unordered_map case
+			if (serializeMap(pair.first, pair.second, serialized)) {
+				jsonStream << (first ? (first = false, "") : ", ") << serialized;
+			}
+			else {
+				success = false;
+			}
 		}
 		else {
+			SKSE::log::error("Unsupported type for serialization");
 			success = false;
 		}
 		};
@@ -272,9 +314,64 @@ bool Manager::serializeArbitraryVector(std::string& output, const Args&... args)
 	return success;
 }
 
+template <typename T>
+bool Manager::deserializeVector(const std::string& key, const glz::json_t& json, std::vector<T>& vec)
+{
+	if (json.contains(key)) {
+		std::string buffer;
+		const auto write_result = glz::write_json(json[key], buffer);
+		if (write_result) {
+			SKSE::log::error("Error serializing JSON for key '{}'.", key);
+			return false;
+		}
 
-template<typename ...Args>
-bool Manager::deserializeArbitraryVector(const std::string& buf, Args& ...args)
+		const auto read_result = glz::read_json(vec, buffer);
+		if (read_result) {
+			SKSE::log::error("Error deserializing vector for key '{}'.", key);
+			return false;
+		}
+	}
+	else {
+		SKSE::log::error("Key '{}' not found in JSON.", key);
+		return false;
+	}
+	return true;
+}
+
+template <typename T>
+bool Manager::deserializeMapOfVectors(const std::string& key, const glz::json_t& json, std::unordered_map<std::string, std::vector<T>>& map)
+{
+	if (json.contains(key)) {
+		const auto& mapData = json[key].get_object();
+		map.clear();
+		for (const auto& [subKey, subValue] : mapData) {
+			std::vector<T> vec;
+
+			// Serialize the subValue to a string and then deserialize into the vector
+			std::string buffer;
+			const auto write_result = glz::write_json(subValue, buffer);
+			if (write_result) {
+				SKSE::log::error("Error serializing JSON for subKey '{}'.", subKey);
+				return false;
+			}
+
+			const auto read_result = glz::read_json(vec, buffer);
+			if (read_result) {
+				SKSE::log::error("Error deserializing vector for subKey '{}'.", subKey);
+				return false;
+			}
+			map[subKey] = std::move(vec);
+		}
+	}
+	else {
+		SKSE::log::error("Key '{}' not found in JSON.", key);
+		return false;
+	}
+	return true;
+}
+
+template <typename... Args>
+bool Manager::deserializeArbitraryData(const std::string& buf, Args&... args)
 {
 	glz::json_t json{};
 	const auto result = glz::read_json(json, buf);
@@ -283,41 +380,26 @@ bool Manager::deserializeArbitraryVector(const std::string& buf, Args& ...args)
 		SKSE::log::error("Error parsing JSON: {}", descriptive_error);
 		return false;
 	}
+	bool success = true;
 
-	auto process_pair = [&](const auto& pair) {
+	auto process_pair = [&](auto& pair) {
 		const auto& key = pair.first;
-		auto& vec = pair.second;
+		auto& data = pair.second;
 
-		if (json.contains(key))
-		{
-			auto& jsonArray = json[key].get_array();
-			vec.clear();
-			vec.reserve(jsonArray.size());
-
-			// Serialize the array to a string and then deserialize into the vector
-			std::string newBuffer;
-			const auto write_result = glz::write_json(jsonArray, newBuffer);
-			if (write_result) {
-				SKSE::log::error("Error serializing JSON array for key '{}'.", key);
-				return false;
-			}
-
-			const auto read_result = glz::read_json(vec, newBuffer);
-			if (read_result) {
-				SKSE::log::error("Error deserializing vector for key '{}'.", key);
-				return false;
-			}
+		if constexpr (std::is_same_v<std::decay_t<decltype(data)>, std::vector<typename std::decay_t<decltype(data)>::value_type>>) {
+			return deserializeVector(key, json, data);
+		}
+		else if constexpr (std::is_same_v<std::decay_t<decltype(pair.second)>, std::unordered_map<std::string, std::vector<typename std::decay_t<decltype(pair.second)>::mapped_type::value_type>>>) {
+			return deserializeMapOfVectors(key, json, pair.second);
 		}
 		else
 		{
-			SKSE::log::error("Key '{}' not found in JSON.", key);
 			return false;
 		}
-		return true;
-		};
+	};
 
-	bool success = true;
 	((success &= process_pair(args)), ...);
 	return success;
 }
+
 #pragma endregion

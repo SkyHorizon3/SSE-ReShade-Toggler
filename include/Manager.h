@@ -1,4 +1,5 @@
 #pragma once
+#include <glaze/json/json_t.hpp>
 
 struct MenuToggleInformation
 {
@@ -83,12 +84,21 @@ private:
 private:
 	template<typename T>
 	bool serializeVector(const std::string& key, const std::vector<T>& vec, std::string& output);
+	
+	template<typename T>
+	bool serializeMap(const std::string& key, const std::unordered_map<std::string, std::vector<T>>& map, std::string& output);
 
 	template<typename... Args>
-	bool serializeArbitraryVector(std::string& output, const Args&... args);
+	bool serializeArbitraryData(std::string& output, const Args&... args);
+
+	template<typename T>
+	bool deserializeVector(const std::string& key, const glz::json_t& json, std::vector<T>& vec);
+
+	template<typename T>
+	bool deserializeMapOfVectors(const std::string& key, const glz::json_t& json, std::unordered_map<std::string, std::vector<T>>& map);
 
 	template<typename... Args>
-	bool deserializeArbitraryVector(const std::string& buf, Args&... args);
+	bool deserializeArbitraryData(const std::string& buf, Args&... args);
 
 };
 

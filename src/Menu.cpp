@@ -187,7 +187,6 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 	ImGui::End();
 }
 
-
 void Menu::SpawnTimeSettings(ImGuiID dockspace_id)
 {
 	ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
@@ -435,7 +434,6 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 
 	ImGui::End();
 }
-
 
 bool Menu::CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags)
 {
