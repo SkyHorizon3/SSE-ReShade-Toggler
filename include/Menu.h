@@ -55,6 +55,9 @@ private:
 	std::vector<std::string> m_effects;
 	std::vector<std::string> m_menuNames;
 
+	ImVec4 m_lastMessageColor;
+	std::string m_lastMessage;
+
 	bool m_saveConfigPopupOpen = false;
 	bool m_openSettingsMenu = false;
 	bool m_showMenuSettings = false;

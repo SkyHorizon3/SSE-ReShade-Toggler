@@ -2,7 +2,7 @@
 #include "Utils.h"
 #include "glaze/glaze.hpp"
 
-void Manager::parseJSONPreset(const std::string& presetName)
+bool Manager::parseJSONPreset(const std::string& presetName)
 {
 	const std::string fullPath = getPresetPath(presetName);
 
@@ -10,26 +10,19 @@ void Manager::parseJSONPreset(const std::string& presetName)
 	if (!openFile.is_open())
 	{
 		SKSE::log::error("Couldn't load preset {}!", fullPath);
-		return;
+		return false;
 	}
 
 	std::stringstream buffer;
 	buffer << openFile.rdbuf();
 
 	const auto menuPair = std::make_pair("Menu", std::ref(m_menuToggleInfo));
+	const auto timePair = std::make_pair("Time", std::ref(m_timeToggleInfo));
 
-	deserializeArbitraryVector(buffer.str(),
-		menuPair
-	);
-
-	SKSE::log::info("Menu:");
-	for (const auto& member : m_menuToggleInfo)
-	{
-		SKSE::log::info("\t{}, {}, {}", member.effectName, member.menuName, member.state);
-	}
+	return deserializeArbitraryVector(buffer.str(), menuPair, timePair);
 }
 
-void Manager::serializeJSONPreset(const std::string& presetName)
+bool Manager::serializeJSONPreset(const std::string& presetName)
 {
 	const std::string fullPath = getPresetPath(presetName);
 
@@ -37,17 +30,21 @@ void Manager::serializeJSONPreset(const std::string& presetName)
 	if (!outFile.is_open())
 	{
 		SKSE::log::error("Couldn't save preset {}!", presetName);
-		return;
+		return false;
 	}
 
-	std::string buffer = serializeArbitraryVector(
-		std::make_pair(std::string("Menu"), m_menuToggleInfo)
-	);
+	std::string buffer;
+	if (!serializeArbitraryVector(buffer, std::make_pair("Menu", m_menuToggleInfo), std::make_pair("Time", m_timeToggleInfo)))
+	{
+		SKSE::log::error("Failed to serialize preset {}!", presetName);
+		return false;
+	}
 
-	// TODO: investigate why no good looking json. This is kinda irrelevant tho
-	//buffer = glz::prettify_json(buffer);
+	// TODO: prettify
 	outFile << buffer;
 	outFile.close();
+
+	return true;
 }
 
 void Manager::toggleEffectMenu(const std::set<std::string>& openMenus)
@@ -126,6 +123,8 @@ std::string Manager::getPresetPath(const std::string& presetName)
 	return std::string(configDirectory) + "\\" + presetName;
 }
 
+/*
+
 void Manager::toggleEffectWeather()
 {
 	const auto sky = RE::Sky::GetSingleton();
@@ -189,7 +188,7 @@ void Manager::toggleEffectWeather()
 	{
 		toggleEffect(weatherInfo.effectName.c_str(), !weatherInfo.state);
 	}
-}
+}*/
 
 float Manager::getCurrentGameTime()
 {
@@ -206,40 +205,61 @@ void Manager::toggleEffect(const char* effect, const bool state) const
 		});
 }
 
+#pragma region TemplateTomfoolery
 template <typename T>
-std::string Manager::serializeVector(const std::string& key, const std::vector<T>& vec)
+bool Manager::serializeVector(const std::string& key, const std::vector<T>& vec, std::string& output)
 {
 	std::string vecJson;
 	const auto result = glz::write_json(vec, vecJson);  // Serialize the vector
 	if (result) {
 		const std::string descriptive_error = glz::format_error(result, vecJson);
 		SKSE::log::error("Error serializing vector: {}", descriptive_error);
+		return false;
 	}
 
-	const std::string jsonStr = "\"" + key + "\": " + vecJson;
-	return jsonStr;
+	output = "\"" + key + "\": " + vecJson;
+	return true;
 }
 
 template <typename... Args>
-std::string Manager::serializeArbitraryVector(const Args&... args)
+bool Manager::serializeArbitraryVector(std::string& output, const Args&... args)
 {
 	std::stringstream jsonStream;
 	jsonStream << "{ ";
 
 	bool first = true;
-	((jsonStream << (first ? (first = false, "") : ", ") << serializeVector(args.first, args.second)), ...);
+	bool success = true;
 
+	auto processArg = [&](const auto& pair) {
+		std::string serialized;
+		if (serializeVector(pair.first, pair.second, serialized)) {
+			jsonStream << (first ? (first = false, "") : ", ") << serialized;
+		}
+		else {
+			success = false;
+		}
+		};
+
+	// Process each argument pair
+	(processArg(args), ...);
 
 	jsonStream << " }";
+	output = jsonStream.str();
 
-	return jsonStream.str();
+	return success;
 }
 
+
 template<typename ...Args>
-void Manager::deserializeArbitraryVector(const std::string& buf, Args& ...args)
+bool Manager::deserializeArbitraryVector(const std::string& buf, Args& ...args)
 {
 	glz::json_t json{};
-	std::ignore = glz::read_json(json, buf);
+	const auto result = glz::read_json(json, buf);
+	if (result) {
+		const std::string descriptive_error = glz::format_error(result, buf);
+		SKSE::log::error("Error parsing JSON: {}", descriptive_error);
+		return false;
+	}
 
 	auto process_pair = [&](const auto& pair) {
 		const auto& key = pair.first;
@@ -247,23 +267,34 @@ void Manager::deserializeArbitraryVector(const std::string& buf, Args& ...args)
 
 		if (json.contains(key))
 		{
-			//SKSE::log::info("Found");
-
 			auto& jsonArray = json[key].get_array();
 			vec.clear();
 			vec.reserve(jsonArray.size());
 
 			// Serialize the array to a string and then deserialize into the vector
 			std::string newBuffer;
-			std::ignore = glz::write_json(jsonArray, newBuffer);
-			std::ignore = glz::read_json(vec, newBuffer);
+			const auto write_result = glz::write_json(jsonArray, newBuffer);
+			if (write_result) {
+				SKSE::log::error("Error serializing JSON array for key '{}'.", key);
+				return false;
+			}
+
+			const auto read_result = glz::read_json(vec, newBuffer);
+			if (read_result) {
+				SKSE::log::error("Error deserializing vector for key '{}'.", key);
+				return false;
+			}
 		}
 		else
 		{
 			SKSE::log::error("Key '{}' not found in JSON.", key);
+			return false;
 		}
+		return true;
 		};
 
-	// Apply the lambda function to each argument pair
-	(process_pair(args), ...);
+	bool success = true;
+	((success &= process_pair(args)), ...);
+	return success;
 }
+#pragma endregion

@@ -68,6 +68,7 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 {
 	ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
 	ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoCollapse);
+
 	m_presets = Manager::GetSingleton()->enumeratePresets();
 
 	CreateCombo("Select Preset", m_selectedPreset, m_presets, ImGuiComboFlags_None);
@@ -83,13 +84,24 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 		std::string selectedPresetPath = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets\\" + m_selectedPreset;
 		if (std::filesystem::exists(selectedPresetPath))
 		{
-			Manager::GetSingleton()->parseJSONPreset(m_selectedPreset);
+			if (!Manager::GetSingleton()->parseJSONPreset(m_selectedPreset))
+			{
+				m_lastMessage = "Failed to load preset: '" + m_selectedPreset + "'.";
+				m_lastMessageColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+			}
+			else
+			{
+				m_lastMessage = "Successfully loaded preset: '" + m_selectedPreset +"'!";
+				m_lastMessageColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+			}
 		}
 		else
 		{
-			SKSE::log::error("Tried to log preset '{}'. Preset doesn't exist", selectedPresetPath);
+			m_lastMessage = "Tried to load preset '" + selectedPresetPath + "'. Preset doesn't exist";
+			m_lastMessageColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
 		}
 	}
+
 	ImGui::SameLine();
 	if (ImGui::Button("Save"))
 	{
@@ -97,6 +109,11 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 		m_inputBuffer[0] = '\0';
 	}
 	SaveFile();
+
+	if (!m_lastMessage.empty())
+	{
+		ImGui::TextColored(m_lastMessageColor, "%s", m_lastMessage.c_str());
+	}
 
 	ImGui::End();
 }
@@ -106,7 +123,6 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 	ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
 	ImGui::Begin("Menu Settings", &m_showMenuSettings, ImGuiWindowFlags_NoCollapse);
 	ImGui::Text("Configure menu toggling settings here.");
-	// TODO: Specific / All?
 
 	m_menuNames = Manager::GetSingleton()->enumerateMenus();
 	ImGui::SeparatorText("Effects");
@@ -155,7 +171,7 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 	}
 	Manager::GetSingleton()->setMenuToggleInfo(updatedInfoList);
 
-	ImGui::Separator();
+	ImGui::SeparatorText("Add New");
 
 	// Add new effect
 	if (ImGui::Button("Add New Effect"))
@@ -177,6 +193,114 @@ void Menu::SpawnTimeSettings(ImGuiID dockspace_id)
 	ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
 	ImGui::Begin("Time Settings", &m_showTimeSettings, ImGuiWindowFlags_NoCollapse);
 	ImGui::Text("Configure time toggling settings here.");
+
+	ImGui::SeparatorText("Effects");
+
+	// Get the list of toggle information
+	std::vector<TimeToggleInformation> infoList = Manager::GetSingleton()->getTimeToggleInfo();
+	std::vector<TimeToggleInformation> updatedInfoList;
+
+	if (!infoList.empty())
+	{
+		for (int i = 0; i < infoList.size(); i++)
+		{
+			if (infoList[i].effectName != "")
+			{
+				bool valueChanged = false;
+				// Create unique IDs for each element
+				std::string effectComboID = "Effect##Time" + std::to_string(i);
+				std::string effectStateID = "Toggle On##Time" + std::to_string(i);
+				std::string removeID = "Remove Effect##Time" + std::to_string(i);
+				std::string startTimeID = "StartTime##Time" + std::to_string(i);
+				std::string stopTimeID = "StopTime##Time" + std::to_string(i);
+
+				std::string currentEffectName = infoList[i].effectName;
+				float currentStartTime = infoList[i].startTime;
+				float currentStopTime = infoList[i].stopTime;
+				bool currentEffectState = infoList[i].state;
+
+				if (CreateCombo(effectComboID.c_str(), currentEffectName, m_effects, ImGuiComboFlags_None)) { valueChanged = true; }
+				ImGui::SameLine();
+				if (ImGui::Checkbox(effectStateID.c_str(), &currentEffectState)) { valueChanged = true; }
+				int startHour = static_cast<int>(currentStartTime);
+				int startMinute = static_cast<int>((currentStartTime - startHour) * 100); // Extract minutes
+				int stopHour = static_cast<int>(currentStopTime);
+				int stopMinute = static_cast<int>((currentStopTime - stopHour) * 100); // Extract minutes
+
+				bool timeIsValid = true;
+
+				ImGui::SetNextItemWidth(150.0f);
+				if (ImGui::SliderInt(("Start Hour##" + std::to_string(i)).c_str(), &startHour, 0, 23)) {
+					valueChanged = true;
+				}
+
+				ImGui::SameLine();
+				ImGui::SetNextItemWidth(150.0f);
+				if (ImGui::SliderInt(("Start Minute##" + std::to_string(i)).c_str(), &startMinute, 0, 59)) {
+					valueChanged = true;
+				}
+
+				ImGui::Dummy(ImVec2(0.0f, 5.0f));
+
+				ImGui::SetNextItemWidth(150.0f);
+				if (ImGui::SliderInt(("Stop Hour##" + std::to_string(i)).c_str(), &stopHour, 0, 23)) {
+					valueChanged = true;
+				}
+
+				ImGui::SameLine();
+				ImGui::SetNextItemWidth(150.0f);
+				if (ImGui::SliderInt(("Stop Minute##" + std::to_string(i)).c_str(), &stopMinute, 0, 59)) {
+					valueChanged = true;
+				}
+
+				// Combine hours and minutes back into floating-point times
+				currentStartTime = startHour + (startMinute / 100.0f);
+				currentStopTime = stopHour + (stopMinute / 100.0f);
+
+				// Validate that stop time is after start time
+				if (currentStartTime > currentStopTime) {
+					timeIsValid = false;
+				}
+
+				if (!timeIsValid) {
+					ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Invalid time range!");
+				}
+
+
+				if (ImGui::Button(removeID.c_str()))
+				{
+					continue;
+				}
+
+				if (valueChanged)
+				{
+					infoList[i].effectName = currentEffectName;
+					infoList[i].startTime = currentStartTime;
+					infoList[i].stopTime = currentStopTime;
+					infoList[i].state = currentEffectState;
+				}
+
+				updatedInfoList.push_back(infoList[i]);
+			}
+		}
+	}
+	Manager::GetSingleton()->setTimeToggleInfo(updatedInfoList);
+
+	ImGui::SeparatorText("Add New");
+
+	// Add new effect
+	if (ImGui::Button("Add New Effect"))
+	{
+		TimeToggleInformation info;
+		info.effectName = "Default.fx";
+		info.startTime = 0.0f;
+		info.stopTime = 0.0f;
+		info.state = false;
+
+		updatedInfoList.push_back(info);
+		Manager::GetSingleton()->setTimeToggleInfo(updatedInfoList);
+	}
+
 	ImGui::End();
 }
 
@@ -245,7 +369,16 @@ void Menu::SaveFile()
 				// Use the provided filename or the default if empty
 				std::string filename = (m_inputBuffer[0] != '\0') ? m_inputBuffer : "NewPreset";
 				filename = filename + ".json";
-				Manager::GetSingleton()->serializeJSONPreset(filename);
+				if (!Manager::GetSingleton()->serializeJSONPreset(filename))
+				{
+					m_lastMessage = "Failed to save preset '" + filename + "'.";
+					m_lastMessageColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
+				}
+				else
+				{
+					m_lastMessage = "Successfully saved Preset: '" + filename + "'!";
+					m_lastMessageColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
+				}
 
 				//Refresh
 				m_presets.clear();

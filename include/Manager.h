@@ -43,9 +43,9 @@ public:
 		kTime
 	};
 
-	void parseJSONPreset(const std::string& presetName);
+	bool parseJSONPreset(const std::string& presetName);
 
-	void serializeJSONPreset(const std::string& presetName);
+	bool serializeJSONPreset(const std::string& presetName);
 
 	void toggleEffectMenu(const std::set<std::string>& openMenus);
 
@@ -53,10 +53,13 @@ public:
 	std::vector<std::string> enumerateEffects();
 	std::vector<std::string> enumerateMenus();
 
-	void toggleEffectWeather();
+	// void toggleEffectWeather();
 
 	std::vector<MenuToggleInformation> getMenuToggleInfo() const { return m_menuToggleInfo; }
 	void setMenuToggleInfo(const std::vector<MenuToggleInformation>& info) { m_menuToggleInfo = info; }
+
+	std::vector<TimeToggleInformation> getTimeToggleInfo() const { return m_timeToggleInfo; }
+	void setTimeToggleInfo(const std::vector<TimeToggleInformation>& info) { m_timeToggleInfo = info; }
 
 private:
 	std::string getPresetPath(const std::string& presetName);
@@ -74,13 +77,13 @@ private:
 	std::pair<RE::TESWorldSpace*, WeatherToggleInformation> m_lastWs;
 private:
 	template<typename T>
-	std::string serializeVector(const std::string& key, const std::vector<T>& vec);
+	bool serializeVector(const std::string& key, const std::vector<T>& vec, std::string& output);
 
 	template<typename... Args>
-	std::string serializeArbitraryVector(const Args&... args);
+	bool serializeArbitraryVector(std::string& output, const Args&... args);
 
 	template<typename... Args>
-	void deserializeArbitraryVector(const std::string& buf, Args&... args);
+	bool deserializeArbitraryVector(const std::string& buf, Args&... args);
 
 };
 
