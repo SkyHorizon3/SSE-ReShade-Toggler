@@ -136,8 +136,15 @@ void Manager::toggleEffectWeather()
 		return;
 
 	const auto ws = player->GetWorldspace();
-	if (!ws) // player is in interior
+	if (!ws || m_lastWs.first && m_lastWs.first->formID != ws->formID) // player is in interior or changed worldspace
+	{
+		if (m_lastWs.first)
+		{
+			toggleEffect(m_lastWs.second.effectName.c_str(), !m_lastWs.second.state);
+			m_lastWs.first = nullptr;
+		}
 		return;
+	}
 
 	const auto it = m_weatherToggleInfo.find(std::make_pair(Utils::getTrimmedFormID(ws), Utils::getModName(ws)));
 	if (it == m_weatherToggleInfo.end()) // no info for ws in unordered map
@@ -175,6 +182,12 @@ void Manager::toggleEffectWeather()
 	if (weatherInfo.weatherFlag == weatherFlag)
 	{
 		toggleEffect(weatherInfo.effectName.c_str(), weatherInfo.state);
+		m_lastWs.first = ws;
+		m_lastWs.second = weatherInfo;
+	}
+	else
+	{
+		toggleEffect(weatherInfo.effectName.c_str(), !weatherInfo.state);
 	}
 }
 

@@ -70,7 +70,7 @@ private:
 	std::vector<InteriorToggleInformation> m_interiorToggleInfo;
 	std::vector<TimeToggleInformation> m_timeToggleInfo;
 
-
+	std::pair<RE::TESWorldSpace*, WeatherToggleInformation> m_lastWs;
 private:
 	template<typename T>
 	std::string serializeVector(const std::string& key, const std::vector<T>& vec);
