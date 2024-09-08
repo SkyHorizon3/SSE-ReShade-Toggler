@@ -166,7 +166,7 @@ void Manager::toggleEffectWeather()
 	const auto ws = player->GetWorldspace();
 	if (!ws || m_lastWs.first && m_lastWs.first->formID != ws->formID) // player is in interior or changed worldspace
 	{
-		if (m_lastWs.first && m_lastWs.second.weatherFlag != weatherFlag)
+		if (m_lastWs.first && m_lastWs.second.weatherFlag != weatherFlag) // change effect state back to original if it was toggled before
 		{
 			toggleEffect(m_lastWs.second.effectName.c_str(), !m_lastWs.second.state);
 			m_lastWs.first = nullptr;
@@ -178,7 +178,7 @@ void Manager::toggleEffectWeather()
 	if (it == m_weatherToggleInfo.end()) // no info for ws in unordered map
 		return;
 
-	const auto weatherInfo = it->second;
+	const auto& weatherInfo = it->second;
 	if (weatherInfo.weatherFlag == weatherFlag)
 	{
 		toggleEffect(weatherInfo.effectName.c_str(), weatherInfo.state);
