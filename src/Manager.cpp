@@ -383,14 +383,11 @@ bool Manager::deserializeArbitraryData(const std::string& buf, Args&... args)
 	bool success = true;
 
 	auto process_pair = [&](auto& pair) {
-		const auto& key = pair.first;
-		auto& data = pair.second;
-
-		if constexpr (std::is_same_v<std::decay_t<decltype(data)>, std::vector<typename std::decay_t<decltype(data)>::value_type>>) {
-			return deserializeVector(key, json, data);
+		if constexpr (std::is_same_v<std::decay_t<decltype(pair.second)>, std::vector<typename std::decay_t<decltype(pair.second)>::value_type>>) {
+			return deserializeVector(pair.first, json, pair.second);
 		}
 		else if constexpr (std::is_same_v<std::decay_t<decltype(pair.second)>, std::unordered_map<std::string, std::vector<typename std::decay_t<decltype(pair.second)>::mapped_type::value_type>>>) {
-			return deserializeMapOfVectors(key, json, pair.second);
+			return deserializeMapOfVectors(pair.first, json, pair.second);
 		}
 		else
 		{

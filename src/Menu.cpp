@@ -84,14 +84,19 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 		std::string selectedPresetPath = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets\\" + m_selectedPreset;
 		if (std::filesystem::exists(selectedPresetPath))
 		{
-			if (!Manager::GetSingleton()->parseJSONPreset(m_selectedPreset))
+			auto start = std::chrono::high_resolution_clock::now();
+			bool success = Manager::GetSingleton()->parseJSONPreset(m_selectedPreset);
+			auto end = std::chrono::high_resolution_clock::now();
+			std::chrono::duration<double, std::milli> duration = end - start;
+
+			if (!success)
 			{
 				m_lastMessage = "Failed to load preset: '" + m_selectedPreset + "'.";
 				m_lastMessageColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
 			}
 			else
 			{
-				m_lastMessage = "Successfully loaded preset: '" + m_selectedPreset +"'!";
+				m_lastMessage = "Successfully loaded preset: '" + m_selectedPreset +"'! Took: " + std::to_string(duration.count()) + "ms";
 				m_lastMessageColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
 			}
 		}
@@ -483,14 +488,19 @@ void Menu::SaveFile()
 				// Use the provided filename or the default if empty
 				std::string filename = (m_inputBuffer[0] != '\0') ? m_inputBuffer : "NewPreset";
 				filename = filename + ".json";
-				if (!Manager::GetSingleton()->serializeJSONPreset(filename))
+				auto start = std::chrono::high_resolution_clock::now();
+				bool success = Manager::GetSingleton()->serializeJSONPreset(filename);
+				auto end = std::chrono::high_resolution_clock::now();
+				std::chrono::duration<double, std::milli> duration = end - start;
+
+				if (!success)
 				{
 					m_lastMessage = "Failed to save preset '" + filename + "'.";
 					m_lastMessageColor = ImVec4(1.0f, 0.0f, 0.0f, 1.0f);
 				}
 				else
 				{
-					m_lastMessage = "Successfully saved Preset: '" + filename + "'!";
+					m_lastMessage = "Successfully saved Preset: '" + filename + "'! Took: " + std::to_string(duration.count()) + "ms";
 					m_lastMessageColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
 				}
 
