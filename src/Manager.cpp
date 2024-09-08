@@ -135,21 +135,6 @@ void Manager::toggleEffectWeather()
 	if (!player || !sky || !sky->currentWeather || !ui || ui->GameIsPaused())
 		return;
 
-	const auto ws = player->GetWorldspace();
-	if (!ws || m_lastWs.first && m_lastWs.first->formID != ws->formID) // player is in interior or changed worldspace
-	{
-		if (m_lastWs.first)
-		{
-			toggleEffect(m_lastWs.second.effectName.c_str(), !m_lastWs.second.state);
-			m_lastWs.first = nullptr;
-		}
-		return;
-	}
-
-	const auto it = m_weatherToggleInfo.find(std::make_pair(Utils::getTrimmedFormID(ws), Utils::getModName(ws)));
-	if (it == m_weatherToggleInfo.end()) // no info for ws in unordered map
-		return;
-
 	const auto flags = sky->currentWeather->data.flags;
 	std::string weatherFlag{};
 
@@ -177,6 +162,21 @@ void Manager::toggleEffectWeather()
 		weatherFlag = "kAuroraFollowsSun";
 		break;
 	}
+
+	const auto ws = player->GetWorldspace();
+	if (!ws || m_lastWs.first && m_lastWs.first->formID != ws->formID) // player is in interior or changed worldspace
+	{
+		if (m_lastWs.first && m_lastWs.second.weatherFlag != weatherFlag)
+		{
+			toggleEffect(m_lastWs.second.effectName.c_str(), !m_lastWs.second.state);
+			m_lastWs.first = nullptr;
+		}
+		return;
+	}
+
+	const auto it = m_weatherToggleInfo.find(std::make_pair(Utils::getTrimmedFormID(ws), Utils::getModName(ws)));
+	if (it == m_weatherToggleInfo.end()) // no info for ws in unordered map
+		return;
 
 	const auto weatherInfo = it->second;
 	if (weatherInfo.weatherFlag == weatherFlag)
