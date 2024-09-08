@@ -174,7 +174,7 @@ void Manager::toggleEffectWeather()
 		return;
 	}
 
-	const auto it = m_weatherToggleInfo.find(std::make_pair(Utils::getTrimmedFormID(ws), Utils::getModName(ws)));
+	const auto it = m_weatherToggleInfo.find(std::to_string(Utils::getTrimmedFormID(ws)) + Utils::getModName(ws));
 	if (it == m_weatherToggleInfo.end()) // no info for ws in unordered map
 		return;
 
@@ -191,9 +191,9 @@ void Manager::toggleEffectWeather()
 	}
 }
 
-float Manager::GetCurrentGameTime()
+float Manager::getCurrentGameTime()
 {
-	using func_t = decltype(&Manager::GetCurrentGameTime);
+	using func_t = decltype(&Manager::getCurrentGameTime);
 	static REL::Relocation<func_t> func{ REL::VariantID(56475, 56832, 0x9F3290) };
 	return func();
 }

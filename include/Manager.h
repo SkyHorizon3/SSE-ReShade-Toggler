@@ -61,13 +61,12 @@ public:
 private:
 	std::string getPresetPath(const std::string& presetName);
 
-	static float GetCurrentGameTime();
+	static float getCurrentGameTime();
 
 	void toggleEffect(const char* technique, bool state) const;
 
 	std::vector<MenuToggleInformation> m_menuToggleInfo;
-	//std::vector<WeatherToggleInformation> m_weatherToggleInfo;
-	std::unordered_map<std::pair<std::uint32_t, std::string>, WeatherToggleInformation> m_weatherToggleInfo;
+	std::unordered_map<std::string, WeatherToggleInformation> m_weatherToggleInfo;
 
 	std::vector<InteriorToggleInformation> m_interiorToggleInfo;
 	std::vector<TimeToggleInformation> m_timeToggleInfo;
