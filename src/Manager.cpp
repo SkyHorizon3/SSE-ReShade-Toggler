@@ -57,6 +57,10 @@ void Manager::toggleEffectMenu(const std::set<std::string>& openMenus)
 		{
 			toggleEffect(menuInfo.effectName.c_str(), menuInfo.state);
 		}
+		else
+		{
+			toggleEffect(menuInfo.effectName.c_str(), !menuInfo.state);
+		}
 	}
 }
 
