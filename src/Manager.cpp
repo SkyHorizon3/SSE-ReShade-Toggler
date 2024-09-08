@@ -119,7 +119,7 @@ std::vector<std::string> Manager::enumerateWorldSpaces()
 	std::vector<std::string> worldSpaces;
 	for (const auto& space : ws)
 	{
-		std::string s = std::to_string(Utils::getTrimmedFormID(space)) + "~" + Utils::getModName(space);
+		const std::string s = std::to_string(Utils::getTrimmedFormID(space)) + "~" + Utils::getModName(space);
 		worldSpaces.emplace_back(s);
 	}
 
@@ -178,15 +178,22 @@ void Manager::toggleEffectWeather()
 	const auto ws = player->GetWorldspace();
 	if (!ws || m_lastWs.first && m_lastWs.first->formID != ws->formID) // player is in interior or changed worldspace
 	{
-		if (m_lastWs.first && m_lastWs.second.weatherFlag != weatherFlag) // change effect state back to original if it was toggled before
+		if (m_lastWs.first)
 		{
-			toggleEffect(m_lastWs.second.effectName.c_str(), !m_lastWs.second.state);
+			for (const auto& info : m_lastWs.second)
+			{
+				if (info.weatherFlag != weatherFlag) // change effect state back to original if it was toggled before
+				{
+					toggleEffect(info.effectName.c_str(), !info.state);
+				}
+			}
 			m_lastWs.first = nullptr;
+			m_lastWs.second.clear();
 		}
 		return;
 	}
 
-	const auto it = m_weatherToggleInfo.find(std::to_string(Utils::getTrimmedFormID(ws)) + Utils::getModName(ws));
+	const auto it = m_weatherToggleInfo.find(std::to_string(Utils::getTrimmedFormID(ws)) + "~" + Utils::getModName(ws));
 	if (it == m_weatherToggleInfo.end()) // no info for ws in unordered map
 		return;
 
@@ -197,7 +204,7 @@ void Manager::toggleEffectWeather()
 		{
 			toggleEffect(info.effectName.c_str(), info.state);
 			m_lastWs.first = ws;
-			m_lastWs.second = info;
+			m_lastWs.second.emplace_back(info);
 		}
 		else
 		{
