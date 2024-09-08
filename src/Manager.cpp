@@ -1,4 +1,5 @@
 #include "Manager.h"
+#include "Utils.h"
 #include "glaze/glaze.hpp"
 
 void Manager::parseJSONPreset(const std::string& presetName)
@@ -92,7 +93,7 @@ std::vector<std::string> Manager::enumerateEffects()
 	{
 		if (entry.is_regular_file() && entry.path().filename().extension() == ".fx")
 		{
-			effects.push_back(entry.path().filename().string());
+			effects.emplace_back(entry.path().filename().string());
 		}
 	}
 	//sort files
@@ -115,7 +116,7 @@ std::vector<std::string> Manager::enumerateMenus()
 	return menuNames;
 }
 
-std::string Manager::getPresetPath(std::string presetName)
+std::string Manager::getPresetPath(const std::string& presetName)
 {
 	constexpr const char* configDirectory = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
 
@@ -123,6 +124,58 @@ std::string Manager::getPresetPath(std::string presetName)
 		std::filesystem::create_directories(configDirectory);
 
 	return std::string(configDirectory) + "\\" + presetName;
+}
+
+void Manager::toggleEffectWeather()
+{
+	const auto sky = RE::Sky::GetSingleton();
+	const auto player = RE::PlayerCharacter::GetSingleton();
+	const auto ui = RE::UI::GetSingleton();
+
+	if (!player || !sky || !sky->currentWeather || !ui || ui->GameIsPaused())
+		return;
+
+	const auto ws = player->GetWorldspace();
+	if (!ws) // player is in interior
+		return;
+
+	const auto it = m_weatherToggleInfo.find(std::make_pair(Utils::getTrimmedFormID(ws), Utils::getModName(ws)));
+	if (it == m_weatherToggleInfo.end()) // no info for ws in unordered map
+		return;
+
+	const auto flags = sky->currentWeather->data.flags;
+	std::string weatherFlag{};
+
+	switch (flags.get())
+	{
+	case RE::TESWeather::WeatherDataFlag::kNone:
+		weatherFlag = "kNone";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kRainy:
+		weatherFlag = "kRainy";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kPleasant:
+		weatherFlag = "kPleasant";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kCloudy:
+		weatherFlag = "kCloudy";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kSnow:
+		weatherFlag = "kSnow";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kPermAurora:
+		weatherFlag = "kPermAurora";
+		break;
+	case RE::TESWeather::WeatherDataFlag::kAuroraFollowsSun:
+		weatherFlag = "kAuroraFollowsSun";
+		break;
+	}
+
+	const auto weatherInfo = it->second;
+	if (weatherInfo.weatherFlag == weatherFlag)
+	{
+		toggleEffect(weatherInfo.effectName.c_str(), weatherInfo.state);
+	}
 }
 
 void Manager::toggleEffect(const char* effect, const bool state) const
