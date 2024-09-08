@@ -16,23 +16,15 @@ void Manager::parseJSONPreset(const std::string& presetName)
 	buffer << openFile.rdbuf();
 
 	const auto menuPair = std::make_pair("Menu", std::ref(m_menuToggleInfo));
-	const auto numbersPair = std::make_pair("Numbers", std::ref(m_test));
 
 	deserializeArbitraryVector(buffer.str(),
-		menuPair,
-		numbersPair
+		menuPair
 	);
 
 	SKSE::log::info("Menu:");
 	for (const auto& member : m_menuToggleInfo)
 	{
 		SKSE::log::info("\t{}, {}, {}", member.effectName, member.menuName, member.state);
-	}
-
-	SKSE::log::info("Numbers:");
-	for (const auto& member : m_test)
-	{
-		SKSE::log::info("\t{}", member);
 	}
 }
 
@@ -48,8 +40,7 @@ void Manager::serializeJSONPreset(const std::string& presetName)
 	}
 
 	std::string buffer = serializeArbitraryVector(
-		std::make_pair(std::string("Menu"), m_menuToggleInfo),
-		std::make_pair(std::string("Numbers"), m_test)
+		std::make_pair(std::string("Menu"), m_menuToggleInfo)
 	);
 
 	// TODO: investigate why no good looking json. This is kinda irrelevant tho
@@ -69,7 +60,7 @@ void Manager::toggleEffectMenu(const std::set<std::string>& openMenus)
 	}
 }
 
-std::vector<std::string> Manager::EnumeratePresets()
+std::vector<std::string> Manager::enumeratePresets()
 {
 	std::vector<std::string> presets;
 	constexpr auto presetDirectory = L"Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
@@ -86,6 +77,38 @@ std::vector<std::string> Manager::EnumeratePresets()
 
 	std::sort(presets.begin(), presets.end());
 	return presets;
+}
+
+std::vector<std::string> Manager::enumerateEffects()
+{
+	constexpr const char* shadersDirectory = "reshade-shaders\\Shaders";
+	std::vector<std::string> effects;
+
+	for (const auto& entry : std::filesystem::recursive_directory_iterator(shadersDirectory))
+	{
+		if (entry.is_regular_file() && entry.path().filename().extension() == ".fx")
+		{
+			effects.push_back(entry.path().filename().string());
+		}
+	}
+	//sort files
+	std::sort(effects.begin(), effects.end());
+	return effects;
+}
+
+std::vector<std::string> Manager::enumerateMenus()
+{
+	const auto ui = RE::UI::GetSingleton();
+	const auto& menuMap = ui->menuMap;
+	std::vector<std::string> menuNames;
+
+	for (const auto& menu : menuMap)
+	{
+		const auto& menuName = menu.first;
+		menuNames.emplace_back(std::string(menuName));
+	}
+	std::sort(menuNames.begin(), menuNames.end());
+	return menuNames;
 }
 
 std::string Manager::getPresetPath(std::string presetName)

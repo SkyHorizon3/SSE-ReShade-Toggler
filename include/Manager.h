@@ -2,6 +2,13 @@
 #include <glaze/glaze.hpp>
 
 
+struct MenuToggleInformation
+{
+	std::string effectName{};
+	std::string menuName{};
+	bool state = true;
+};
+
 class Manager : public ISingleton<Manager>
 {
 	// class for main functions used for all features
@@ -13,14 +20,12 @@ public:
 
 	void toggleEffectMenu(const std::set<std::string>& openMenus);
 
-	std::vector<std::string> EnumeratePresets();
+	std::vector<std::string> enumeratePresets();
+	std::vector<std::string> enumerateEffects();
+	std::vector<std::string> enumerateMenus();
 
-	struct MenuToggleInformation
-	{
-		std::string effectName{};
-		std::string menuName{};
-		bool state = true;
-	};
+	std::vector<MenuToggleInformation> getMenuToggleInfo() { return m_menuToggleInfo; }
+	void setMenuToggleInfo(const std::vector<MenuToggleInformation>& info) { m_menuToggleInfo = info; }
 
 private:
 	std::string getPresetPath(std::string presetName);

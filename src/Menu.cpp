@@ -9,6 +9,8 @@ void Menu::SettingsMenu()
 
 	if (m_openSettingsMenu)
 	{
+
+		m_effects = Manager::GetSingleton()->enumerateEffects();
 		// TODO: ensure that we are only putting the colors onto our own window and its subwindows
 		SetColors();
 
@@ -66,14 +68,14 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 {
 	ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
 	ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoCollapse);
-	m_presets = Manager::GetSingleton()->EnumeratePresets();
+	m_presets = Manager::GetSingleton()->enumeratePresets();
 
 	CreateCombo("Select Preset", m_selectedPreset, m_presets, ImGuiComboFlags_None);
 	ImGui::SameLine();
 	if (ImGui::Button("Reload Preset List"))
 	{
 		m_presets.clear();
-		m_presets = Manager::GetSingleton()->EnumeratePresets();
+		m_presets = Manager::GetSingleton()->enumeratePresets();
 	}
 
 	if (ImGui::Button("Load Preset"))
@@ -98,14 +100,77 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 
 	ImGui::End();
 }
+
 void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 {
-	// Use SetNextWindowDockID to dock this window to the dockspace
 	ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
 	ImGui::Begin("Menu Settings", &m_showMenuSettings, ImGuiWindowFlags_NoCollapse);
 	ImGui::Text("Configure menu toggling settings here.");
+	// TODO: Specific / All?
+
+	m_menuNames = Manager::GetSingleton()->enumerateMenus();
+	ImGui::SeparatorText("Effects");
+
+	// Get the list of toggle information
+	std::vector<MenuToggleInformation> infoList = Manager::GetSingleton()->getMenuToggleInfo();
+	std::vector<MenuToggleInformation> updatedInfoList;
+
+	if (!infoList.empty())
+	{
+		for (int i = 0; i < infoList.size(); i++)
+		{
+			if (infoList[i].effectName != "")
+			{
+				bool valueChanged = false;
+				// Create unique IDs for each element
+				std::string effectComboID = "Effect##Menu" + std::to_string(i);
+				std::string effectStateID = "Toggle On##Menu" + std::to_string(i);
+				std::string removeID = "Remove Effect##Menu" + std::to_string(i);
+				std::string menuID = "Menu##Menu" + std::to_string(i);
+
+				std::string currentEffectName = infoList[i].effectName;
+				std::string currentEffectMenu = infoList[i].menuName;
+				bool currentEffectState = infoList[i].state;
+				
+				if (CreateCombo(effectComboID.c_str(), currentEffectName, m_effects, ImGuiComboFlags_None)) { valueChanged = true; }
+				ImGui::SameLine();
+				if (ImGui::Checkbox(effectStateID.c_str(), &currentEffectState)) { valueChanged = true; }
+				if (CreateCombo(menuID.c_str(), currentEffectMenu, m_menuNames, ImGuiComboFlags_None)) { valueChanged = true; }
+
+				if (ImGui::Button(removeID.c_str()))
+				{
+					continue;
+				}
+
+				if (valueChanged)
+				{
+					infoList[i].effectName = currentEffectName;
+					infoList[i].menuName = currentEffectMenu;
+					infoList[i].state = currentEffectState;
+				}
+
+				updatedInfoList.push_back(infoList[i]);
+			}
+		}
+	}
+	Manager::GetSingleton()->setMenuToggleInfo(updatedInfoList);
+
+	ImGui::Separator();
+
+	// Add new effect
+	if (ImGui::Button("Add New Effect"))
+	{
+		MenuToggleInformation info;
+		info.effectName = "Default.fx";
+		info.state = false;
+
+		updatedInfoList.push_back(info);
+		Manager::GetSingleton()->setMenuToggleInfo(updatedInfoList);
+	}
+
 	ImGui::End();
 }
+
 
 void Menu::SpawnTimeSettings(ImGuiID dockspace_id)
 {
@@ -179,12 +244,12 @@ void Menu::SaveFile()
 			{
 				// Use the provided filename or the default if empty
 				std::string filename = (m_inputBuffer[0] != '\0') ? m_inputBuffer : "NewPreset";
-
+				filename = filename + ".json";
 				Manager::GetSingleton()->serializeJSONPreset(filename);
 
 				//Refresh
 				m_presets.clear();
-				m_presets = Manager::GetSingleton()->EnumeratePresets();
+				m_presets = Manager::GetSingleton()->enumeratePresets();
 
 				ImGui::CloseCurrentPopup();
 				m_saveConfigPopupOpen = false;
