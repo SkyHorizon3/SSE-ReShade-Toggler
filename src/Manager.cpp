@@ -113,6 +113,21 @@ std::vector<std::string> Manager::enumerateMenus()
 	return menuNames;
 }
 
+std::vector<std::string> Manager::enumerateWorldSpaces()
+{
+	const auto& ws = RE::TESDataHandler::GetSingleton()->GetFormArray<RE::TESWorldSpace>();
+	std::vector<std::string> worldSpaces;
+	for (const auto& space : ws)
+	{
+		std::string s = std::to_string(Utils::getTrimmedFormID(space)) + "~" + Utils::getModName(space);
+		worldSpaces.emplace_back(s);
+	}
+
+	return worldSpaces;
+}
+
+
+
 std::string Manager::getPresetPath(const std::string& presetName)
 {
 	constexpr const char* configDirectory = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
@@ -122,8 +137,6 @@ std::string Manager::getPresetPath(const std::string& presetName)
 
 	return std::string(configDirectory) + "\\" + presetName;
 }
-
-/*
 
 void Manager::toggleEffectWeather()
 {
@@ -178,17 +191,20 @@ void Manager::toggleEffectWeather()
 		return;
 
 	const auto& weatherInfo = it->second;
-	if (weatherInfo.weatherFlag == weatherFlag)
+	for (const auto& info : weatherInfo)
 	{
-		toggleEffect(weatherInfo.effectName.c_str(), weatherInfo.state);
-		m_lastWs.first = ws;
-		m_lastWs.second = weatherInfo;
+		if (info.weatherFlag == weatherFlag)
+		{
+			toggleEffect(info.effectName.c_str(), info.state);
+			m_lastWs.first = ws;
+			m_lastWs.second = info;
+		}
+		else
+		{
+			toggleEffect(info.effectName.c_str(), !info.state);
+		}
 	}
-	else
-	{
-		toggleEffect(weatherInfo.effectName.c_str(), !weatherInfo.state);
-	}
-}*/
+}
 
 float Manager::getCurrentGameTime()
 {

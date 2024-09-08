@@ -52,14 +52,18 @@ public:
 	std::vector<std::string> enumeratePresets();
 	std::vector<std::string> enumerateEffects();
 	std::vector<std::string> enumerateMenus();
+	std::vector<std::string> enumerateWorldSpaces();
 
-	// void toggleEffectWeather();
+	void toggleEffectWeather();
 
 	std::vector<MenuToggleInformation> getMenuToggleInfo() const { return m_menuToggleInfo; }
 	void setMenuToggleInfo(const std::vector<MenuToggleInformation>& info) { m_menuToggleInfo = info; }
 
 	std::vector<TimeToggleInformation> getTimeToggleInfo() const { return m_timeToggleInfo; }
 	void setTimeToggleInfo(const std::vector<TimeToggleInformation>& info) { m_timeToggleInfo = info; }
+
+	std::unordered_map<std::string, std::vector<WeatherToggleInformation>> getWeatherToggleInfo() const { return m_weatherToggleInfo; }
+	void setWeatherToggleInfo(const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>& info) { m_weatherToggleInfo = info; }
 
 private:
 	std::string getPresetPath(const std::string& presetName);
@@ -69,12 +73,13 @@ private:
 	void toggleEffect(const char* technique, bool state) const;
 
 	std::vector<MenuToggleInformation> m_menuToggleInfo;
-	std::unordered_map<std::string, WeatherToggleInformation> m_weatherToggleInfo;
+	std::unordered_map<std::string, std::vector<WeatherToggleInformation>> m_weatherToggleInfo;
 
 	std::vector<InteriorToggleInformation> m_interiorToggleInfo;
 	std::vector<TimeToggleInformation> m_timeToggleInfo;
 
 	std::pair<RE::TESWorldSpace*, WeatherToggleInformation> m_lastWs;
+
 private:
 	template<typename T>
 	bool serializeVector(const std::string& key, const std::vector<T>& vec, std::string& output);

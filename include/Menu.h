@@ -54,6 +54,10 @@ private:
 	std::vector<std::string> m_presets;
 	std::vector<std::string> m_effects;
 	std::vector<std::string> m_menuNames;
+	std::vector<std::string> m_worldSpaces;
+	std::vector<std::string> m_weatherFlags = {
+		"kNone", "kRainy", "kPleasant", "kCloudy", "kSnow", "kPermAurora", "kAuroraFollowsSun"
+	};
 
 	ImVec4 m_lastMessageColor;
 	std::string m_lastMessage;
