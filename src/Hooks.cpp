@@ -1,28 +1,17 @@
 #include "Hooks.h"
+#include "Manager.h"
 
 namespace Hook
 {
 	struct MainUpdate
 	{
-		static float GetCurrentGameTime()
-		{
-			using func_t = decltype(&GetCurrentGameTime);
-			static REL::Relocation<func_t> funct{ REL::VariantID(56475, 56832, 0x9F3290) };
-			return funct();
-		}
 
 		static void thunk()
 		{
-			/*
-
-			This function runs every few ms. We could use a thread instead to just run every second or whatever, but performance shouldn't be effected anyway from just checking some stuff.
-			Couldn't find a function that runs on every weather change. We need a function for the time anyway...
-
-			*/
-
-			// Run functions
-
 			func(); // Run original function
+
+			Manager::GetSingleton()->toggleEffectWeather();
+
 		};
 		static inline REL::Relocation<decltype(thunk)> func;
 

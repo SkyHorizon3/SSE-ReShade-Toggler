@@ -132,7 +132,7 @@ void Manager::toggleEffectWeather()
 	const auto player = RE::PlayerCharacter::GetSingleton();
 	const auto ui = RE::UI::GetSingleton();
 
-	if (!player || !sky || !sky->currentWeather || !ui || ui->GameIsPaused())
+	if (m_weatherToggleInfo.empty() || !player || !sky || !sky->currentWeather || !ui || ui->GameIsPaused())
 		return;
 
 	const auto flags = sky->currentWeather->data.flags;
@@ -189,6 +189,13 @@ void Manager::toggleEffectWeather()
 	{
 		toggleEffect(weatherInfo.effectName.c_str(), !weatherInfo.state);
 	}
+}
+
+float Manager::GetCurrentGameTime()
+{
+	using func_t = decltype(&Manager::GetCurrentGameTime);
+	static REL::Relocation<func_t> func{ REL::VariantID(56475, 56832, 0x9F3290) };
+	return func();
 }
 
 void Manager::toggleEffect(const char* effect, const bool state) const
