@@ -14,6 +14,7 @@ struct WeatherToggleInformation
 	std::string effectName{};
 	std::string weatherFlag{};
 	bool state = true;
+	bool isToggled = false;
 };
 
 struct InteriorToggleInformation // not final. pair isn't best idea. Will get back to it after weather

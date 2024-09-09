@@ -55,10 +55,13 @@ void Manager::toggleEffectMenu(const std::set<std::string>& openMenus)
 {
 	for (auto& menuInfo : m_menuToggleInfo)
 	{
-		if (openMenus.find(menuInfo.menuName) != openMenus.end() && !menuInfo.isToggled)
+		if (openMenus.find(menuInfo.menuName) != openMenus.end())
 		{
-			toggleEffect(menuInfo.effectName.c_str(), menuInfo.state);
-			menuInfo.isToggled = true;
+			if (!menuInfo.isToggled)
+			{
+				toggleEffect(menuInfo.effectName.c_str(), menuInfo.state);
+				menuInfo.isToggled = true;
+			}
 		}
 		else if (menuInfo.isToggled)
 		{
@@ -182,13 +185,15 @@ void Manager::toggleEffectWeather()
 	}
 
 	const auto ws = player->GetWorldspace();
+	const auto it = m_weatherToggleInfo.find(std::format("{:08X}~{}", Utils::getTrimmedFormID(ws), Utils::getModName(ws)));
+
 	if (!ws || m_lastWs.first && m_lastWs.first->formID != ws->formID) // player is in interior or changed worldspace
 	{
-		if (m_lastWs.first)
+		if (m_lastWs.first) // TODO: refactor. This approach is not suitable for the intended flawless behaviour
 		{
 			for (const auto& info : m_lastWs.second)
 			{
-				if (info.weatherFlag != weatherFlag) // change effect state back to original if it was toggled before
+				if (info.weatherFlag != weatherFlag || !ws || it == m_weatherToggleInfo.end()) // change effect state back to original if it was toggled before
 				{
 					toggleEffect(info.effectName.c_str(), !info.state);
 				}
@@ -199,22 +204,22 @@ void Manager::toggleEffectWeather()
 		return;
 	}
 
-	const auto it = m_weatherToggleInfo.find(std::format("{:08X}~{}", Utils::getTrimmedFormID(ws), Utils::getModName(ws)));
 	if (it == m_weatherToggleInfo.end()) // no info for ws in unordered map
 		return;
 
-	const auto& weatherInfo = it->second;
-	for (const auto& info : weatherInfo)
+	for (auto& info : it->second)
 	{
 		if (info.weatherFlag == weatherFlag)
 		{
 			toggleEffect(info.effectName.c_str(), info.state);
+			info.isToggled = true;
 			m_lastWs.first = ws;
 			m_lastWs.second.emplace_back(info);
 		}
-		else
+		else if (info.isToggled)
 		{
 			toggleEffect(info.effectName.c_str(), !info.state);
+			info.isToggled = false;
 		}
 	}
 }
