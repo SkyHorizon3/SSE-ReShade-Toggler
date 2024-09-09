@@ -35,8 +35,8 @@ bool Manager::serializeJSONPreset(const std::string& presetName)
 	}
 
 	std::string buffer;
-	if (!serializeArbitraryData(buffer, 
-		std::make_pair("Menu", m_menuToggleInfo), 
+	if (!serializeArbitraryData(buffer,
+		std::make_pair("Menu", m_menuToggleInfo),
 		std::make_pair("Time", m_timeToggleInfo),
 		std::make_pair("Weather", m_weatherToggleInfo)))
 	{
@@ -123,7 +123,7 @@ std::vector<std::string> Manager::enumerateWorldSpaces()
 	std::vector<std::string> worldSpaces;
 	for (const auto& space : ws)
 	{
-		const std::string s = std::to_string(Utils::getTrimmedFormID(space)) + "~" + Utils::getModName(space);
+		const std::string s = std::format("{:08X}~{}", Utils::getTrimmedFormID(space), Utils::getModName(space));
 		worldSpaces.emplace_back(s);
 	}
 
@@ -195,7 +195,7 @@ void Manager::toggleEffectWeather()
 		return;
 	}
 
-	const auto it = m_weatherToggleInfo.find(std::to_string(Utils::getTrimmedFormID(ws)) + "~" + Utils::getModName(ws));
+	const auto it = m_weatherToggleInfo.find(std::format("{:08X}~{}", Utils::getTrimmedFormID(ws), Utils::getModName(ws)));
 	if (it == m_weatherToggleInfo.end()) // no info for ws in unordered map
 		return;
 
@@ -393,7 +393,7 @@ bool Manager::deserializeArbitraryData(const std::string& buf, Args&... args)
 		{
 			return false;
 		}
-	};
+		};
 
 	((success &= process_pair(args)), ...);
 	return success;
