@@ -53,15 +53,17 @@ bool Manager::serializeJSONPreset(const std::string& presetName)
 
 void Manager::toggleEffectMenu(const std::set<std::string>& openMenus)
 {
-	for (const auto& menuInfo : m_menuToggleInfo)
+	for (auto& menuInfo : m_menuToggleInfo)
 	{
-		if (openMenus.find(menuInfo.menuName) != openMenus.end())
+		if (openMenus.find(menuInfo.menuName) != openMenus.end() && !menuInfo.isToggled)
 		{
 			toggleEffect(menuInfo.effectName.c_str(), menuInfo.state);
+			menuInfo.isToggled = true;
 		}
-		else
+		else if (menuInfo.isToggled)
 		{
 			toggleEffect(menuInfo.effectName.c_str(), !menuInfo.state);
+			menuInfo.isToggled = false;
 		}
 	}
 }
@@ -105,13 +107,11 @@ std::vector<std::string> Manager::enumerateEffects()
 std::vector<std::string> Manager::enumerateMenus()
 {
 	const auto ui = RE::UI::GetSingleton();
-	const auto& menuMap = ui->menuMap;
 	std::vector<std::string> menuNames;
 
-	for (const auto& menu : menuMap)
+	for (const auto& menu : ui->menuMap)
 	{
-		const auto& menuName = menu.first;
-		menuNames.emplace_back(std::string(menuName));
+		menuNames.emplace_back(std::string(menu.first));
 	}
 	std::sort(menuNames.begin(), menuNames.end());
 	return menuNames;
@@ -121,6 +121,10 @@ std::vector<std::string> Manager::enumerateWorldSpaces()
 {
 	const auto& ws = RE::TESDataHandler::GetSingleton()->GetFormArray<RE::TESWorldSpace>();
 	std::vector<std::string> worldSpaces;
+
+	if (ws.empty())
+		return worldSpaces;
+
 	for (const auto& space : ws)
 	{
 		const std::string s = std::format("{:08X}~{}", Utils::getTrimmedFormID(space), Utils::getModName(space));

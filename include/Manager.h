@@ -6,6 +6,7 @@ struct MenuToggleInformation
 	std::string effectName{};
 	std::string menuName{};
 	bool state = true;
+	bool isToggled = false;
 };
 
 struct WeatherToggleInformation
@@ -84,7 +85,7 @@ private:
 private:
 	template<typename T>
 	bool serializeVector(const std::string& key, const std::vector<T>& vec, std::string& output);
-	
+
 	template<typename T>
 	bool serializeMap(const std::string& key, const std::unordered_map<std::string, std::vector<T>>& map, std::string& output);
 

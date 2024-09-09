@@ -96,7 +96,7 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 			}
 			else
 			{
-				m_lastMessage = "Successfully loaded preset: '" + m_selectedPreset +"'! Took: " + std::to_string(duration.count()) + "ms";
+				m_lastMessage = "Successfully loaded preset: '" + m_selectedPreset + "'! Took: " + std::to_string(duration.count()) + "ms";
 				m_lastMessageColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
 			}
 		}
@@ -152,7 +152,7 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 				std::string currentEffectName = infoList[i].effectName;
 				std::string currentEffectMenu = infoList[i].menuName;
 				bool currentEffectState = infoList[i].state;
-				
+
 				if (CreateCombo(effectComboID.c_str(), currentEffectName, m_effects, ImGuiComboFlags_None)) { valueChanged = true; }
 				ImGui::SameLine();
 				if (ImGui::Checkbox(effectStateID.c_str(), &currentEffectState)) { valueChanged = true; }
@@ -367,10 +367,10 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 					// Remove the current entry
 					updatedInfoList[originalWorldSpaceName].erase(
 						std::remove_if(updatedInfoList[originalWorldSpaceName].begin(), updatedInfoList[originalWorldSpaceName].end(),
-							[&weatherInfo](const WeatherToggleInformation& info) {
-								return info.effectName == weatherInfo.effectName && info.weatherFlag == weatherInfo.weatherFlag;
-							}
-						),
+						[&weatherInfo](const WeatherToggleInformation& info) {
+							return info.effectName == weatherInfo.effectName && info.weatherFlag == weatherInfo.weatherFlag;
+						}
+					),
 						updatedInfoList[originalWorldSpaceName].end()
 					);
 					continue;
@@ -384,10 +384,10 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 						// Remove the entry from the old world space
 						updatedInfoList[originalWorldSpaceName].erase(
 							std::remove_if(updatedInfoList[originalWorldSpaceName].begin(), updatedInfoList[originalWorldSpaceName].end(),
-								[&weatherInfo](const WeatherToggleInformation& info) {
-									return info.effectName == weatherInfo.effectName && info.weatherFlag == weatherInfo.weatherFlag;
-								}
-							),
+							[&weatherInfo](const WeatherToggleInformation& info) {
+								return info.effectName == weatherInfo.effectName && info.weatherFlag == weatherInfo.weatherFlag;
+							}
+						),
 							updatedInfoList[originalWorldSpaceName].end()
 						);
 
