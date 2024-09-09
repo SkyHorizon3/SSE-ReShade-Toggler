@@ -44,7 +44,6 @@ private:
 	bool CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags);
 private:
 	void SaveFile();
-
 	void SetColors();
 	void RemoveColors();
 private:
