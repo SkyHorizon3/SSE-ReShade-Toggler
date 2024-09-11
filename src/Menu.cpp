@@ -137,84 +137,10 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 	std::vector<MenuToggleInformation> infoList = Manager::GetSingleton()->getMenuToggleInfo();
 	std::vector<MenuToggleInformation> updatedInfoList;
 
-	// Group effects by menu name
-	std::unordered_map<std::string, std::vector<MenuToggleInformation>> menuEffectMap;
-	for (const auto& info : infoList)
-	{
-		if (!info.effectName.empty())
-		{
-			menuEffectMap[info.menuName].push_back(info);
-		}
-	}
-
-	// Display each menu as a collapsible header
-	for (const auto& [menuName, effects] : menuEffectMap)
-	{
-		if (ImGui::CollapsingHeader(menuName.c_str()))
-		{
-			ImGui::BeginTable("EffectsTable", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg);
-			ImGui::TableSetupColumn("Effect");
-			ImGui::TableSetupColumn("State");
-			ImGui::TableSetupColumn("Actions");
-			ImGui::TableHeadersRow();
-
-			for (int i = 0; i < effects.size(); i++)
-			{
-				auto& info = effects[i];
-				bool valueChanged = false;
-				std::string effectComboID = "Effect##Menu" + std::to_string(i);
-				std::string effectStateID = "Toggle On##Menu" + std::to_string(i);
-				std::string removeID = "Remove Effect##Menu" + std::to_string(i);
-
-				std::string currentEffectName = infoList[i].effectName;
-				bool currentEffectState = infoList[i].state;
-
-				ImGui::TableNextRow();
-				ImGui::TableNextColumn();
-				if (CreateCombo(effectComboID.c_str(), currentEffectName, m_effects, ImGuiComboFlags_None)) { valueChanged = true; }
-				ImGui::TableNextColumn();
-				if (ImGui::Checkbox(effectStateID.c_str(), &currentEffectState)) { valueChanged = true; }
-				ImGui::TableNextColumn();
-				if (ImGui::Button(removeID.c_str()))
-				{
-					continue;
-				}
-
-				if (valueChanged)
-				{
-					infoList[i].menuName = menuName;
-					infoList[i].effectName = currentEffectName;
-					infoList[i].state = currentEffectState;
-				}
-
-				updatedInfoList.emplace_back(infoList[i]);
-			}
-
-			ImGui::EndTable();
-
-			// Add new effect
-			if (ImGui::Button("Add New Effect"))
-			{
-				MenuToggleInformation info;
-				info.menuName = menuName;
-				info.effectName = "Default.fx";
-				info.state = false;
-
-				updatedInfoList.push_back(info);
-				Manager::GetSingleton()->setMenuToggleInfo(updatedInfoList);
-			}
-		}
-	}
-
-	Manager::GetSingleton()->setMenuToggleInfo(infoList);
-
-	ImGui::SeparatorText("Add New");
-
 
 
 	ImGui::End();
 }
-
 
 void Menu::SpawnTimeSettings(ImGuiID dockspace_id)
 {
@@ -356,164 +282,6 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 	static char inputBuffer[256] = "";
 	ImGui::InputTextWithHint("##Search", "Search Worldspaces...", inputBuffer, sizeof(inputBuffer));
 
-	ImGui::SameLine();
-	if (ImGui::Button("Sort"))
-	{
-		// Sort both the original and updated worldspaces alphabetically
-		std::vector<std::string> sortedWorldSpaces;
-		for (const auto& pair : infoList)
-		{
-			sortedWorldSpaces.push_back(pair.first);
-		}
-		std::sort(sortedWorldSpaces.begin(), sortedWorldSpaces.end());
-
-		// Create a new sorted updatedInfoList
-		std::unordered_map<std::string, std::vector<WeatherToggleInformation>> sortedInfoList;
-		for (const auto& worldSpace : sortedWorldSpaces)
-		{
-			sortedInfoList[worldSpace] = updatedInfoList[worldSpace];
-		}
-		updatedInfoList = sortedInfoList;
-	}
-
-	// Iterate through the weather toggle information
-	if (!infoList.empty())
-	{
-		int index = 0;
-		for (auto& pair : infoList)  // Iterate over the original infoList to avoid modifying during iteration
-		{
-			const std::string& originalWorldSpaceName = pair.first;
-			const std::vector<WeatherToggleInformation>& weatherInfos = pair.second;
-
-			if (weatherInfos.empty())
-			{
-				updatedInfoList.erase(pair.first);
-			}
-
-			if (strlen(inputBuffer) > 0 && originalWorldSpaceName.find(inputBuffer) == std::string::npos) {
-				continue;
-			}
-			std::string headerID = originalWorldSpaceName;
-			if (ImGui::CollapsingHeader(headerID.c_str()))
-			{
-				ImGui::BeginTable(("WeatherInfoTable_" + originalWorldSpaceName).c_str(), 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg);
-
-				// Define table columns
-				ImGui::TableSetupColumn("Effect");
-				ImGui::TableSetupColumn("State");
-				ImGui::TableSetupColumn("Weather");
-				ImGui::TableSetupColumn("WorldSpace");
-				ImGui::TableSetupColumn("Actions");
-
-				ImGui::TableHeadersRow();
-
-				for (const WeatherToggleInformation& weatherInfo : weatherInfos)
-				{
-					bool valueChanged = false;
-
-					// Create unique IDs for each element
-					std::string worldSpaceID = "##Worldspace" + std::to_string(index);
-					std::string weatherComboID = "##Weather" + originalWorldSpaceName + std::to_string(index);
-					std::string weatherStateID = "##Toggle On" + originalWorldSpaceName + std::to_string(index);
-					std::string weatherEffectID = "##Effect" + originalWorldSpaceName + std::to_string(index);
-					std::string removeID = "Remove Effect##" + originalWorldSpaceName + std::to_string(index);
-
-					// Variables to track changes
-					std::string newWorldSpace = originalWorldSpaceName; // Start with the current world space
-					std::string currentEffect = weatherInfo.effectName;
-					std::string currentWeather = weatherInfo.weatherFlag;
-					bool currentWeatherState = weatherInfo.state;
-
-					ImGui::TableNextRow();
-					ImGui::TableSetColumnIndex(0);
-					if (CreateCombo(weatherEffectID.c_str(), currentEffect, m_effects, ImGuiComboFlags_None)) { valueChanged = true; }
-
-					ImGui::TableSetColumnIndex(1);
-					if (ImGui::Checkbox(weatherStateID.c_str(), &currentWeatherState)) { valueChanged = true; }
-
-					ImGui::TableSetColumnIndex(2);
-					if (CreateCombo(weatherComboID.c_str(), currentWeather, m_weatherFlags, ImGuiComboFlags_None)) { valueChanged = true; }
-
-					ImGui::TableSetColumnIndex(3);
-					if (CreateCombo(worldSpaceID.c_str(), newWorldSpace, m_worldSpaces, ImGuiComboFlags_None)) { valueChanged = true; }
-
-					ImGui::TableSetColumnIndex(4);
-					if (ImGui::Button(removeID.c_str()))
-					{
-						// Remove the current entry
-						updatedInfoList[originalWorldSpaceName].erase(
-							std::remove_if(updatedInfoList[originalWorldSpaceName].begin(), updatedInfoList[originalWorldSpaceName].end(),
-								[&weatherInfo](const WeatherToggleInformation& info) {
-									return info.effectName == weatherInfo.effectName && info.weatherFlag == weatherInfo.weatherFlag;
-								}
-							),
-							updatedInfoList[originalWorldSpaceName].end()
-						);
-						continue;
-					}
-
-					if (valueChanged)
-					{
-						// If world space was changed, move the entry to the new world space
-						if (newWorldSpace != originalWorldSpaceName)
-						{
-							// Remove the entry from the old world space
-							updatedInfoList[originalWorldSpaceName].erase(
-								std::remove_if(updatedInfoList[originalWorldSpaceName].begin(), updatedInfoList[originalWorldSpaceName].end(),
-									[&weatherInfo](const WeatherToggleInformation& info) {
-										return info.effectName == weatherInfo.effectName && info.weatherFlag == weatherInfo.weatherFlag;
-									}
-								),
-								updatedInfoList[originalWorldSpaceName].end()
-							);
-
-							// Add the updated entry to the new world space
-							WeatherToggleInformation updatedInfo;
-							updatedInfo.effectName = currentEffect;
-							updatedInfo.weatherFlag = currentWeather;
-							updatedInfo.state = currentWeatherState;
-							updatedInfoList[newWorldSpace].push_back(updatedInfo);
-						}
-						else
-						{
-							// Otherwise, just update the existing entry
-							for (auto& entry : updatedInfoList[originalWorldSpaceName])
-							{
-								if (entry.effectName == weatherInfo.effectName && entry.weatherFlag == weatherInfo.weatherFlag)
-								{
-									entry.effectName = currentEffect;
-									entry.weatherFlag = currentWeather;
-									entry.state = currentWeatherState;
-									break;
-								}
-							}
-						}
-					}
-
-					index++;
-				}
-
-				ImGui::EndTable();
-			}
-			ImGui::Spacing();
-		}
-	}
-	
-
-	// Handle adding new weather effect
-	ImGui::SeparatorText("Add New");
-	if (ImGui::Button("Add New Effect"))
-	{
-		WeatherToggleInformation info;
-		info.effectName = "Default.fx";
-		info.weatherFlag = "kNone";
-		info.state = false;
-		std::string defaultWorldSpace = !m_worldSpaces.empty() ? m_worldSpaces[0] : ""; // Ensure there's at least one world space
-		if (!defaultWorldSpace.empty())
-		{
-			updatedInfoList[defaultWorldSpace].push_back(info);
-		}
-	}
 
 	// Update the manager with the new list
 	Manager::GetSingleton()->setWeatherToggleInfo(updatedInfoList);
@@ -524,7 +292,7 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 bool Menu::CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags)
 {
 	ImGuiStyle& style = ImGui::GetStyle();
-	float w = 250.0f;
+	float w = 500.0f;
 	float spacing = style.ItemInnerSpacing.x;
 	float button_sz = ImGui::GetFrameHeight();
 	ImGui::PushItemWidth(w - spacing - button_sz * 2.0f);
