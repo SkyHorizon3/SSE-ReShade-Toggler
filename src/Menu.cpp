@@ -137,28 +137,44 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 	std::vector<MenuToggleInformation> infoList = Manager::GetSingleton()->getMenuToggleInfo();
 	std::vector<MenuToggleInformation> updatedInfoList;
 
-	if (!infoList.empty())
+	// Group effects by menu name
+	std::unordered_map<std::string, std::vector<MenuToggleInformation>> menuEffectMap;
+	for (const auto& info : infoList)
 	{
-		for (int i = 0; i < infoList.size(); i++)
+		if (!info.effectName.empty())
 		{
-			if (infoList[i].effectName != "")
+			menuEffectMap[info.menuName].push_back(info);
+		}
+	}
+
+	// Display each menu as a collapsible header
+	for (const auto& [menuName, effects] : menuEffectMap)
+	{
+		if (ImGui::CollapsingHeader(menuName.c_str()))
+		{
+			ImGui::BeginTable("EffectsTable", 3, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg);
+			ImGui::TableSetupColumn("Effect");
+			ImGui::TableSetupColumn("State");
+			ImGui::TableSetupColumn("Actions");
+			ImGui::TableHeadersRow();
+
+			for (int i = 0; i < effects.size(); i++)
 			{
+				auto& info = effects[i];
 				bool valueChanged = false;
-				// Create unique IDs for each element
 				std::string effectComboID = "Effect##Menu" + std::to_string(i);
 				std::string effectStateID = "Toggle On##Menu" + std::to_string(i);
 				std::string removeID = "Remove Effect##Menu" + std::to_string(i);
-				std::string menuID = "Menu##Menu" + std::to_string(i);
 
 				std::string currentEffectName = infoList[i].effectName;
-				std::string currentEffectMenu = infoList[i].menuName;
 				bool currentEffectState = infoList[i].state;
 
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
 				if (CreateCombo(effectComboID.c_str(), currentEffectName, m_effects, ImGuiComboFlags_None)) { valueChanged = true; }
-				ImGui::SameLine();
+				ImGui::TableNextColumn();
 				if (ImGui::Checkbox(effectStateID.c_str(), &currentEffectState)) { valueChanged = true; }
-				if (CreateCombo(menuID.c_str(), currentEffectMenu, m_menuNames, ImGuiComboFlags_None)) { valueChanged = true; }
-
+				ImGui::TableNextColumn();
 				if (ImGui::Button(removeID.c_str()))
 				{
 					continue;
@@ -166,32 +182,39 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 
 				if (valueChanged)
 				{
+					infoList[i].menuName = menuName;
 					infoList[i].effectName = currentEffectName;
-					infoList[i].menuName = currentEffectMenu;
 					infoList[i].state = currentEffectState;
 				}
 
-				updatedInfoList.push_back(infoList[i]);
+				updatedInfoList.emplace_back(infoList[i]);
+			}
+
+			ImGui::EndTable();
+
+			// Add new effect
+			if (ImGui::Button("Add New Effect"))
+			{
+				MenuToggleInformation info;
+				info.menuName = menuName;
+				info.effectName = "Default.fx";
+				info.state = false;
+
+				updatedInfoList.push_back(info);
+				Manager::GetSingleton()->setMenuToggleInfo(updatedInfoList);
 			}
 		}
 	}
-	Manager::GetSingleton()->setMenuToggleInfo(updatedInfoList);
+
+	Manager::GetSingleton()->setMenuToggleInfo(infoList);
 
 	ImGui::SeparatorText("Add New");
 
-	// Add new effect
-	if (ImGui::Button("Add New Effect"))
-	{
-		MenuToggleInformation info;
-		info.effectName = "Default.fx";
-		info.state = false;
 
-		updatedInfoList.push_back(info);
-		Manager::GetSingleton()->setMenuToggleInfo(updatedInfoList);
-	}
 
 	ImGui::End();
 }
+
 
 void Menu::SpawnTimeSettings(ImGuiID dockspace_id)
 {
@@ -497,7 +520,6 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 
 	ImGui::End();
 }
-
 
 bool Menu::CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags)
 {
