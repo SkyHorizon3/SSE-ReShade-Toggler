@@ -4,13 +4,11 @@
 
 void Menu::SettingsMenu()
 {
-	m_openSettingsMenu = true;
 	if (ImGui::Button("[PH] Configure SSEReshadeToggler"))
 		m_openSettingsMenu = true;
 
 	if (m_openSettingsMenu)
 	{
-
 		m_effects = Manager::GetSingleton()->enumerateEffects();
 		// TODO: ensure that we are only putting the colors onto our own window and its subwindows
 		SetColors();
@@ -135,12 +133,145 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 
 	// Get the list of toggle information
 	std::vector<MenuToggleInformation> infoList = Manager::GetSingleton()->getMenuToggleInfo();
-	std::vector<MenuToggleInformation> updatedInfoList;
+	std::vector<MenuToggleInformation> updatedInfoList = infoList;
+
+	// Group menus
+	std::unordered_map<std::string, std::vector<MenuToggleInformation>> menuEffectMap;
+	for (auto& info : infoList)
+	{
+		if (!info.effectName.empty())
+		{
+			menuEffectMap[info.menuName].emplace_back(info);
+		}
+	}
+
+	static char inputBuffer[256] = "";
+	ImGui::InputTextWithHint("##Search", "Search Menus...", inputBuffer, sizeof(inputBuffer));
+
+	int headerId = -1;
+	int globalIndex = 0;
+
+	for (const auto& [menuName, effects] : menuEffectMap)
+	{
+		if (strlen(inputBuffer) > 0 && menuName.find(inputBuffer) == std::string::npos)
+			continue;
+
+		headerId++;
+		std::string headerUniqueId = menuName + std::to_string(headerId);
+
+		if (ImGui::CollapsingHeader((menuName + "##" +headerUniqueId + "##Header").c_str(), ImGuiTreeNodeFlags_AllowOverlap | ImGuiTreeNodeFlags_AllowItemOverlap))
+		{
+			ImGui::BeginTable(("EffectsTable##" + headerUniqueId).c_str(), 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg);
+			ImGui::TableSetupColumn(("Effect##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("State##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("Actions##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("MenuName##"+ headerUniqueId ).c_str());
+			ImGui::TableHeadersRow();
+
+			for (int i = 0; i < effects.size(); i++, globalIndex++)
+			{
+				MenuToggleInformation info = effects[i];
+				bool valueChanged = false;
+
+				std::string effectComboId = "Effect##" + headerUniqueId + std::to_string(i);
+				std::string effectStateId = "State##" + headerUniqueId + std::to_string(i);
+				std::string removeId = "RemoveEffect##" + headerUniqueId + std::to_string(i);
+				std::string editId = "EditEffect##" + headerUniqueId + std::to_string(i);
+
+				std::string currentEffectName = info.effectName;
+				bool currentEffectState = info.state;
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				if (CreateCombo(effectComboId.c_str(), currentEffectName, m_effects, ImGuiComboFlags_None)) { valueChanged = true; }
+				ImGui::TableNextColumn();
+				if (ImGui::Checkbox(effectStateId.c_str(), &currentEffectState)) { valueChanged = true; }
+				ImGui::TableNextColumn();
+				if (ImGui::Button(removeId.c_str()))
+				{
+					updatedInfoList.erase(updatedInfoList.begin() + globalIndex);
+					globalIndex--;
+					continue;
+				}
+				if (ImGui::Button(editId.c_str())) { ImGui::Text("I do nothing"); }
+				ImGui::TableNextColumn();
+				ImGui::Text("%s", menuName.c_str());
+
+				if (valueChanged)
+				{
+					info.menuName = menuName;
+					info.effectName = currentEffectName;
+					info.state = currentEffectState;
+					updatedInfoList[globalIndex] = info;
+				}
+			}
+			ImGui::EndTable();
+		}
+	}
 
 
+	Manager::GetSingleton()->setMenuToggleInfo(updatedInfoList);
+
+	ImGui::SeparatorText("Add New");
+	// Add new effect
+	if (ImGui::Button("Add New Effect"))
+	{
+		ImGui::OpenPopup("Create Menu Entry");
+	}
+	AddNewMenu(updatedInfoList);
 
 	ImGui::End();
 }
+
+void Menu::AddNewMenu(std::vector<MenuToggleInformation>& updatedInfoList)
+{
+	static std::string currentMenu;
+	static std::string currentEffect;
+	static bool toggled = false;
+
+	if (ImGui::BeginPopupModal("Create Menu Entry", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		// Reset static variables for each popup
+		if (ImGui::IsWindowAppearing())
+		{
+			currentMenu.clear();
+			currentEffect.clear();
+			toggled = false;
+		}
+
+		ImGui::Text("Select a Menu");
+		CreateCombo("Menu", currentMenu, m_menuNames, ImGuiComboFlags_None);
+		ImGui::Separator();
+
+		ImGui::Text("Select the Effect");
+		CreateCombo("Effect", currentEffect, m_effects, ImGuiComboFlags_None);
+		ImGui::SameLine();
+		ImGui::Checkbox("Toggled On", &toggled);
+
+		ImGui::Separator();
+		if (ImGui::Button("Finish"))
+		{
+			MenuToggleInformation info;
+			info.menuName = currentMenu;
+			info.effectName = currentEffect;
+			info.state = toggled;
+
+			updatedInfoList.emplace_back(info);
+			Manager::GetSingleton()->setMenuToggleInfo(updatedInfoList);
+
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
 
 void Menu::SpawnTimeSettings(ImGuiID dockspace_id)
 {
@@ -464,4 +595,5 @@ void Menu::RemoveColors()
 	ImGui::PopStyleColor(38);
 	ImGui::PopStyleVar(3);
 }
+
 #pragma endregion

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Manager.h"
 
 namespace Colors
 {
@@ -46,6 +47,8 @@ private:
 	void SaveFile();
 	void SetColors();
 	void RemoveColors();
+
+	void AddNewMenu(std::vector<MenuToggleInformation>& updatedInfoList);
 private:
 
 	char m_inputBuffer[256] = { 0 };
