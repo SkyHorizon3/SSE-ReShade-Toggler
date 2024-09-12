@@ -147,6 +147,24 @@ std::string Manager::getPresetPath(const std::string& presetName)
 	return std::string(configDirectory) + "\\" + presetName;
 }
 
+bool Manager::allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const
+{
+	if (it == m_weatherToggleInfo.end())
+		return true;
+
+	for (const auto& newInfo : it->second)
+	{
+		if (cachedweather.effectName == newInfo.effectName &&
+			cachedweather.state == newInfo.state &&
+			cachedweather.weatherFlag == newInfo.weatherFlag)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void Manager::toggleEffectWeather()
 {
 	const auto sky = RE::Sky::GetSingleton();
@@ -186,14 +204,15 @@ void Manager::toggleEffectWeather()
 
 	const auto ws = player->GetWorldspace();
 	const auto it = m_weatherToggleInfo.find(std::format("{:08X}~{}", Utils::getTrimmedFormID(ws), Utils::getModName(ws)));
+	const auto cachedWorldspace = m_lastWs.first;
 
-	if (!ws || m_lastWs.first && m_lastWs.first->formID != ws->formID) // player is in interior or changed worldspace
+	if (!ws || cachedWorldspace && cachedWorldspace->formID != ws->formID) // player is in interior or changed worldspace
 	{
-		if (m_lastWs.first) // TODO: refactor. This approach is not suitable for the intended flawless behaviour
+		if (cachedWorldspace)
 		{
 			for (const auto& info : m_lastWs.second)
 			{
-				if (info.weatherFlag != weatherFlag || !ws || it == m_weatherToggleInfo.end()) // change effect state back to original if it was toggled before
+				if (!ws || allowtoggleEffectWeather(info, it)) // change effect state back to original if it was toggled before
 				{
 					toggleEffect(info.effectName.c_str(), !info.state);
 				}

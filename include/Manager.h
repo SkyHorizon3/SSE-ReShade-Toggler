@@ -57,6 +57,7 @@ public:
 	std::vector<std::string> enumerateMenus();
 	std::vector<std::string> enumerateWorldSpaces();
 
+	bool allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const;
 	void toggleEffectWeather();
 
 	std::vector<MenuToggleInformation> getMenuToggleInfo() const { return m_menuToggleInfo; }
