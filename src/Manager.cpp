@@ -51,7 +51,7 @@ bool Manager::serializeJSONPreset(const std::string& presetName)
 	return true;
 }
 
-void Manager::toggleEffectMenu(const std::set<std::string>& openMenus)
+void Manager::toggleEffectMenu(const std::unordered_set<std::string>& openMenus)
 {
 	for (auto& menuInfo : m_menuToggleInfo)
 	{
@@ -92,17 +92,21 @@ std::vector<std::string> Manager::enumeratePresets()
 
 std::vector<std::string> Manager::enumerateEffects()
 {
-	constexpr const char* shadersDirectory = "reshade-shaders\\Shaders";
 	std::vector<std::string> effects;
 
-	for (const auto& entry : std::filesystem::recursive_directory_iterator(shadersDirectory))
-	{
-		if (entry.is_regular_file() && entry.path().filename().extension() == ".fx")
+	s_pRuntime->enumerate_techniques(nullptr, [&](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
 		{
-			effects.emplace_back(entry.path().filename().string());
-		}
-	}
-	//sort files
+			char nameBuffer[30];
+
+			runtime->get_technique_effect_name(technique, nameBuffer);
+
+			if (std::find(effects.begin(), effects.end(), nameBuffer) == effects.end())
+			{
+				effects.emplace_back(nameBuffer);
+			}
+
+		});
+
 	std::sort(effects.begin(), effects.end());
 	return effects;
 }

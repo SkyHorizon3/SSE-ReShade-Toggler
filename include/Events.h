@@ -8,6 +8,6 @@ public:
 
 private:
 
-	std::set<std::string> m_openMenus;
+	std::unordered_set<std::string> m_openMenus;
 
 };

@@ -51,7 +51,7 @@ public:
 
 	bool serializeJSONPreset(const std::string& presetName);
 
-	void toggleEffectMenu(const std::set<std::string>& openMenus);
+	void toggleEffectMenu(const std::unordered_set<std::string>& openMenus);
 
 	std::vector<std::string> enumeratePresets();
 	std::vector<std::string> enumerateEffects();

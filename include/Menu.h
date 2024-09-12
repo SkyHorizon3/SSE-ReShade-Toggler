@@ -54,7 +54,7 @@ private:
 	char m_inputBuffer[256] = { 0 };
 	std::string m_selectedPreset;
 	std::vector<std::string> m_presets;
-	std::vector<std::string> m_effects;
+	std::vector<std::string> m_effects = Manager::GetSingleton()->enumerateEffects();
 	std::vector<std::string> m_menuNames;
 	std::vector<std::string> m_worldSpaces;
 	std::vector<std::string> m_weatherFlags = {

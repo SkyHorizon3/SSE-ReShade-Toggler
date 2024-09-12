@@ -9,7 +9,6 @@ void Menu::SettingsMenu()
 
 	if (m_openSettingsMenu)
 	{
-		m_effects = Manager::GetSingleton()->enumerateEffects();
 		// TODO: ensure that we are only putting the colors onto our own window and its subwindows
 		SetColors();
 
@@ -159,13 +158,13 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 		headerId++;
 		std::string headerUniqueId = menuName + std::to_string(headerId);
 
-		if (ImGui::CollapsingHeader((menuName + "##" +headerUniqueId + "##Header").c_str(), ImGuiTreeNodeFlags_AllowOverlap | ImGuiTreeNodeFlags_AllowItemOverlap))
+		if (ImGui::CollapsingHeader((menuName + "##" + headerUniqueId + "##Header").c_str(), ImGuiTreeNodeFlags_AllowOverlap | ImGuiTreeNodeFlags_AllowItemOverlap))
 		{
 			ImGui::BeginTable(("EffectsTable##" + headerUniqueId).c_str(), 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg);
 			ImGui::TableSetupColumn(("Effect##" + headerUniqueId).c_str());
 			ImGui::TableSetupColumn(("State##" + headerUniqueId).c_str());
 			ImGui::TableSetupColumn(("Actions##" + headerUniqueId).c_str());
-			ImGui::TableSetupColumn(("MenuName##"+ headerUniqueId ).c_str());
+			ImGui::TableSetupColumn(("MenuName##" + headerUniqueId).c_str());
 			ImGui::TableHeadersRow();
 
 			for (int i = 0; i < effects.size(); i++, globalIndex++)

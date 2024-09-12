@@ -80,10 +80,6 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Event::GetSingleton());
 	}
 	break;
-	case SKSE::MessagingInterface::kDataLoaded:
-	{
-	}
-	break;
 
 	default:
 		break;

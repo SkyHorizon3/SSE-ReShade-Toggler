@@ -4,6 +4,7 @@
 #include "SKSE/SKSE.h"
 
 #include <spdlog/sinks/basic_file_sink.h>
+#include <unordered_set>
 
 #include "Plugin.h"
 
