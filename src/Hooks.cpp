@@ -10,7 +10,10 @@ namespace Hook
 		{
 			func(); // Run original function
 
-			Manager::GetSingleton()->toggleEffectWeather();
+			const auto& singleton = Manager::GetSingleton();
+
+			singleton->toggleEffectWeather();
+			singleton->toggleEffectTime();
 
 		};
 		static inline REL::Relocation<decltype(thunk)> func;

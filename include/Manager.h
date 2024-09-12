@@ -30,6 +30,7 @@ struct TimeToggleInformation
 	float startTime = 0.f;
 	float stopTime = 0.f;
 	bool state = true;
+	bool isToggled = false;
 };
 
 class Manager : public ISingleton<Manager>
@@ -57,8 +58,9 @@ public:
 	std::vector<std::string> enumerateMenus();
 	std::vector<std::string> enumerateWorldSpaces();
 
-	bool allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const;
 	void toggleEffectWeather();
+
+	void toggleEffectTime();
 
 	std::vector<MenuToggleInformation> getMenuToggleInfo() const { return m_menuToggleInfo; }
 	void setMenuToggleInfo(const std::vector<MenuToggleInformation>& info) { m_menuToggleInfo = info; }
@@ -70,6 +72,11 @@ public:
 	void setWeatherToggleInfo(const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>& info) { m_weatherToggleInfo = info; }
 
 private:
+
+	bool timeWithinRange(const float& currentTime, const float& startTime, const float& stopTime) const;
+
+	bool allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const;
+
 	std::string getPresetPath(const std::string& presetName);
 
 	static float getCurrentGameTime();

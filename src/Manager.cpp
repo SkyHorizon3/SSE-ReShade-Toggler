@@ -243,6 +243,38 @@ void Manager::toggleEffectWeather()
 	}
 }
 
+void Manager::toggleEffectTime()
+{
+	const auto ui = RE::UI::GetSingleton();
+	if (m_timeToggleInfo.empty() || !RE::Calendar::GetSingleton() || !ui || ui->GameIsPaused())
+		return;
+
+	for (auto& timeInfo : m_timeToggleInfo)
+	{
+		const bool inRange = timeWithinRange(getCurrentGameTime(), timeInfo.startTime, timeInfo.stopTime);
+
+		if (inRange)
+		{
+			if (!timeInfo.isToggled)
+			{
+				toggleEffect(timeInfo.effectName.c_str(), timeInfo.state);
+				timeInfo.isToggled = true;
+			}
+		}
+		else if (!inRange && timeInfo.isToggled)
+		{
+			toggleEffect(timeInfo.effectName.c_str(), !timeInfo.state);
+			timeInfo.isToggled = false;
+		}
+	}
+
+}
+
+bool Manager::timeWithinRange(const float& currentTime, const float& startTime, const float& stopTime) const
+{
+	return currentTime >= startTime && currentTime <= stopTime;
+}
+
 float Manager::getCurrentGameTime()
 {
 	using func_t = decltype(&Manager::getCurrentGameTime);
