@@ -391,6 +391,9 @@ void Menu::SpawnInteriorSettings(ImGuiID dockspace_id)
 	ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
 	ImGui::Begin("Interior Settings", &m_showInteriorSettings, ImGuiWindowFlags_NoCollapse);
 	ImGui::Text("Configure interior toggling settings here.");
+	std::string current;
+	CreateCombo("Cells", current, m_interiorCells, ImGuiComboFlags_None);
+
 	ImGui::End();
 }
 

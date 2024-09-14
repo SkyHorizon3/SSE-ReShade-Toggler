@@ -141,6 +141,34 @@ std::vector<std::string> Manager::enumerateWorldSpaces()
 	return worldSpaces;
 }
 
+// TODO: Maybe make this also account for exterior cells, returning a pair of interior and exterior cells?
+std::vector<std::string> Manager::enumerateCells()
+{
+	std::vector<std::string> cells;
+	auto* dataHandler = RE::TESDataHandler::GetSingleton();
+
+	// Get all loaded forms
+	auto formArray = RE::TESForm::GetAllForms();
+	if (!&formArray) 
+	{
+		SKSE::log::error("Form array not available.");
+		return cells;
+	}
+
+	for (auto& form : *formArray.first) 
+	{
+		// Check if the form is a cell
+		RE::TESObjectCELL* cell = form.second->As<RE::TESObjectCELL>();
+		if (cell && cell->IsInteriorCell())
+		{
+			const std::string s = std::format("{}~{}", cell->GetFullName(), Utils::getModName(cell));
+			cells.emplace_back(s);
+		}
+	}
+
+	return cells;
+}
+
 std::string Manager::getPresetPath(const std::string& presetName)
 {
 	constexpr const char* configDirectory = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
