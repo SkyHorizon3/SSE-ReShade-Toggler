@@ -49,14 +49,16 @@ private:
 	void RemoveColors();
 
 	void AddNewMenu(std::vector<MenuToggleInformation>& updatedInfoList);
+	void AddNewWeather(std::unordered_map<std::string, std::vector<WeatherToggleInformation>>& updatedInfoList);
 private:
 
 	char m_inputBuffer[256] = { 0 };
 	std::string m_selectedPreset;
 	std::vector<std::string> m_presets;
+
 	std::vector<std::string> m_effects = Manager::GetSingleton()->enumerateEffects();
-	std::vector<std::string> m_menuNames;
-	std::vector<std::string> m_worldSpaces;
+	std::vector<std::string> m_menuNames = Manager::GetSingleton()->enumerateMenus();
+	std::vector<std::string> m_worldSpaces = Manager::GetSingleton()->enumerateWorldSpaces();
 	std::vector<std::string> m_weatherFlags = {
 		"kNone", "kRainy", "kPleasant", "kCloudy", "kSnow", "kPermAurora", "kAuroraFollowsSun"
 	};

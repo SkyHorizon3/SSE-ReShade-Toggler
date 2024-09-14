@@ -127,7 +127,6 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 	ImGui::Begin("Menu Settings", &m_showMenuSettings, ImGuiWindowFlags_NoCollapse);
 	ImGui::Text("Configure menu toggling settings here.");
 
-	m_menuNames = Manager::GetSingleton()->enumerateMenus();
 	ImGui::SeparatorText("Effects");
 
 	// Get the list of toggle information
@@ -271,7 +270,6 @@ void Menu::AddNewMenu(std::vector<MenuToggleInformation>& updatedInfoList)
 	}
 }
 
-
 void Menu::SpawnTimeSettings(ImGuiID dockspace_id)
 {
 	ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
@@ -407,16 +405,153 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 	// Retrieve the current weather toggle info
 	std::unordered_map<std::string, std::vector<WeatherToggleInformation>> infoList = Manager::GetSingleton()->getWeatherToggleInfo();
 	std::unordered_map<std::string, std::vector<WeatherToggleInformation>> updatedInfoList = infoList; // Start with existing info
-	m_worldSpaces = Manager::GetSingleton()->enumerateWorldSpaces();
-
 	static char inputBuffer[256] = "";
 	ImGui::InputTextWithHint("##Search", "Search Worldspaces...", inputBuffer, sizeof(inputBuffer));
 
+	int headerId = -1;
+	int globalIndex = 0;
+	for (const auto& [worldSpaceName, effects] : infoList)
+	{
+		if (strlen(inputBuffer) > 0 && worldSpaceName.find(inputBuffer) == std::string::npos)
+			continue;
+
+		headerId++;
+		std::string headerUniqueId = worldSpaceName + std::to_string(headerId);
+
+		if (ImGui::CollapsingHeader((worldSpaceName + "##" + headerUniqueId + "##Header").c_str(), ImGuiTreeNodeFlags_AllowOverlap | ImGuiTreeNodeFlags_AllowItemOverlap))
+		{
+			ImGui::BeginTable(("EffectsTable##" + headerUniqueId).c_str(), 5, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg);
+			ImGui::TableSetupColumn(("Effect##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("State##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("Weather##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("Actions##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("Worldspace##" + headerUniqueId).c_str());
+			ImGui::TableHeadersRow();
+
+			for (int i = 0; i < effects.size(); i++, globalIndex++)
+			{
+				WeatherToggleInformation info = effects[i];
+				bool valueChanged = false;
+
+				std::string effectComboId = "Effect##" + headerUniqueId + std::to_string(i);
+				std::string effectStateId = "State##" + headerUniqueId + std::to_string(i);
+				std::string weatherId = "Weather##" + headerUniqueId + std::to_string(i);
+				std::string removeId = "RemoveEffect##" + headerUniqueId + std::to_string(i);
+				std::string editId = "EditEffect##" + headerUniqueId + std::to_string(i);
+
+				std::string currentEffectName = info.effectName;
+				std::string currentWeather = info.weatherFlag;
+				bool currentEffectState = info.state;
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				if (CreateCombo(effectComboId.c_str(), currentEffectName, m_effects, ImGuiComboFlags_None)) { valueChanged = true; }
+				ImGui::TableNextColumn();
+				if (ImGui::Checkbox(effectStateId.c_str(), &currentEffectState)) { valueChanged = true; }
+				ImGui::TableNextColumn();
+				if (CreateCombo(weatherId.c_str(), currentWeather, m_weatherFlags, ImGuiComboFlags_None)) { valueChanged = true; }
+				ImGui::TableNextColumn();
+				if (ImGui::Button(removeId.c_str()))
+				{
+					updatedInfoList[worldSpaceName].erase(
+						std::remove_if(updatedInfoList[worldSpaceName].begin(), updatedInfoList[worldSpaceName].end(),
+							[&info](const WeatherToggleInformation& weatherInfo) {
+								return weatherInfo.effectName == info.effectName && weatherInfo.weatherFlag == info.weatherFlag;
+							}
+						),
+						updatedInfoList[worldSpaceName].end()
+					);
+					
+					if (updatedInfoList[worldSpaceName].empty())
+					{
+						updatedInfoList.erase(worldSpaceName);
+					}
+
+					globalIndex--;
+					continue;
+				}
+				if (ImGui::Button(editId.c_str())) { ImGui::Text("I do nothing"); }
+				ImGui::TableNextColumn();
+				ImGui::Text("%s", worldSpaceName.c_str());
+
+				if (valueChanged)
+				{
+					info.effectName = currentEffectName;
+					info.weatherFlag = currentWeather;
+					info.state = currentEffectState;
+					updatedInfoList[worldSpaceName].at(globalIndex) = info;
+				}
+			}
+			ImGui::EndTable();
+		}
+
+	}
 
 	// Update the manager with the new list
 	Manager::GetSingleton()->setWeatherToggleInfo(updatedInfoList);
 
+	ImGui::SeparatorText("Add New");
+	// Add new effect
+	if (ImGui::Button("Add New Effect"))
+	{
+		ImGui::OpenPopup("Create Weather Entry");
+	}
+	AddNewWeather(updatedInfoList);
+
 	ImGui::End();
+}
+
+void Menu::AddNewWeather(std::unordered_map<std::string, std::vector<WeatherToggleInformation>>& updatedInfoList)
+{
+	static std::string currentWorldSpace;
+	static std::string currentWeatherFlag;
+	static std::string currentEffect;
+	static bool toggled = false;
+
+	if (ImGui::BeginPopupModal("Create Weather Entry", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		// Reset static variables for each popup
+		if (ImGui::IsWindowAppearing())
+		{
+			currentWorldSpace.clear();
+			currentWeatherFlag.clear();
+			currentEffect.clear();
+			toggled = false;
+		}
+
+		ImGui::Text("Select a Worldspace");
+		CreateCombo("Worldspace", currentWorldSpace, m_worldSpaces, ImGuiComboFlags_None);
+		ImGui::Text("Select a Weather");
+		CreateCombo("Weather", currentWeatherFlag, m_weatherFlags, ImGuiComboFlags_None);
+		ImGui::Separator();
+
+		ImGui::Text("Select the Effect");
+		CreateCombo("Effect", currentEffect, m_effects, ImGuiComboFlags_None);
+		ImGui::SameLine();
+		ImGui::Checkbox("Toggled On", &toggled);
+
+		ImGui::Separator();
+		if (ImGui::Button("Finish"))
+		{
+			WeatherToggleInformation info;
+			info.weatherFlag = currentWeatherFlag;
+			info.effectName = currentEffect;
+			info.state = toggled;
+
+			updatedInfoList[currentWorldSpace].emplace_back(info);
+			Manager::GetSingleton()->setWeatherToggleInfo(updatedInfoList);
+
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
 }
 
 bool Menu::CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags)
