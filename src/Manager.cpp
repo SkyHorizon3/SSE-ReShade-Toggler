@@ -142,31 +142,24 @@ std::vector<std::string> Manager::enumerateWorldSpaces()
 }
 
 // TODO: Maybe make this also account for exterior cells, returning a pair of interior and exterior cells?
-std::vector<std::string> Manager::enumerateCells()
+std::vector<std::string> Manager::enumerateInteriorCells()
 {
-	std::vector<std::string> cells;
-	auto* dataHandler = RE::TESDataHandler::GetSingleton();
+	std::vector<std::string> interiorCells;
+	const auto& cells = RE::TESDataHandler::GetSingleton()->interiorCells;
 
-	// Get all loaded forms
-	auto formArray = RE::TESForm::GetAllForms();
-	if (!&formArray) 
-	{
-		SKSE::log::error("Form array not available.");
-		return cells;
-	}
+	if (cells.empty())
+		return interiorCells;
 
-	for (auto& form : *formArray.first) 
+	for (const auto& cell : cells)
 	{
-		// Check if the form is a cell
-		RE::TESObjectCELL* cell = form.second->As<RE::TESObjectCELL>();
-		if (cell && cell->IsInteriorCell())
+		if (cell)
 		{
-			const std::string s = std::format("{}~{}", cell->GetFullName(), Utils::getModName(cell));
-			cells.emplace_back(s);
+			const std::string interiorCell = std::format("{}~{}", cell->GetFullName(), Utils::getModName(cell));
+			interiorCells.emplace_back(interiorCell);
 		}
 	}
 
-	return cells;
+	return interiorCells;
 }
 
 std::string Manager::getPresetPath(const std::string& presetName)

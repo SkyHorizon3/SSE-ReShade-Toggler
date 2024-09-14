@@ -1,6 +1,6 @@
 #include "Menu.h"
 #include "Manager.h"
-
+#include "Utils.h"
 
 void Menu::SettingsMenu()
 {
@@ -567,15 +567,29 @@ bool Menu::CreateCombo(const char* label, std::string& currentItem, std::vector<
 
 	bool itemChanged = false;
 
+	static char searchBuffer[256] = "";
+
 	if (ImGui::BeginCombo(label, currentItem.c_str(), flags))
 	{
-		for (std::string& item : items)
+		ImGui::InputTextWithHint("##Search", "Search...", searchBuffer, sizeof(searchBuffer));
+
+		std::vector<std::string> filteredItems;
+		for (const auto& item : items)
+		{
+			if (strcasestr(item.c_str(), searchBuffer))
+			{
+				filteredItems.push_back(item);
+			}
+		}
+
+		for (std::string& item : filteredItems)
 		{
 			bool isSelected = (currentItem == item);
 			if (ImGui::Selectable(item.c_str(), isSelected))
 			{
 				currentItem = item;
 				itemChanged = true;
+				searchBuffer[0] = '\0';
 			}
 			if (isSelected) { ImGui::SetItemDefaultFocus(); }
 		}

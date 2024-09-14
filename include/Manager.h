@@ -57,7 +57,7 @@ public:
 	std::vector<std::string> enumerateEffects();
 	std::vector<std::string> enumerateMenus();
 	std::vector<std::string> enumerateWorldSpaces();
-	std::vector<std::string> enumerateCells();
+	std::vector<std::string> enumerateInteriorCells();
 
 	void toggleEffectWeather();
 
