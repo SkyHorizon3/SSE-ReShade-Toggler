@@ -96,7 +96,7 @@ std::vector<std::string> Manager::enumerateEffects()
 
 	s_pRuntime->enumerate_techniques(nullptr, [&](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
 		{
-			char nameBuffer[30];
+			char nameBuffer[64];
 
 			runtime->get_technique_effect_name(technique, nameBuffer);
 
@@ -128,14 +128,12 @@ std::vector<std::string> Manager::enumerateWorldSpaces()
 {
 	const auto& ws = RE::TESDataHandler::GetSingleton()->GetFormArray<RE::TESWorldSpace>();
 	std::vector<std::string> worldSpaces;
-
-	if (ws.empty())
-		return worldSpaces;
+	worldSpaces.reserve(ws.size());
 
 	for (const auto& space : ws)
 	{
-		const std::string s = std::format("{:08X}~{}", Utils::getTrimmedFormID(space), Utils::getModName(space));
-		worldSpaces.emplace_back(s);
+		if (space)
+			worldSpaces.emplace_back(std::format("{:08X}~{}", Utils::getTrimmedFormID(space), Utils::getModName(space)));
 	}
 
 	return worldSpaces;
@@ -276,11 +274,11 @@ void Manager::toggleEffectTime()
 	if (m_timeToggleInfo.empty() || !calendar || !ui || ui->GameIsPaused())
 		return;
 
+	const std::uint32_t currentHour = static_cast<std::uint32_t>(calendar->GetHour());
+	const float currentTime = currentHour + (calendar->GetMinutes() / 100.f);
+
 	for (auto& timeInfo : m_timeToggleInfo)
 	{
-		const std::uint32_t currentHour = static_cast<std::uint32_t>(calendar->GetHour());
-		const float currentTime = currentHour + (calendar->GetMinutes() / 100.f);
-
 		const bool inRange = timeWithinRange(currentTime, timeInfo.startTime, timeInfo.stopTime);
 
 		if (inRange)
