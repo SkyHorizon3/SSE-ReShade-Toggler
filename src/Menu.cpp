@@ -482,7 +482,7 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 					info.effectName = currentEffectName;
 					info.weatherFlag = currentWeather;
 					info.state = currentEffectState;
-					updatedInfoList[worldSpaceName].at(globalIndex) = info;
+					updatedInfoList[worldSpaceName].at(i) = info;
 				}
 			}
 			ImGui::EndTable();
