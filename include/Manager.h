@@ -17,11 +17,11 @@ struct WeatherToggleInformation
 	bool isToggled = false;
 };
 
-struct InteriorToggleInformation // not final. pair isn't best idea. Will get back to it after weather
+struct InteriorToggleInformation
 {
 	std::string effectName{};
-	std::pair<RE::FormID, std::string> interiorCell{}; // FormID + Plugin. If not a specific cell, place 0 or something
 	bool state = true;
+	bool isToggled = false;
 };
 
 struct TimeToggleInformation
@@ -64,6 +64,9 @@ public:
 	std::unordered_map<std::string, std::vector<WeatherToggleInformation>> getWeatherToggleInfo() const { return m_weatherToggleInfo; }
 	void setWeatherToggleInfo(const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>& info) { m_weatherToggleInfo = info; }
 
+	std::unordered_map<std::string, std::vector<InteriorToggleInformation>> getInteriorToggleInfo() const { return m_interiorToggleInfo; }
+	void setInteriorToggleInfo(const std::unordered_map<std::string, std::vector<InteriorToggleInformation>>& info) { m_interiorToggleInfo = info; }
+
 private:
 
 	bool timeWithinRange(const float& currentTime, const float& startTime, const float& stopTime) const;
@@ -77,7 +80,7 @@ private:
 	std::vector<MenuToggleInformation> m_menuToggleInfo;
 	std::unordered_map<std::string, std::vector<WeatherToggleInformation>> m_weatherToggleInfo;
 
-	std::vector<InteriorToggleInformation> m_interiorToggleInfo;
+	std::unordered_map<std::string, std::vector<InteriorToggleInformation>> m_interiorToggleInfo;
 	std::vector<TimeToggleInformation> m_timeToggleInfo;
 
 	std::pair<RE::TESWorldSpace*, std::vector<WeatherToggleInformation>> m_lastWs;

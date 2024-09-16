@@ -19,8 +19,9 @@ bool Manager::parseJSONPreset(const std::string& presetName)
 	const auto menuPair = std::make_pair("Menu", std::ref(m_menuToggleInfo));
 	const auto timePair = std::make_pair("Time", std::ref(m_timeToggleInfo));
 	const auto weatherPair = std::make_pair("Weather", std::ref(m_weatherToggleInfo));
+	const auto interiorPair = std::make_pair("Interior", std::ref(m_interiorToggleInfo));
 
-	return deserializeArbitraryData(buffer.str(), menuPair, timePair, weatherPair);
+	return deserializeArbitraryData(buffer.str(), menuPair, timePair, weatherPair, interiorPair);
 }
 
 bool Manager::serializeJSONPreset(const std::string& presetName)
@@ -38,7 +39,8 @@ bool Manager::serializeJSONPreset(const std::string& presetName)
 	if (!serializeArbitraryData(buffer,
 		std::make_pair("Menu", m_menuToggleInfo),
 		std::make_pair("Time", m_timeToggleInfo),
-		std::make_pair("Weather", m_weatherToggleInfo)))
+		std::make_pair("Weather", m_weatherToggleInfo),
+		std::make_pair("Interior", m_interiorToggleInfo)))
 	{
 		SKSE::log::error("Failed to serialize preset {}!", presetName);
 		return false;

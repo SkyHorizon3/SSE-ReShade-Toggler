@@ -391,15 +391,102 @@ void Menu::SpawnInteriorSettings(ImGuiID dockspace_id)
 	ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
 	ImGui::Begin("Interior Settings", &m_showInteriorSettings, ImGuiWindowFlags_NoCollapse);
 	ImGui::Text("Configure interior toggling settings here.");
-	std::string current;
-	CreateCombo("Cells", current, m_interiorCells, ImGuiComboFlags_None);
+
+	// Retrieve the current weather toggle info
+	std::unordered_map<std::string, std::vector<InteriorToggleInformation>> infoList = Manager::GetSingleton()->getInteriorToggleInfo();
+	std::unordered_map<std::string, std::vector<InteriorToggleInformation>> updatedInfoList = infoList; // Start with existing info
+	static char inputBuffer[256] = "";
+	ImGui::InputTextWithHint("##Search", "Search Interior Cell...", inputBuffer, sizeof(inputBuffer));
+
+	int headerId = -1;
+	int globalIndex = 0;
+	for (const auto& [cellName, effects] : infoList)
+	{
+		if (strlen(inputBuffer) > 0 && cellName.find(inputBuffer) == std::string::npos)
+			continue;
+
+		headerId++;
+		std::string headerUniqueId = cellName + std::to_string(headerId);
+
+		if (ImGui::CollapsingHeader((cellName + "##" + headerUniqueId + "##Header").c_str(), ImGuiTreeNodeFlags_AllowOverlap | ImGuiTreeNodeFlags_AllowItemOverlap))
+		{
+			ImGui::BeginTable(("EffectsTable##" + headerUniqueId).c_str(), 4, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg);
+			ImGui::TableSetupColumn(("Effect##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("State##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("Actions##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("Cell##" + headerUniqueId).c_str());
+			ImGui::TableHeadersRow();
+
+			for (int i = 0; i < effects.size(); i++, globalIndex++)
+			{
+				InteriorToggleInformation info = effects[i];
+				bool valueChanged = false;
+
+				std::string effectComboId = "Effect##" + headerUniqueId + std::to_string(i);
+				std::string effectStateId = "State##" + headerUniqueId + std::to_string(i);
+				std::string removeId = "RemoveEffect##" + headerUniqueId + std::to_string(i);
+				std::string editId = "EditEffect##" + headerUniqueId + std::to_string(i);
+
+				std::string currentEffectName = info.effectName;
+				bool currentEffectState = info.state;
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				if (CreateCombo(effectComboId.c_str(), currentEffectName, m_effects, ImGuiComboFlags_None)) { valueChanged = true; }
+				ImGui::TableNextColumn();
+				if (ImGui::Checkbox(effectStateId.c_str(), &currentEffectState)) { valueChanged = true; }
+				ImGui::TableNextColumn();
+				if (ImGui::Button(removeId.c_str()))
+				{
+					updatedInfoList[cellName].erase(
+						std::remove_if(updatedInfoList[cellName].begin(), updatedInfoList[cellName].end(),
+							[&info](const InteriorToggleInformation& interiorInfo) {
+								return interiorInfo.effectName == info.effectName;
+							}
+						),
+						updatedInfoList[cellName].end()
+					);
+
+					if (updatedInfoList[cellName].empty())
+					{
+						updatedInfoList.erase(cellName);
+					}
+
+					globalIndex--;
+					continue;
+				}
+				if (ImGui::Button(editId.c_str())) { ImGui::Text("I do nothing"); }
+				ImGui::TableNextColumn();
+				ImGui::Text("%s", cellName.c_str());
+
+				if (valueChanged)
+				{
+					info.effectName = currentEffectName;
+					info.state = currentEffectState;
+					updatedInfoList[cellName].at(i) = info;
+				}
+			}
+			ImGui::EndTable();
+		}
+
+	}
+
+	// Update the manager with the new list
+	Manager::GetSingleton()->setInteriorToggleInfo(updatedInfoList);
+
+	ImGui::SeparatorText("Add New");
+	// Add new effect
+	if (ImGui::Button("Add New Effect"))
+	{
+		ImGui::OpenPopup("Create Interior Entry");
+	}
+	AddNewInterior(updatedInfoList);
 
 	ImGui::End();
 }
 
 void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 {
-	// TODO: Fix nesting
 	ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
 	ImGui::Begin("Weather Settings", &m_showWeatherSettings, ImGuiWindowFlags_NoCollapse);
 	ImGui::Text("Configure weather toggling settings here.");
@@ -543,6 +630,54 @@ void Menu::AddNewWeather(std::unordered_map<std::string, std::vector<WeatherTogg
 
 			updatedInfoList[currentWorldSpace].emplace_back(info);
 			Manager::GetSingleton()->setWeatherToggleInfo(updatedInfoList);
+
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
+void Menu::AddNewInterior(std::unordered_map<std::string, std::vector<InteriorToggleInformation>>& updatedInfoList)
+{
+	static std::string currentCell;
+	static std::string currentEffect;
+	static bool toggled = false;
+
+	if (ImGui::BeginPopupModal("Create Interior Entry", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		// Reset static variables for each popup
+		if (ImGui::IsWindowAppearing())
+		{
+			currentCell.clear();
+			currentEffect.clear();
+			toggled = false;
+		}
+
+		ImGui::Text("Select an Interior Cell");
+		CreateCombo("Cell", currentCell, m_interiorCells, ImGuiComboFlags_None);
+		ImGui::Separator();
+
+		ImGui::Text("Select the Effect");
+		CreateCombo("Effect", currentEffect, m_effects, ImGuiComboFlags_None);
+		ImGui::SameLine();
+		ImGui::Checkbox("Toggled On", &toggled);
+
+		ImGui::Separator();
+		if (ImGui::Button("Finish"))
+		{
+			InteriorToggleInformation info;
+			info.effectName = currentEffect;
+			info.state = toggled;
+
+			updatedInfoList[currentCell].emplace_back(info);
+			Manager::GetSingleton()->setInteriorToggleInfo(updatedInfoList);
 
 			ImGui::CloseCurrentPopup();
 		}
