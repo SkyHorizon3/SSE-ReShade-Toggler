@@ -458,13 +458,13 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 				{
 					updatedInfoList[worldSpaceName].erase(
 						std::remove_if(updatedInfoList[worldSpaceName].begin(), updatedInfoList[worldSpaceName].end(),
-							[&info](const WeatherToggleInformation& weatherInfo) {
-								return weatherInfo.effectName == info.effectName && weatherInfo.weatherFlag == info.weatherFlag;
-							}
-						),
+						[&info](const WeatherToggleInformation& weatherInfo) {
+							return weatherInfo.effectName == info.effectName && weatherInfo.weatherFlag == info.weatherFlag;
+						}
+					),
 						updatedInfoList[worldSpaceName].end()
 					);
-					
+
 					if (updatedInfoList[worldSpaceName].empty())
 					{
 						updatedInfoList.erase(worldSpaceName);

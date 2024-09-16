@@ -272,12 +272,16 @@ void Manager::toggleEffectWeather()
 void Manager::toggleEffectTime()
 {
 	const auto ui = RE::UI::GetSingleton();
-	if (m_timeToggleInfo.empty() || !RE::Calendar::GetSingleton() || !ui || ui->GameIsPaused())
+	const auto calendar = RE::Calendar::GetSingleton();
+	if (m_timeToggleInfo.empty() || !calendar || !ui || ui->GameIsPaused())
 		return;
 
 	for (auto& timeInfo : m_timeToggleInfo)
 	{
-		const bool inRange = timeWithinRange(getCurrentGameTime(), timeInfo.startTime, timeInfo.stopTime);
+		const std::uint32_t currentHour = static_cast<std::uint32_t>(calendar->GetHour());
+		const float currentTime = currentHour + (calendar->GetMinutes() / 100.f);
+
+		const bool inRange = timeWithinRange(currentTime, timeInfo.startTime, timeInfo.stopTime);
 
 		if (inRange)
 		{
@@ -299,13 +303,6 @@ void Manager::toggleEffectTime()
 bool Manager::timeWithinRange(const float& currentTime, const float& startTime, const float& stopTime) const
 {
 	return currentTime >= startTime && currentTime <= stopTime;
-}
-
-float Manager::getCurrentGameTime()
-{
-	using func_t = decltype(&Manager::getCurrentGameTime);
-	static REL::Relocation<func_t> func{ REL::VariantID(56475, 56832, 0x9F3290) };
-	return func();
 }
 
 void Manager::toggleEffect(const char* effect, const bool state) const

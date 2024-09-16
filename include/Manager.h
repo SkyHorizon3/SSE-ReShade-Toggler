@@ -80,8 +80,6 @@ private:
 
 	std::string getPresetPath(const std::string& presetName);
 
-	static float getCurrentGameTime();
-
 	void toggleEffect(const char* technique, bool state) const;
 
 	std::vector<MenuToggleInformation> m_menuToggleInfo;
