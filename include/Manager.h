@@ -39,14 +39,6 @@ class Manager : public ISingleton<Manager>
 
 public:
 
-	enum class Feature : std::uint32_t
-	{
-		kMenu,
-		kWeather,
-		kInterior,
-		kTime
-	};
-
 	bool parseJSONPreset(const std::string& presetName);
 
 	bool serializeJSONPreset(const std::string& presetName);

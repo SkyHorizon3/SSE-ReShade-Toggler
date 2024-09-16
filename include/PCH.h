@@ -23,19 +23,6 @@ namespace stl
 
 		T::func = trampoline.write_call<5>(a_src, T::thunk);
 	}
-
-	template <class F, size_t offset, class T>
-	void write_vfunc()
-	{
-		REL::Relocation<std::uintptr_t> vtbl{ F::VTABLE[offset] };
-		T::func = vtbl.write_vfunc(T::idx, T::thunk);
-	}
-
-	template <class F, class T>
-	void write_vfunc()
-	{
-		write_vfunc<F, 0, T>();
-	}
 }
 
 //https://github.com/powerof3/CLibUtil/blob/master/include/CLIBUtil/singleton.hpp
