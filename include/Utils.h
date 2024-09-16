@@ -7,7 +7,6 @@ namespace Utils
 	std::string getModName(const RE::TESForm* form);
 }
 
-#pragma once
 /**
  * @brief Performs a case-insensitive substring search.
  *

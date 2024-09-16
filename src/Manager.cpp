@@ -144,23 +144,24 @@ std::vector<std::string> Manager::enumerateWorldSpaces()
 // TODO: Maybe make this also account for exterior cells, returning a pair of interior and exterior cells?
 std::vector<std::string> Manager::enumerateInteriorCells()
 {
-	std::vector<std::string> interiorCells;
 	const auto& cells = RE::TESDataHandler::GetSingleton()->interiorCells;
 
-	if (cells.empty())
-		return interiorCells;
+	std::vector<std::string> interiorCells;
+	interiorCells.reserve(cells.size());
 
 	for (const auto& cell : cells)
 	{
 		if (cell)
 		{
-			const std::string interiorCell = std::format("{}~{}", cell->GetFullName(), Utils::getModName(cell));
-			interiorCells.emplace_back(interiorCell);
+			const auto& fullname = (cell->GetFullNameLength() > 0) ? cell->GetFullName() : cell->GetFormEditorID();
+
+			interiorCells.emplace_back(std::format("{}~{}", fullname, Utils::getModName(cell)));
 		}
 	}
 
 	return interiorCells;
 }
+
 
 std::string Manager::getPresetPath(const std::string& presetName)
 {
