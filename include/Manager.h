@@ -43,17 +43,19 @@ public:
 
 	bool serializeJSONPreset(const std::string& presetName);
 
-	void toggleEffectMenu(const std::unordered_set<std::string>& openMenus);
-
 	std::vector<std::string> enumeratePresets();
 	std::vector<std::string> enumerateEffects();
 	std::vector<std::string> enumerateMenus();
 	std::vector<std::string> enumerateWorldSpaces();
 	std::vector<std::string> enumerateInteriorCells();
 
+	void toggleEffectMenu(const std::unordered_set<std::string>& openMenus);
+
 	void toggleEffectWeather();
 
 	void toggleEffectTime();
+
+	void toggleEffectInterior();
 
 	std::vector<MenuToggleInformation> getMenuToggleInfo() const { return m_menuToggleInfo; }
 	void setMenuToggleInfo(const std::vector<MenuToggleInformation>& info) { m_menuToggleInfo = info; }
@@ -74,6 +76,8 @@ private:
 	bool allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const;
 
 	std::string getPresetPath(const std::string& presetName);
+
+	std::string constructKey(const RE::TESForm* form) const;
 
 	void toggleEffect(const char* technique, bool state) const;
 

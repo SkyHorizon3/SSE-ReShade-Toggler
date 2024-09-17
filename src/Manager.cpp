@@ -53,26 +53,6 @@ bool Manager::serializeJSONPreset(const std::string& presetName)
 	return true;
 }
 
-void Manager::toggleEffectMenu(const std::unordered_set<std::string>& openMenus)
-{
-	for (auto& menuInfo : m_menuToggleInfo)
-	{
-		if (openMenus.find(menuInfo.menuName) != openMenus.end())
-		{
-			if (!menuInfo.isToggled)
-			{
-				toggleEffect(menuInfo.effectName.c_str(), menuInfo.state);
-				menuInfo.isToggled = true;
-			}
-		}
-		else if (menuInfo.isToggled)
-		{
-			toggleEffect(menuInfo.effectName.c_str(), !menuInfo.state);
-			menuInfo.isToggled = false;
-		}
-	}
-}
-
 std::vector<std::string> Manager::enumeratePresets()
 {
 	std::vector<std::string> presets;
@@ -135,13 +115,12 @@ std::vector<std::string> Manager::enumerateWorldSpaces()
 	for (const auto& space : ws)
 	{
 		if (space)
-			worldSpaces.emplace_back(std::format("{:08X}~{}", Utils::getTrimmedFormID(space), Utils::getModName(space)));
+			worldSpaces.emplace_back(constructKey(space));
 	}
 
 	return worldSpaces;
 }
 
-// TODO: Maybe make this also account for exterior cells, returning a pair of interior and exterior cells?
 std::vector<std::string> Manager::enumerateInteriorCells()
 {
 	const auto& cells = RE::TESDataHandler::GetSingleton()->interiorCells;
@@ -153,9 +132,7 @@ std::vector<std::string> Manager::enumerateInteriorCells()
 	{
 		if (cell)
 		{
-			const auto& fullname = (cell->GetFullNameLength() > 0) ? cell->GetFullName() : cell->GetFormEditorID();
-
-			interiorCells.emplace_back(std::format("{}~{}", fullname, Utils::getModName(cell)));
+			interiorCells.emplace_back(constructKey(cell));
 		}
 	}
 
@@ -171,6 +148,31 @@ std::string Manager::getPresetPath(const std::string& presetName)
 		std::filesystem::create_directories(configDirectory);
 
 	return std::string(configDirectory) + "\\" + presetName;
+}
+
+std::string Manager::constructKey(const RE::TESForm* form) const
+{
+	return std::format("{:08X}|{}|{}", Utils::getTrimmedFormID(form), form->GetFormEditorID(), Utils::getModName(form));
+}
+
+void Manager::toggleEffectMenu(const std::unordered_set<std::string>& openMenus)
+{
+	for (auto& menuInfo : m_menuToggleInfo)
+	{
+		if (openMenus.find(menuInfo.menuName) != openMenus.end())
+		{
+			if (!menuInfo.isToggled)
+			{
+				toggleEffect(menuInfo.effectName.c_str(), menuInfo.state);
+				menuInfo.isToggled = true;
+			}
+		}
+		else if (menuInfo.isToggled)
+		{
+			toggleEffect(menuInfo.effectName.c_str(), !menuInfo.state);
+			menuInfo.isToggled = false;
+		}
+	}
 }
 
 bool Manager::allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const
@@ -229,7 +231,7 @@ void Manager::toggleEffectWeather()
 	}
 
 	const auto ws = player->GetWorldspace();
-	const auto it = m_weatherToggleInfo.find(std::format("{:08X}~{}", Utils::getTrimmedFormID(ws), Utils::getModName(ws)));
+	const auto it = m_weatherToggleInfo.find(constructKey(ws));
 	const auto cachedWorldspace = m_lastWs.first;
 
 	if (!ws || cachedWorldspace && cachedWorldspace->formID != ws->formID) // player is in interior or changed worldspace
@@ -296,6 +298,36 @@ void Manager::toggleEffectTime()
 			toggleEffect(timeInfo.effectName.c_str(), !timeInfo.state);
 			timeInfo.isToggled = false;
 		}
+	}
+
+}
+
+void Manager::toggleEffectInterior()
+{
+	const auto ui = RE::UI::GetSingleton();
+	const auto player = RE::PlayerCharacter::GetSingleton();
+	if (m_interiorToggleInfo.empty() || !player || !ui || ui->GameIsPaused())
+		return;
+
+	if (const auto cell = player->GetParentCell(); cell->IsInteriorCell())
+	{
+		const auto it = m_interiorToggleInfo.find(constructKey(cell));
+
+		// need a caching function here, too
+
+		if (it == m_interiorToggleInfo.end())
+			return;
+
+		for (auto& info : it->second)
+		{
+			if (!info.isToggled)
+			{
+				toggleEffect(info.effectName.c_str(), info.state);
+				info.isToggled = true;
+			}
+
+		}
+
 	}
 
 }
