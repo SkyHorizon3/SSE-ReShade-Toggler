@@ -152,6 +152,9 @@ std::string Manager::getPresetPath(const std::string& presetName)
 
 std::string Manager::constructKey(const RE::TESForm* form) const
 {
+	if (!form)
+		return "";
+
 	return std::format("{:08X}|{}|{}", Utils::getTrimmedFormID(form), form->GetFormEditorID(), Utils::getModName(form));
 }
 
