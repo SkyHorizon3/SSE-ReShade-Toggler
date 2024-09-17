@@ -21,7 +21,6 @@ struct InteriorToggleInformation
 {
 	std::string effectName{};
 	bool state = true;
-	bool isToggled = false;
 };
 
 struct TimeToggleInformation
@@ -75,7 +74,7 @@ private:
 
 	bool allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const;
 
-	bool allowtoggleEffectInterior(const InteriorToggleInformation& cachedinterior, const std::unordered_map<std::string, std::vector<InteriorToggleInformation>>::iterator& it) const;
+	bool allowtoggleEffectInterior(const InteriorToggleInformation& cachedinterior, const std::map<std::string, std::vector<InteriorToggleInformation>>::iterator& it) const;
 
 	std::string getPresetPath(const std::string& presetName);
 

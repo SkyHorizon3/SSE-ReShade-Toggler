@@ -193,7 +193,7 @@ bool Manager::allowtoggleEffectWeather(const WeatherToggleInformation& cachedwea
 	return true;
 }
 
-bool Manager::allowtoggleEffectInterior(const InteriorToggleInformation& cachedInterior, const std::unordered_map<std::string, std::vector<InteriorToggleInformation>>::iterator& it) const
+bool Manager::allowtoggleEffectInterior(const InteriorToggleInformation& cachedInterior, const std::map<std::string, std::vector<InteriorToggleInformation>>::iterator& it) const
 {
 	if (it == m_interiorToggleInfo.end())
 		return true;
@@ -340,7 +340,6 @@ void Manager::toggleEffectInterior(const bool isInterior)
 				if (!isInterior || allowtoggleEffectInterior(info, it))
 				{
 					toggleEffect(info.effectName.c_str(), !info.state);
-					info.isToggled = false;
 				}
 			}
 			lastCell.first = nullptr;
@@ -356,16 +355,11 @@ void Manager::toggleEffectInterior(const bool isInterior)
 
 	for (auto& info : it->second)
 	{
-		if (!info.isToggled)
-		{
-			toggleEffect(info.effectName.c_str(), info.state);
-			info.isToggled = true;
+		toggleEffect(info.effectName.c_str(), info.state);
 
-			lastCell.first = cell;
-			lastCell.second.emplace_back(info);
-		}
-
+		lastCell.second.emplace_back(info);
 	}
+	lastCell.first = cell;
 
 }
 
