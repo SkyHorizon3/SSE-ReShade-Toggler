@@ -63,17 +63,17 @@ public:
 	std::vector<TimeToggleInformation> getTimeToggleInfo() const { return m_timeToggleInfo; }
 	void setTimeToggleInfo(const std::vector<TimeToggleInformation>& info) { m_timeToggleInfo = info; }
 
-	std::unordered_map<std::string, std::vector<WeatherToggleInformation>> getWeatherToggleInfo() const { return m_weatherToggleInfo; }
-	void setWeatherToggleInfo(const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>& info) { m_weatherToggleInfo = info; }
+	std::map<std::string, std::vector<WeatherToggleInformation>> getWeatherToggleInfo() const { return m_weatherToggleInfo; }
+	void setWeatherToggleInfo(const std::map<std::string, std::vector<WeatherToggleInformation>>& info) { m_weatherToggleInfo = info; }
 
-	std::unordered_map<std::string, std::vector<InteriorToggleInformation>> getInteriorToggleInfo() const { return m_interiorToggleInfo; }
-	void setInteriorToggleInfo(const std::unordered_map<std::string, std::vector<InteriorToggleInformation>>& info) { m_interiorToggleInfo = info; }
+	std::map<std::string, std::vector<InteriorToggleInformation>> getInteriorToggleInfo() const { return m_interiorToggleInfo; }
+	void setInteriorToggleInfo(const std::map<std::string, std::vector<InteriorToggleInformation>>& info) { m_interiorToggleInfo = info; }
 
 private:
 
 	bool timeWithinRange(const float& currentTime, const float& startTime, const float& stopTime) const;
 
-	bool allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const;
+	bool allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const;
 
 	bool allowtoggleEffectInterior(const InteriorToggleInformation& cachedinterior, const std::unordered_map<std::string, std::vector<InteriorToggleInformation>>::iterator& it) const;
 
@@ -84,9 +84,9 @@ private:
 	void toggleEffect(const char* technique, bool state) const;
 
 	std::vector<MenuToggleInformation> m_menuToggleInfo;
-	std::unordered_map<std::string, std::vector<WeatherToggleInformation>> m_weatherToggleInfo;
+	std::map<std::string, std::vector<WeatherToggleInformation>> m_weatherToggleInfo;
 
-	std::unordered_map<std::string, std::vector<InteriorToggleInformation>> m_interiorToggleInfo;
+	std::map<std::string, std::vector<InteriorToggleInformation>> m_interiorToggleInfo;
 	std::vector<TimeToggleInformation> m_timeToggleInfo;
 
 	std::pair<RE::TESWorldSpace*, std::vector<WeatherToggleInformation>> m_lastWs;
@@ -96,7 +96,7 @@ private:
 	bool serializeVector(const std::string& key, const std::vector<T>& vec, std::string& output);
 
 	template<typename T>
-	bool serializeMap(const std::string& key, const std::unordered_map<std::string, std::vector<T>>& map, std::string& output);
+	bool serializeMap(const std::string& key, const std::map<std::string, std::vector<T>>& map, std::string& output);
 
 	template<typename... Args>
 	bool serializeArbitraryData(std::string& output, const Args&... args);
@@ -105,7 +105,7 @@ private:
 	bool deserializeVector(const std::string& key, const glz::json_t& json, std::vector<T>& vec);
 
 	template<typename T>
-	bool deserializeMapOfVectors(const std::string& key, const glz::json_t& json, std::unordered_map<std::string, std::vector<T>>& map);
+	bool deserializeMapOfVectors(const std::string& key, const glz::json_t& json, std::map<std::string, std::vector<T>>& map);
 
 	template<typename... Args>
 	bool deserializeArbitraryData(const std::string& buf, Args&... args);

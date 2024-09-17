@@ -49,8 +49,8 @@ private:
 	void RemoveColors();
 
 	void AddNewMenu(std::vector<MenuToggleInformation>& updatedInfoList);
-	void AddNewWeather(std::unordered_map<std::string, std::vector<WeatherToggleInformation>>& updatedInfoList);
-	void AddNewInterior(std::unordered_map<std::string, std::vector<InteriorToggleInformation>>& updatedInfoList);
+	void AddNewWeather(std::map<std::string, std::vector<WeatherToggleInformation>>& updatedInfoList);
+	void AddNewInterior(std::map<std::string, std::vector<InteriorToggleInformation>>& updatedInfoList);
 private:
 
 	char m_inputBuffer[256] = { 0 };

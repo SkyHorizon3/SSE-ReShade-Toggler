@@ -393,8 +393,8 @@ void Menu::SpawnInteriorSettings(ImGuiID dockspace_id)
 	ImGui::Text("Configure interior toggling settings here.");
 
 	// Retrieve the current weather toggle info
-	std::unordered_map<std::string, std::vector<InteriorToggleInformation>> infoList = Manager::GetSingleton()->getInteriorToggleInfo();
-	std::unordered_map<std::string, std::vector<InteriorToggleInformation>> updatedInfoList = infoList; // Start with existing info
+	std::map<std::string, std::vector<InteriorToggleInformation>> infoList = Manager::GetSingleton()->getInteriorToggleInfo();
+	std::map<std::string, std::vector<InteriorToggleInformation>> updatedInfoList = infoList; // Start with existing info
 	static char inputBuffer[256] = "";
 	ImGui::InputTextWithHint("##Search", "Search Interior Cell...", inputBuffer, sizeof(inputBuffer));
 
@@ -493,8 +493,8 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 	ImGui::SeparatorText("Effects");
 
 	// Retrieve the current weather toggle info
-	std::unordered_map<std::string, std::vector<WeatherToggleInformation>> infoList = Manager::GetSingleton()->getWeatherToggleInfo();
-	std::unordered_map<std::string, std::vector<WeatherToggleInformation>> updatedInfoList = infoList; // Start with existing info
+	std::map<std::string, std::vector<WeatherToggleInformation>> infoList = Manager::GetSingleton()->getWeatherToggleInfo();
+	std::map<std::string, std::vector<WeatherToggleInformation>> updatedInfoList = infoList; // Start with existing info
 	static char inputBuffer[256] = "";
 	ImGui::InputTextWithHint("##Search", "Search Worldspaces...", inputBuffer, sizeof(inputBuffer));
 
@@ -591,7 +591,7 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 	ImGui::End();
 }
 
-void Menu::AddNewWeather(std::unordered_map<std::string, std::vector<WeatherToggleInformation>>& updatedInfoList)
+void Menu::AddNewWeather(std::map<std::string, std::vector<WeatherToggleInformation>>& updatedInfoList)
 {
 	static std::string currentWorldSpace;
 	static std::string currentWeatherFlag;
@@ -644,7 +644,7 @@ void Menu::AddNewWeather(std::unordered_map<std::string, std::vector<WeatherTogg
 	}
 }
 
-void Menu::AddNewInterior(std::unordered_map<std::string, std::vector<InteriorToggleInformation>>& updatedInfoList)
+void Menu::AddNewInterior(std::map<std::string, std::vector<InteriorToggleInformation>>& updatedInfoList)
 {
 	static std::string currentCell;
 	static std::string currentEffect;

@@ -175,7 +175,7 @@ void Manager::toggleEffectMenu(const std::unordered_set<std::string>& openMenus)
 	}
 }
 
-bool Manager::allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const
+bool Manager::allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const
 {
 	if (it == m_weatherToggleInfo.end())
 		return true;
@@ -399,7 +399,7 @@ bool Manager::serializeVector(const std::string& key, const std::vector<T>& vec,
 }
 
 template<typename T>
-bool Manager::serializeMap(const std::string& key, const std::unordered_map<std::string, std::vector<T>>& map, std::string& output)
+bool Manager::serializeMap(const std::string& key, const std::map<std::string, std::vector<T>>& map, std::string& output)
 {
 	std::stringstream mapJson;
 	mapJson << "{ ";
@@ -442,7 +442,7 @@ bool Manager::serializeArbitraryData(std::string& output, const Args&... args)
 				success = false;
 			}
 		}
-		else if constexpr (std::is_same_v<std::decay_t<decltype(pair.second)>, std::unordered_map<std::string, std::vector<typename std::decay_t<decltype(pair.second)>::mapped_type::value_type>>>) {
+		else if constexpr (std::is_same_v<std::decay_t<decltype(pair.second)>, std::map<std::string, std::vector<typename std::decay_t<decltype(pair.second)>::mapped_type::value_type>>>) {
 			// Handle unordered_map case
 			if (serializeMap(pair.first, pair.second, serialized)) {
 				jsonStream << (first ? (first = false, "") : ", ") << serialized;
@@ -491,7 +491,7 @@ bool Manager::deserializeVector(const std::string& key, const glz::json_t& json,
 }
 
 template <typename T>
-bool Manager::deserializeMapOfVectors(const std::string& key, const glz::json_t& json, std::unordered_map<std::string, std::vector<T>>& map)
+bool Manager::deserializeMapOfVectors(const std::string& key, const glz::json_t& json, std::map<std::string, std::vector<T>>& map)
 {
 	if (json.contains(key)) {
 		const auto& mapData = json[key].get_object();
