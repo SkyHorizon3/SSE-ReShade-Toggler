@@ -55,7 +55,7 @@ public:
 
 	void toggleEffectTime();
 
-	void toggleEffectInterior();
+	void toggleEffectInterior(const bool isInterior);
 
 	std::vector<MenuToggleInformation> getMenuToggleInfo() const { return m_menuToggleInfo; }
 	void setMenuToggleInfo(const std::vector<MenuToggleInformation>& info) { m_menuToggleInfo = info; }
@@ -74,6 +74,8 @@ private:
 	bool timeWithinRange(const float& currentTime, const float& startTime, const float& stopTime) const;
 
 	bool allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::unordered_map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const;
+
+	bool allowtoggleEffectInterior(const InteriorToggleInformation& cachedinterior, const std::unordered_map<std::string, std::vector<InteriorToggleInformation>>::iterator& it) const;
 
 	std::string getPresetPath(const std::string& presetName);
 

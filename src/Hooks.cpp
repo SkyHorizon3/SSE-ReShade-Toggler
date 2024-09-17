@@ -33,7 +33,8 @@ namespace Hook
 		{
 			func(a_playerIsInInterior);
 
-			// Run process function
+			Manager::GetSingleton()->toggleEffectInterior(a_playerIsInInterior);
+
 		};
 		static inline REL::Relocation<decltype(thunk)> func;
 

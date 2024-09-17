@@ -193,6 +193,23 @@ bool Manager::allowtoggleEffectWeather(const WeatherToggleInformation& cachedwea
 	return true;
 }
 
+bool Manager::allowtoggleEffectInterior(const InteriorToggleInformation& cachedInterior, const std::unordered_map<std::string, std::vector<InteriorToggleInformation>>::iterator& it) const
+{
+	if (it == m_interiorToggleInfo.end())
+		return true;
+
+	for (const auto& newInfo : it->second)
+	{
+		if (cachedInterior.effectName == newInfo.effectName &&
+			cachedInterior.state == newInfo.state)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 void Manager::toggleEffectWeather()
 {
 	const auto sky = RE::Sky::GetSingleton();
@@ -302,30 +319,50 @@ void Manager::toggleEffectTime()
 
 }
 
-void Manager::toggleEffectInterior()
+void Manager::toggleEffectInterior(const bool isInterior)
 {
-	const auto ui = RE::UI::GetSingleton();
 	const auto player = RE::PlayerCharacter::GetSingleton();
-	if (m_interiorToggleInfo.empty() || !player || !ui || ui->GameIsPaused())
+	if (m_interiorToggleInfo.empty() || !player)
 		return;
 
-	if (const auto cell = player->GetParentCell(); cell->IsInteriorCell())
+	static std::pair<RE::TESObjectCELL*, std::vector<InteriorToggleInformation>> lastCell;
+	const auto cell = player->GetParentCell();
+	const auto it = m_interiorToggleInfo.find(constructKey(cell));
+
+	const auto cachedCell = lastCell.first;
+
+	if (!isInterior || cachedCell && isInterior && cachedCell->formID != cell->formID)
 	{
-		const auto it = m_interiorToggleInfo.find(constructKey(cell));
-
-		// need a caching function here, too
-
-		if (it == m_interiorToggleInfo.end())
-			return;
-
-		for (auto& info : it->second)
+		if (cachedCell)
 		{
-			if (!info.isToggled)
+			for (auto& info : lastCell.second)
 			{
-				toggleEffect(info.effectName.c_str(), info.state);
-				info.isToggled = true;
+				if (!isInterior || allowtoggleEffectInterior(info, it))
+				{
+					toggleEffect(info.effectName.c_str(), !info.state);
+					info.isToggled = false;
+				}
 			}
+			lastCell.first = nullptr;
+			lastCell.second.clear();
+		}
 
+		return;
+	}
+
+	if (it == m_interiorToggleInfo.end())
+		return;
+
+
+	for (auto& info : it->second)
+	{
+		if (!info.isToggled)
+		{
+			toggleEffect(info.effectName.c_str(), info.state);
+			info.isToggled = true;
+
+			lastCell.first = cell;
+			lastCell.second.emplace_back(info);
 		}
 
 	}
