@@ -219,6 +219,24 @@ bool Manager::allowtoggleEffectWeather(const WeatherToggleInformation& cachedwea
 	return true;
 }
 
+bool Manager::allowtoggleEffectTime(const TimeToggleInformation& cachedweather, const std::map<std::string, std::vector<TimeToggleInformation>>::iterator& it) const
+{
+	if (it == m_timeToggleInfo.end())
+		return true;
+
+	for (const auto& newInfo : it->second)
+	{
+		if (cachedweather.effectName == newInfo.effectName &&
+			cachedweather.state == newInfo.state &&
+			timeWithinRange(newInfo.startTime, newInfo.stopTime))
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 bool Manager::allowtoggleEffectInterior(const InteriorToggleInformation& cachedInterior, const std::map<std::string, std::vector<InteriorToggleInformation>>::iterator& it) const
 {
 	if (it == m_interiorToggleInfo.end())
@@ -244,6 +262,8 @@ void Manager::toggleEffectWeather()
 
 	if (m_weatherToggleInfo.empty() || !player || !sky || !sky->currentWeather || !ui || ui->GameIsPaused())
 		return;
+
+	static std::pair<RE::TESWorldSpace*, std::vector<WeatherToggleInformation>> lastWs;
 
 	const auto flags = sky->currentWeather->data.flags;
 	std::string weatherFlag{};
@@ -275,21 +295,21 @@ void Manager::toggleEffectWeather()
 
 	const auto ws = player->GetWorldspace();
 	const auto it = m_weatherToggleInfo.find(constructKey(ws));
-	const auto cachedWorldspace = m_lastWs.first;
+	const auto cachedWorldspace = lastWs.first;
 
 	if (!ws || cachedWorldspace && cachedWorldspace->formID != ws->formID) // player is in interior or changed worldspace
 	{
 		if (cachedWorldspace)
 		{
-			for (const auto& info : m_lastWs.second)
+			for (const auto& info : lastWs.second)
 			{
 				if (!ws || allowtoggleEffectWeather(info, it)) // change effect state back to original if it was toggled before
 				{
 					toggleEffect(info.effectName.c_str(), !info.state);
 				}
 			}
-			m_lastWs.first = nullptr;
-			m_lastWs.second.clear();
+			lastWs.first = nullptr;
+			lastWs.second.clear();
 		}
 		return;
 	}
@@ -303,8 +323,8 @@ void Manager::toggleEffectWeather()
 		{
 			toggleEffect(info.effectName.c_str(), info.state);
 			info.isToggled = true;
-			m_lastWs.first = ws;
-			m_lastWs.second.emplace_back(info);
+			lastWs.first = ws;
+			lastWs.second.emplace_back(info);
 		}
 		else if (info.isToggled)
 		{
@@ -317,16 +337,39 @@ void Manager::toggleEffectWeather()
 void Manager::toggleEffectTime()
 {
 	const auto ui = RE::UI::GetSingleton();
-	const auto calendar = RE::Calendar::GetSingleton();
-	if (m_timeToggleInfo.empty() || !calendar || !ui || ui->GameIsPaused())
+	const auto player = RE::PlayerCharacter::GetSingleton();
+	if (m_timeToggleInfo.empty() || !player || !RE::Calendar::GetSingleton() || !ui || ui->GameIsPaused())
 		return;
 
-	const std::uint32_t currentHour = static_cast<std::uint32_t>(calendar->GetHour());
-	const float currentTime = currentHour + (calendar->GetMinutes() / 100.f);
+	static std::pair<RE::TESWorldSpace*, std::vector<TimeToggleInformation>> lastWs;
 
-	for (auto& timeInfo : m_timeToggleInfo)
+	const auto ws = player->GetWorldspace();
+	const auto it = m_timeToggleInfo.find(constructKey(ws));
+	const auto cachedWorldspace = lastWs.first;
+
+	if (!ws || cachedWorldspace && cachedWorldspace->formID != ws->formID)
 	{
-		const bool inRange = timeWithinRange(currentTime, timeInfo.startTime, timeInfo.stopTime);
+		if (cachedWorldspace)
+		{
+			for (const auto& info : lastWs.second)
+			{
+				if (!ws || allowtoggleEffectTime(info, it))
+				{
+					toggleEffect(info.effectName.c_str(), !info.state);
+				}
+			}
+			lastWs.first = nullptr;
+			lastWs.second.clear();
+		}
+		return;
+	}
+
+	if (it == m_timeToggleInfo.end())
+		return;
+
+	for (auto& timeInfo : it->second)
+	{
+		const bool inRange = timeWithinRange(timeInfo.startTime, timeInfo.stopTime);
 
 		if (inRange)
 		{
@@ -334,6 +377,8 @@ void Manager::toggleEffectTime()
 			{
 				toggleEffect(timeInfo.effectName.c_str(), timeInfo.state);
 				timeInfo.isToggled = true;
+				lastWs.first = ws;
+				lastWs.second.emplace_back(timeInfo);
 			}
 		}
 		else if (!inRange && timeInfo.isToggled)
@@ -389,8 +434,12 @@ void Manager::toggleEffectInterior(const bool isInterior)
 
 }
 
-bool Manager::timeWithinRange(const float& currentTime, const float& startTime, const float& stopTime) const
+bool Manager::timeWithinRange(const float& startTime, const float& stopTime) const
 {
+	const auto calendar = RE::Calendar::GetSingleton();
+	const std::uint32_t currentHour = static_cast<std::uint32_t>(calendar->GetHour());
+	const float currentTime = currentHour + (calendar->GetMinutes() / 100.f);
+
 	return currentTime >= startTime && currentTime <= stopTime;
 }
 

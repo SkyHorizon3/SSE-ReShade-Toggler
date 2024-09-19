@@ -60,8 +60,8 @@ public:
 	std::vector<MenuToggleInformation> getMenuToggleInfo() const { return m_menuToggleInfo; }
 	void setMenuToggleInfo(const std::vector<MenuToggleInformation>& info) { m_menuToggleInfo = info; }
 
-	std::vector<TimeToggleInformation> getTimeToggleInfo() const { return m_timeToggleInfo; }
-	void setTimeToggleInfo(const std::vector<TimeToggleInformation>& info) { m_timeToggleInfo = info; }
+	std::map<std::string, std::vector<TimeToggleInformation>> getTimeToggleInfo() const { return m_timeToggleInfo; }
+	void setTimeToggleInfo(const std::map<std::string, std::vector<TimeToggleInformation>>& info) { m_timeToggleInfo = info; }
 
 	std::map<std::string, std::vector<WeatherToggleInformation>> getWeatherToggleInfo() const { return m_weatherToggleInfo; }
 	void setWeatherToggleInfo(const std::map<std::string, std::vector<WeatherToggleInformation>>& info) { m_weatherToggleInfo = info; }
@@ -71,9 +71,11 @@ public:
 
 private:
 
-	bool timeWithinRange(const float& currentTime, const float& startTime, const float& stopTime) const;
+	bool timeWithinRange(const float& startTime, const float& stopTime) const;
 
 	bool allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const;
+
+	bool allowtoggleEffectTime(const TimeToggleInformation& cachedweather, const std::map<std::string, std::vector<TimeToggleInformation>>::iterator& it) const;
 
 	bool allowtoggleEffectInterior(const InteriorToggleInformation& cachedinterior, const std::map<std::string, std::vector<InteriorToggleInformation>>::iterator& it) const;
 
@@ -85,11 +87,8 @@ private:
 
 	std::vector<MenuToggleInformation> m_menuToggleInfo;
 	std::map<std::string, std::vector<WeatherToggleInformation>> m_weatherToggleInfo;
-
 	std::map<std::string, std::vector<InteriorToggleInformation>> m_interiorToggleInfo;
-	std::vector<TimeToggleInformation> m_timeToggleInfo;
-
-	std::pair<RE::TESWorldSpace*, std::vector<WeatherToggleInformation>> m_lastWs;
+	std::map<std::string, std::vector<TimeToggleInformation>> m_timeToggleInfo;
 
 private:
 	template<typename T>
