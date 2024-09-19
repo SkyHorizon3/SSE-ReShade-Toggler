@@ -67,8 +67,6 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 	ImGui::SetNextWindowDockID(dockspace_id, ImGuiCond_Always);
 	ImGui::Begin("Main", nullptr, ImGuiWindowFlags_NoCollapse);
 
-	m_presets = Manager::GetSingleton()->enumeratePresets();
-
 	CreateCombo("Select Preset", m_selectedPreset, m_presets, ImGuiComboFlags_None);
 	ImGui::SameLine();
 	if (ImGui::Button("Reload Preset List"))
@@ -79,7 +77,7 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 
 	if (ImGui::Button("Load Preset"))
 	{
-		std::string selectedPresetPath = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets\\" + m_selectedPreset;
+		const std::string selectedPresetPath = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets\\" + m_selectedPreset;
 		if (std::filesystem::exists(selectedPresetPath))
 		{
 			auto start = std::chrono::high_resolution_clock::now();
@@ -440,10 +438,10 @@ void Menu::SpawnInteriorSettings(ImGuiID dockspace_id)
 				{
 					updatedInfoList[cellName].erase(
 						std::remove_if(updatedInfoList[cellName].begin(), updatedInfoList[cellName].end(),
-							[&info](const InteriorToggleInformation& interiorInfo) {
-								return interiorInfo.effectName == info.effectName;
-							}
-						),
+						[&info](const InteriorToggleInformation& interiorInfo) {
+							return interiorInfo.effectName == info.effectName;
+						}
+					),
 						updatedInfoList[cellName].end()
 					);
 

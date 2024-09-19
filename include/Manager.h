@@ -42,11 +42,12 @@ public:
 
 	bool serializeJSONPreset(const std::string& presetName);
 
-	std::vector<std::string> enumeratePresets();
-	std::vector<std::string> enumerateEffects();
-	std::vector<std::string> enumerateMenus();
-	std::vector<std::string> enumerateWorldSpaces();
-	std::vector<std::string> enumerateInteriorCells();
+	std::vector<std::string> enumeratePresets() const;
+	std::vector<std::string> enumerateEffects() const;
+	std::vector<std::string> enumerateActiveEffects() const;
+	std::vector<std::string> enumerateMenus() const;
+	std::vector<std::string> enumerateWorldSpaces() const;
+	std::vector<std::string> enumerateInteriorCells() const;
 
 	void toggleEffectMenu(const std::unordered_set<std::string>& openMenus);
 

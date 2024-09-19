@@ -53,7 +53,7 @@ bool Manager::serializeJSONPreset(const std::string& presetName)
 	return true;
 }
 
-std::vector<std::string> Manager::enumeratePresets()
+std::vector<std::string> Manager::enumeratePresets() const
 {
 	std::vector<std::string> presets;
 	constexpr auto presetDirectory = L"Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
@@ -72,7 +72,7 @@ std::vector<std::string> Manager::enumeratePresets()
 	return presets;
 }
 
-std::vector<std::string> Manager::enumerateEffects()
+std::vector<std::string> Manager::enumerateEffects() const
 {
 	std::vector<std::string> effects;
 
@@ -93,7 +93,30 @@ std::vector<std::string> Manager::enumerateEffects()
 	return effects;
 }
 
-std::vector<std::string> Manager::enumerateMenus()
+std::vector<std::string> Manager::enumerateActiveEffects() const
+{
+	std::vector<std::string> effects;
+
+	s_pRuntime->enumerate_techniques(nullptr, [&](reshade::api::effect_runtime* runtime, reshade::api::effect_technique technique)
+		{
+			if (runtime->get_technique_state(technique))
+			{
+				char nameBuffer[64];
+
+				runtime->get_technique_effect_name(technique, nameBuffer);
+
+				if (std::find(effects.begin(), effects.end(), nameBuffer) == effects.end())
+				{
+					effects.emplace_back(nameBuffer);
+				}
+
+			}
+		});
+
+	return effects;
+}
+
+std::vector<std::string> Manager::enumerateMenus() const
 {
 	const auto ui = RE::UI::GetSingleton();
 	std::vector<std::string> menuNames;
@@ -106,7 +129,7 @@ std::vector<std::string> Manager::enumerateMenus()
 	return menuNames;
 }
 
-std::vector<std::string> Manager::enumerateWorldSpaces()
+std::vector<std::string> Manager::enumerateWorldSpaces() const
 {
 	const auto& ws = RE::TESDataHandler::GetSingleton()->GetFormArray<RE::TESWorldSpace>();
 	std::vector<std::string> worldSpaces;
@@ -121,7 +144,7 @@ std::vector<std::string> Manager::enumerateWorldSpaces()
 	return worldSpaces;
 }
 
-std::vector<std::string> Manager::enumerateInteriorCells()
+std::vector<std::string> Manager::enumerateInteriorCells() const
 {
 	const auto& cells = RE::TESDataHandler::GetSingleton()->interiorCells;
 
@@ -535,7 +558,7 @@ bool Manager::deserializeArbitraryData(const std::string& buf, Args&... args)
 		if constexpr (std::is_same_v<std::decay_t<decltype(pair.second)>, std::vector<typename std::decay_t<decltype(pair.second)>::value_type>>) {
 			return deserializeVector(pair.first, json, pair.second);
 		}
-		else if constexpr (std::is_same_v<std::decay_t<decltype(pair.second)>, std::unordered_map<std::string, std::vector<typename std::decay_t<decltype(pair.second)>::mapped_type::value_type>>>) {
+		else if constexpr (std::is_same_v<std::decay_t<decltype(pair.second)>, std::map<std::string, std::vector<typename std::decay_t<decltype(pair.second)>::mapped_type::value_type>>>) {
 			return deserializeMapOfVectors(pair.first, json, pair.second);
 		}
 		else

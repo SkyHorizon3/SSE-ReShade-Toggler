@@ -55,7 +55,7 @@ private:
 
 	char m_inputBuffer[256] = { 0 };
 	std::string m_selectedPreset;
-	std::vector<std::string> m_presets;
+	std::vector<std::string> m_presets = Manager::GetSingleton()->enumeratePresets();
 
 	std::vector<std::string> m_effects = Manager::GetSingleton()->enumerateEffects();
 	std::vector<std::string> m_menuNames = Manager::GetSingleton()->enumerateMenus();
