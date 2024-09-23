@@ -277,93 +277,150 @@ void Menu::SpawnTimeSettings(ImGuiID dockspace_id)
 	ImGui::SeparatorText("Effects");
 
 	// Get the list of toggle information
-	std::vector<TimeToggleInformation> infoList = Manager::GetSingleton()->getTimeToggleInfo();
-	std::vector<TimeToggleInformation> updatedInfoList;
-
-	if (!infoList.empty())
+	std::map<std::string, std::vector<TimeToggleInformation>> infoList = Manager::GetSingleton()->getTimeToggleInfo();
+	std::map<std::string, std::vector<TimeToggleInformation>> updatedInfoList = infoList;
+	static char inputBuffer[256] = "";
+	ImGui::InputTextWithHint("##Search", "Search Worldspace...", inputBuffer, sizeof(inputBuffer));
+	
+	int headerId = -1;
+	int globalIndex = 0;
+	for (const auto& [cellName, effects] : infoList)
 	{
-		for (int i = 0; i < infoList.size(); i++)
+		if (strlen(inputBuffer) > 0 && cellName.find(inputBuffer) == std::string::npos)
+			continue;
+
+		headerId++;
+		std::string headerUniqueId = cellName + std::to_string(headerId);
+
+		if (ImGui::CollapsingHeader((cellName + "##" + headerUniqueId + "##Header").c_str(), ImGuiTreeNodeFlags_AllowOverlap | ImGuiTreeNodeFlags_AllowItemOverlap))
 		{
-			if (infoList[i].effectName != "")
+			ImGui::BeginTable(("EffectsTable##" + headerUniqueId).c_str(), 6, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg);
+			ImGui::TableSetupColumn(("Effect##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("State##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("StartTime##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("StopTime##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("Actions##" + headerUniqueId).c_str());
+			ImGui::TableSetupColumn(("Cell##" + headerUniqueId).c_str());
+			ImGui::TableHeadersRow();
+
+			for (int i = 0; i < effects.size(); i++, globalIndex++)
 			{
+				TimeToggleInformation info = effects[i];
 				bool valueChanged = false;
-				// Create unique IDs for each element
-				std::string effectComboID = "Effect##Time" + std::to_string(i);
-				std::string effectStateID = "Toggle On##Time" + std::to_string(i);
-				std::string removeID = "Remove Effect##Time" + std::to_string(i);
-				std::string startTimeID = "StartTime##Time" + std::to_string(i);
-				std::string stopTimeID = "StopTime##Time" + std::to_string(i);
 
-				std::string currentEffectName = infoList[i].effectName;
-				float currentStartTime = infoList[i].startTime;
-				float currentStopTime = infoList[i].stopTime;
-				bool currentEffectState = infoList[i].state;
+				std::string effectComboId = "Effect##" + headerUniqueId + std::to_string(i);
+				std::string effectStateId = "State##" + headerUniqueId + std::to_string(i);
+				std::string startTimeId = "StartTime##" + headerUniqueId + std::to_string(i);
+				std::string stopTimeId = "StopTime##" + headerUniqueId + std::to_string(i);
+				std::string removeId = "RemoveEffect##" + headerUniqueId + std::to_string(i);
+				std::string editId = "EditEffect##" + headerUniqueId + std::to_string(i);
 
-				if (CreateCombo(effectComboID.c_str(), currentEffectName, m_effects, ImGuiComboFlags_None)) { valueChanged = true; }
+				std::string currentEffectName = info.effectName;
+				float currentStartTime = info.startTime;
+				float currentStopTime = info.stopTime;
+				bool currentEffectState = info.state;
+
+				int startHours = static_cast<int>(currentStartTime);
+				int startMinutes = static_cast<int>((currentStartTime - startHours) * 100);
+				int stopHours = static_cast<int>(currentStopTime);
+				int stopMinutes = static_cast<int>((currentStopTime - stopHours) * 100);
+
+				static char startHourStr[3] = "00";
+				static char startMinuteStr[3] = "00";
+				static char stopHourStr[3] = "00";
+				static char stopMinuteStr[3] = "00";
+
+				snprintf(startHourStr, sizeof(startHourStr), "%02d", startHours);
+				snprintf(startMinuteStr, sizeof(startMinuteStr), "%02d", startMinutes);
+				snprintf(stopHourStr, sizeof(stopHourStr), "%02d", stopHours);
+				snprintf(stopMinuteStr, sizeof(stopMinuteStr), "%02d", stopMinutes);
+
+				ImGui::TableNextRow();
+				ImGui::TableNextColumn();
+				if (CreateCombo(effectComboId.c_str(), currentEffectName, m_effects, ImGuiComboFlags_None)) { valueChanged = true; }
+				ImGui::TableNextColumn();
+				if (ImGui::Checkbox(effectStateId.c_str(), &currentEffectState)) { valueChanged = true; }
+
+				// Start time
+				ImGui::TableNextColumn();
+				ImGui::PushItemWidth(35);
+				if (ImGui::InputText(("##StartHours" + startTimeId).c_str(), startHourStr, sizeof(startHourStr), ImGuiInputTextFlags_CharsDecimal)) { valueChanged = true; }
+				ClampInputValue(startHourStr, 23);
+				if (strcmp(startHourStr, "00") == 0 && strlen(startHourStr) == 0) strcpy(startHourStr, "0");
 				ImGui::SameLine();
-				if (ImGui::Checkbox(effectStateID.c_str(), &currentEffectState)) { valueChanged = true; }
-				int startHour = static_cast<int>(currentStartTime);
-				int startMinute = static_cast<int>((currentStartTime - startHour) * 100); // Extract minutes
-				int stopHour = static_cast<int>(currentStopTime);
-				int stopMinute = static_cast<int>((currentStopTime - stopHour) * 100); // Extract minutes
-
-				bool timeIsValid = true;
-
-				ImGui::SetNextItemWidth(150.0f);
-				if (ImGui::SliderInt(("Start Hour##" + std::to_string(i)).c_str(), &startHour, 0, 23)) {
-					valueChanged = true;
-				}
-
+				ImGui::Text(":");
 				ImGui::SameLine();
-				ImGui::SetNextItemWidth(150.0f);
-				if (ImGui::SliderInt(("Start Minute##" + std::to_string(i)).c_str(), &startMinute, 0, 59)) {
-					valueChanged = true;
-				}
+				if (ImGui::InputText(("##StartMinutes" + startTimeId).c_str(), startMinuteStr, sizeof(startMinuteStr), ImGuiInputTextFlags_CharsDecimal)) { valueChanged = true; }
+				ClampInputValue(startMinuteStr, 59);
+				if (strcmp(startMinuteStr, "00") == 0 && strlen(startMinuteStr) == 0) strcpy(startMinuteStr, "0");
+				ImGui::PopItemWidth();
 
-				ImGui::Dummy(ImVec2(0.0f, 5.0f));
-
-				ImGui::SetNextItemWidth(150.0f);
-				if (ImGui::SliderInt(("Stop Hour##" + std::to_string(i)).c_str(), &stopHour, 0, 23)) {
-					valueChanged = true;
-				}
-
+				// Stop Time
+				ImGui::TableNextColumn();
+				ImGui::PushItemWidth(35);
+				if (ImGui::InputText(("##StopHours" + stopTimeId).c_str(), stopHourStr, sizeof(stopHourStr), ImGuiInputTextFlags_CharsDecimal)) { valueChanged = true; }
+				ClampInputValue(stopHourStr, 23);
+				if (strcmp(stopHourStr, "00") == 0 && strlen(stopHourStr) == 0) strcpy(stopHourStr, "0");
 				ImGui::SameLine();
-				ImGui::SetNextItemWidth(150.0f);
-				if (ImGui::SliderInt(("Stop Minute##" + std::to_string(i)).c_str(), &stopMinute, 0, 59)) {
-					valueChanged = true;
-				}
+				ImGui::Text(":");
+				ImGui::SameLine();
+				if (ImGui::InputText(("##StopMinutes" + stopTimeId).c_str(), stopMinuteStr, sizeof(stopMinuteStr), ImGuiInputTextFlags_CharsDecimal)) { valueChanged = true; }
+				ClampInputValue(stopMinuteStr, 59);
+				if (strcmp(stopMinuteStr, "00") == 0 && strlen(stopMinuteStr) == 0) strcpy(stopMinuteStr, "0");
+				ImGui::PopItemWidth();
 
-				// Combine hours and minutes back into floating-point times
-				currentStartTime = startHour + (startMinute / 100.0f);
-				currentStopTime = stopHour + (stopMinute / 100.0f);
+				// Convert baby
+				startHours = strlen(startHourStr) > 0 ? std::stoi(startHourStr) : 0;
+				startMinutes = strlen(startMinuteStr) > 0 ? std::stoi(startMinuteStr) : 0;
+				stopHours = strlen(stopHourStr) > 0 ? std::stoi(stopHourStr) : 0;
+				stopMinutes = strlen(stopMinuteStr) > 0 ? std::stoi(stopMinuteStr) : 0;
 
-				// Validate that stop time is after start time
-				if (currentStartTime > currentStopTime) {
-					timeIsValid = false;
-				}
+				currentStartTime = startHours + (startMinutes / 100.0f);
+				currentStopTime = stopHours + (stopMinutes / 100.0f);
 
-				if (!timeIsValid) {
-					ImGui::TextColored(ImVec4(1.0f, 0.0f, 0.0f, 1.0f), "Invalid time range!");
-				}
-
-
-				if (ImGui::Button(removeID.c_str()))
+				if (currentStartTime > currentStopTime)
 				{
+					ImGui::TextColored(ImVec4(1, 0, 0, 1), "Invalid Time Range");
+				}
+
+				ImGui::TableNextColumn();
+				if (ImGui::Button(removeId.c_str()))
+				{
+					updatedInfoList[cellName].erase(
+						std::remove_if(updatedInfoList[cellName].begin(), updatedInfoList[cellName].end(),
+							[&info](const TimeToggleInformation& timeInfo) {
+								return timeInfo.effectName == info.effectName;
+							}
+						),
+						updatedInfoList[cellName].end()
+					);
+
+					if (updatedInfoList[cellName].empty())
+					{
+						updatedInfoList.erase(cellName);
+					}
+
+					globalIndex--;
 					continue;
 				}
+				if (ImGui::Button(editId.c_str())) { ImGui::Text("I do nothing"); }
+				ImGui::TableNextColumn();
+				ImGui::Text("%s", cellName.c_str());
 
 				if (valueChanged)
 				{
-					infoList[i].effectName = currentEffectName;
-					infoList[i].startTime = currentStartTime;
-					infoList[i].stopTime = currentStopTime;
-					infoList[i].state = currentEffectState;
-				}
+					info.effectName = currentEffectName;
+					info.startTime = currentStartTime;
+					info.stopTime = currentStopTime;
+					info.state = currentEffectState;
 
-				updatedInfoList.push_back(infoList[i]);
+					updatedInfoList[cellName].at(i) = info;
+				}
 			}
+			ImGui::EndTable();
 		}
 	}
+
 	Manager::GetSingleton()->setTimeToggleInfo(updatedInfoList);
 
 	ImGui::SeparatorText("Add New");
@@ -371,16 +428,9 @@ void Menu::SpawnTimeSettings(ImGuiID dockspace_id)
 	// Add new effect
 	if (ImGui::Button("Add New Effect"))
 	{
-		TimeToggleInformation info;
-		info.effectName = "Default.fx";
-		info.startTime = 0.0f;
-		info.stopTime = 0.0f;
-		info.state = false;
-
-		updatedInfoList.push_back(info);
-		Manager::GetSingleton()->setTimeToggleInfo(updatedInfoList);
+		ImGui::OpenPopup("Create Time Entry");
 	}
-
+	AddNewTime(updatedInfoList);
 	ImGui::End();
 }
 
@@ -589,6 +639,162 @@ void Menu::SpawnWeatherSettings(ImGuiID dockspace_id)
 	ImGui::End();
 }
 
+void Menu::AddNewTime(std::map<std::string, std::vector<TimeToggleInformation>>& updatedInfoList)
+{
+	static std::string currentWorldSpace;
+	static std::string currentEffect;
+	static float currentStartTime;
+	static float currentStopTime;
+	static bool toggled = false;
+
+	static char startHourStr[3] = "00", startMinuteStr[3] = "00";
+	static char stopHourStr[3] = "00", stopMinuteStr[3] = "00";
+
+	if (ImGui::BeginPopupModal("Create Time Entry", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		// Reset static variables for each popup
+		if (ImGui::IsWindowAppearing())
+		{
+			currentWorldSpace.clear();
+			currentEffect.clear();
+			toggled = false;
+			strcpy(startHourStr, "00");
+			strcpy(startMinuteStr, "00");
+			strcpy(stopHourStr, "00");
+			strcpy(stopMinuteStr, "00");
+		}
+
+		ImGui::Text("Select a Worldspace");
+		CreateCombo("Worldspace", currentWorldSpace, m_worldSpaces, ImGuiComboFlags_None);
+		ImGui::Separator();
+
+		// Start time
+		ImGui::TableNextColumn();
+		ImGui::PushItemWidth(35);
+		ImGui::InputText("##StartHours", startHourStr, sizeof(startHourStr), ImGuiInputTextFlags_CharsDecimal);
+		ClampInputValue(startHourStr, 23);
+		if(strcmp(startHourStr, "00") == 0 && strlen(startHourStr) == 0) strcpy(startHourStr, "0");
+		ImGui::SameLine();
+		ImGui::Text(":");
+		ImGui::SameLine();
+		ImGui::InputText("##StartMinutes", startMinuteStr, sizeof(startMinuteStr), ImGuiInputTextFlags_CharsDecimal);
+		ClampInputValue(startMinuteStr, 59);
+		if (strcmp(startMinuteStr, "00") == 0 && strlen(startMinuteStr) == 0) strcpy(startMinuteStr, "0");
+		ImGui::PopItemWidth();
+
+		// Stop Time
+		ImGui::TableNextColumn();
+		ImGui::PushItemWidth(35);
+		ImGui::InputText("##StopHours", stopHourStr, sizeof(stopHourStr), ImGuiInputTextFlags_CharsDecimal);
+		ClampInputValue(stopHourStr, 23);
+		if (strcmp(stopHourStr, "00") == 0 && strlen(stopHourStr) == 0) strcpy(stopHourStr, "0");
+		ImGui::SameLine();
+		ImGui::Text(":");
+		ImGui::SameLine();
+		ImGui::InputText("##StopMinutes", stopMinuteStr, sizeof(stopMinuteStr), ImGuiInputTextFlags_CharsDecimal);
+		ClampInputValue(stopMinuteStr, 59);
+		if (strcmp(stopMinuteStr, "00") == 0 && strlen(stopMinuteStr) == 0) strcpy(stopMinuteStr, "0");
+		ImGui::PopItemWidth();
+
+		ImGui::Separator();
+		ImGui::Text("Select the Effect");
+		CreateCombo("Effect", currentEffect, m_effects, ImGuiComboFlags_None);
+		ImGui::SameLine();
+		ImGui::Checkbox("Toggled On", &toggled);
+
+		ImGui::Separator();
+		if (ImGui::Button("Finish"))
+		{
+			// Convert the input text to integers
+			int startHours = strlen(startHourStr) > 0 ? std::stoi(startHourStr) : 0;
+			int startMinutes = strlen(startMinuteStr) > 0 ? std::stoi(startMinuteStr) : 0;
+			int stopHours = strlen(stopHourStr) > 0 ? std::stoi(stopHourStr) : 0;
+			int stopMinutes = strlen(stopMinuteStr) > 0 ? std::stoi(stopMinuteStr) : 0;
+
+			// Convert hours and minutes into float (HH.MM) format
+			currentStartTime = startHours + (startMinutes / 100.0f);
+			currentStopTime = stopHours + (stopMinutes / 100.0f);
+
+			TimeToggleInformation info;
+			info.effectName = currentEffect;
+			info.startTime = currentStartTime;
+			info.stopTime = currentStopTime;
+			info.state = toggled;
+
+			updatedInfoList[currentWorldSpace].emplace_back(info);
+			Manager::GetSingleton()->setTimeToggleInfo(updatedInfoList);
+
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
+void Menu::ClampInputValue(char* inputStr, int maxVal)
+{
+	int val = strlen(inputStr) > 0 ? std::stoi(inputStr) : 0;
+	if (val > maxVal)
+	{
+		val = maxVal;
+		snprintf(inputStr, 3, "%02d", val);
+	}
+}
+
+void Menu::AddNewInterior(std::map<std::string, std::vector<InteriorToggleInformation>>& updatedInfoList)
+{
+	static std::string currentCell;
+	static std::string currentEffect;
+	static bool toggled = false;
+
+	if (ImGui::BeginPopupModal("Create Interior Entry", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		// Reset static variables for each popup
+		if (ImGui::IsWindowAppearing())
+		{
+			currentCell.clear();
+			currentEffect.clear();
+			toggled = false;
+		}
+
+		ImGui::Text("Select an Interior Cell");
+		CreateCombo("Cell", currentCell, m_interiorCells, ImGuiComboFlags_None);
+		ImGui::Separator();
+
+		ImGui::Text("Select the Effect");
+		CreateCombo("Effect", currentEffect, m_effects, ImGuiComboFlags_None);
+		ImGui::SameLine();
+		ImGui::Checkbox("Toggled On", &toggled);
+
+		ImGui::Separator();
+		if (ImGui::Button("Finish"))
+		{
+			InteriorToggleInformation info;
+			info.effectName = currentEffect;
+			info.state = toggled;
+
+			updatedInfoList[currentCell].emplace_back(info);
+			Manager::GetSingleton()->setInteriorToggleInfo(updatedInfoList);
+
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::SameLine();
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
+	}
+}
+
 void Menu::AddNewWeather(std::map<std::string, std::vector<WeatherToggleInformation>>& updatedInfoList)
 {
 	static std::string currentWorldSpace;
@@ -628,54 +834,6 @@ void Menu::AddNewWeather(std::map<std::string, std::vector<WeatherToggleInformat
 
 			updatedInfoList[currentWorldSpace].emplace_back(info);
 			Manager::GetSingleton()->setWeatherToggleInfo(updatedInfoList);
-
-			ImGui::CloseCurrentPopup();
-		}
-
-		ImGui::SameLine();
-		if (ImGui::Button("Cancel"))
-		{
-			ImGui::CloseCurrentPopup();
-		}
-
-		ImGui::EndPopup();
-	}
-}
-
-void Menu::AddNewInterior(std::map<std::string, std::vector<InteriorToggleInformation>>& updatedInfoList)
-{
-	static std::string currentCell;
-	static std::string currentEffect;
-	static bool toggled = false;
-
-	if (ImGui::BeginPopupModal("Create Interior Entry", NULL, ImGuiWindowFlags_AlwaysAutoResize))
-	{
-		// Reset static variables for each popup
-		if (ImGui::IsWindowAppearing())
-		{
-			currentCell.clear();
-			currentEffect.clear();
-			toggled = false;
-		}
-
-		ImGui::Text("Select an Interior Cell");
-		CreateCombo("Cell", currentCell, m_interiorCells, ImGuiComboFlags_None);
-		ImGui::Separator();
-
-		ImGui::Text("Select the Effect");
-		CreateCombo("Effect", currentEffect, m_effects, ImGuiComboFlags_None);
-		ImGui::SameLine();
-		ImGui::Checkbox("Toggled On", &toggled);
-
-		ImGui::Separator();
-		if (ImGui::Button("Finish"))
-		{
-			InteriorToggleInformation info;
-			info.effectName = currentEffect;
-			info.state = toggled;
-
-			updatedInfoList[currentCell].emplace_back(info);
-			Manager::GetSingleton()->setInteriorToggleInfo(updatedInfoList);
 
 			ImGui::CloseCurrentPopup();
 		}
