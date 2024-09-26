@@ -53,6 +53,31 @@ bool Manager::serializeJSONPreset(const std::string& presetName)
 	return true;
 }
 
+void Manager::parseINI()
+{
+	const auto path = std::format("Data/SKSE/Plugins/{}.ini", Plugin::NAME.data());
+
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	ini.LoadFile(path.c_str());
+
+	Utils::loadINIStringSetting(ini, "Preset", "LastPreset", m_lastPresetName);
+
+}
+
+void Manager::serializeINI()
+{
+	const auto path = std::format("Data/SKSE/Plugins/{}.ini", Plugin::NAME.data());
+
+	CSimpleIniA ini;
+	ini.SetUnicode();
+	ini.LoadFile(path.c_str());
+
+	ini.SetValue("Preset", "LastPreset", m_lastPresetName.c_str());
+	ini.SaveFile(path.c_str());
+
+}
+
 std::vector<std::string> Manager::enumeratePresets() const
 {
 	std::vector<std::string> presets;
@@ -163,7 +188,7 @@ std::vector<std::string> Manager::enumerateInteriorCells() const
 }
 
 
-std::string Manager::getPresetPath(const std::string& presetName)
+std::string Manager::getPresetPath(const std::string& presetName) const
 {
 	constexpr const char* configDirectory = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets";
 

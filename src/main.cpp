@@ -77,6 +77,13 @@ void MessageListener(SKSE::MessagingInterface::Message* message)
 	case SKSE::MessagingInterface::kPostPostLoad:
 	{
 		Hook::Install();
+		const auto manager = Manager::GetSingleton();
+		manager->parseINI();
+		if (!manager->parseJSONPreset(manager->getLastPreset()))
+		{
+			manager->setLastPreset("");
+		}
+
 		RE::UI::GetSingleton()->AddEventSink<RE::MenuOpenCloseEvent>(Event::GetSingleton());
 	}
 	break;

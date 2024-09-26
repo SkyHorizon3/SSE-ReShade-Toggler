@@ -77,12 +77,12 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 
 	if (ImGui::Button("Load Preset"))
 	{
-		const std::string selectedPresetPath = "Data\\SKSE\\Plugins\\ReShadeEffectTogglerPresets\\" + m_selectedPreset;
+		const std::string selectedPresetPath = Manager::GetSingleton()->getPresetPath(m_selectedPreset);
 		if (std::filesystem::exists(selectedPresetPath))
 		{
-			auto start = std::chrono::high_resolution_clock::now();
-			bool success = Manager::GetSingleton()->parseJSONPreset(m_selectedPreset);
-			auto end = std::chrono::high_resolution_clock::now();
+			const auto start = std::chrono::high_resolution_clock::now();
+			const bool success = Manager::GetSingleton()->parseJSONPreset(m_selectedPreset);
+			const auto end = std::chrono::high_resolution_clock::now();
 			std::chrono::duration<double, std::milli> duration = end - start;
 
 			if (!success)
@@ -92,6 +92,9 @@ void Menu::SpawnMainPage(ImGuiID dockspace_id)
 			}
 			else
 			{
+				Manager::GetSingleton()->setLastPreset(m_selectedPreset);
+				Manager::GetSingleton()->serializeINI();
+
 				m_lastMessage = "Successfully loaded preset: '" + m_selectedPreset + "'! Took: " + std::to_string(duration.count()) + "ms";
 				m_lastMessageColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
 			}
@@ -281,7 +284,7 @@ void Menu::SpawnTimeSettings(ImGuiID dockspace_id)
 	std::map<std::string, std::vector<TimeToggleInformation>> updatedInfoList = infoList;
 	static char inputBuffer[256] = "";
 	ImGui::InputTextWithHint("##Search", "Search Worldspace...", inputBuffer, sizeof(inputBuffer));
-	
+
 	int headerId = -1;
 	int globalIndex = 0;
 	for (const auto& [cellName, effects] : infoList)
@@ -388,10 +391,10 @@ void Menu::SpawnTimeSettings(ImGuiID dockspace_id)
 				{
 					updatedInfoList[cellName].erase(
 						std::remove_if(updatedInfoList[cellName].begin(), updatedInfoList[cellName].end(),
-							[&info](const TimeToggleInformation& timeInfo) {
-								return timeInfo.effectName == info.effectName;
-							}
-						),
+						[&info](const TimeToggleInformation& timeInfo) {
+							return timeInfo.effectName == info.effectName;
+						}
+					),
 						updatedInfoList[cellName].end()
 					);
 
@@ -673,7 +676,7 @@ void Menu::AddNewTime(std::map<std::string, std::vector<TimeToggleInformation>>&
 		ImGui::PushItemWidth(35);
 		ImGui::InputText("##StartHours", startHourStr, sizeof(startHourStr), ImGuiInputTextFlags_CharsDecimal);
 		ClampInputValue(startHourStr, 23);
-		if(strcmp(startHourStr, "00") == 0 && strlen(startHourStr) == 0) strcpy(startHourStr, "0");
+		if (strcmp(startHourStr, "00") == 0 && strlen(startHourStr) == 0) strcpy(startHourStr, "0");
 		ImGui::SameLine();
 		ImGui::Text(":");
 		ImGui::SameLine();
@@ -910,9 +913,9 @@ void Menu::SaveFile()
 				// Use the provided filename or the default if empty
 				std::string filename = (m_inputBuffer[0] != '\0') ? m_inputBuffer : "NewPreset";
 				filename = filename + ".json";
-				auto start = std::chrono::high_resolution_clock::now();
-				bool success = Manager::GetSingleton()->serializeJSONPreset(filename);
-				auto end = std::chrono::high_resolution_clock::now();
+				const auto start = std::chrono::high_resolution_clock::now();
+				const bool success = Manager::GetSingleton()->serializeJSONPreset(filename);
+				const auto end = std::chrono::high_resolution_clock::now();
 				std::chrono::duration<double, std::milli> duration = end - start;
 
 				if (!success)
@@ -922,6 +925,10 @@ void Menu::SaveFile()
 				}
 				else
 				{
+					m_selectedPreset = filename;
+					Manager::GetSingleton()->setLastPreset(m_selectedPreset);
+					Manager::GetSingleton()->serializeINI();
+
 					m_lastMessage = "Successfully saved Preset: '" + filename + "'! Took: " + std::to_string(duration.count()) + "ms";
 					m_lastMessageColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
 				}

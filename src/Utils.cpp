@@ -44,5 +44,14 @@ namespace Utils
 		return filename.data();
 	}
 
+	void loadINIStringSetting(const CSimpleIniA& a_ini, const char* a_sectionName, const char* a_settingName, std::string& a_setting)
+	{
+		const char* found = nullptr;
+		found = a_ini.GetValue(a_sectionName, a_settingName);
+		if (found)
+		{
+			a_setting = a_ini.GetValue(a_sectionName, a_settingName);
+		}
+	}
 
 }

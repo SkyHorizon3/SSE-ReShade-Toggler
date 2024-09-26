@@ -42,6 +42,10 @@ public:
 
 	bool serializeJSONPreset(const std::string& presetName);
 
+	void parseINI();
+
+	void serializeINI();
+
 	std::vector<std::string> enumeratePresets() const;
 	std::vector<std::string> enumerateEffects() const;
 	std::vector<std::string> enumerateActiveEffects() const;
@@ -69,6 +73,10 @@ public:
 	std::map<std::string, std::vector<InteriorToggleInformation>> getInteriorToggleInfo() const { return m_interiorToggleInfo; }
 	void setInteriorToggleInfo(const std::map<std::string, std::vector<InteriorToggleInformation>>& info) { m_interiorToggleInfo = info; }
 
+	std::string getLastPreset() const { return m_lastPresetName; }
+	void setLastPreset(const std::string& updatedPreset) { m_lastPresetName = updatedPreset; }
+
+	std::string getPresetPath(const std::string& presetName) const;
 private:
 
 	bool timeWithinRange(const float& startTime, const float& stopTime) const;
@@ -79,8 +87,6 @@ private:
 
 	bool allowtoggleEffectInterior(const InteriorToggleInformation& cachedinterior, const std::map<std::string, std::vector<InteriorToggleInformation>>::iterator& it) const;
 
-	std::string getPresetPath(const std::string& presetName);
-
 	std::string constructKey(const RE::TESForm* form) const;
 
 	void toggleEffect(const char* technique, bool state) const;
@@ -89,6 +95,9 @@ private:
 	std::map<std::string, std::vector<WeatherToggleInformation>> m_weatherToggleInfo;
 	std::map<std::string, std::vector<InteriorToggleInformation>> m_interiorToggleInfo;
 	std::map<std::string, std::vector<TimeToggleInformation>> m_timeToggleInfo;
+
+	// INI settings
+	std::string m_lastPresetName = "";
 
 private:
 	template<typename T>
