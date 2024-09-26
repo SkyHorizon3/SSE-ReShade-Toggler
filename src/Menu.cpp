@@ -918,6 +918,10 @@ void Menu::SaveFile()
 				const auto end = std::chrono::high_resolution_clock::now();
 				std::chrono::duration<double, std::milli> duration = end - start;
 
+				// update preset list
+				m_presets.clear();
+				m_presets = Manager::GetSingleton()->enumeratePresets();
+
 				if (!success)
 				{
 					m_lastMessage = "Failed to save preset '" + filename + "'.";
@@ -932,10 +936,6 @@ void Menu::SaveFile()
 					m_lastMessage = "Successfully saved Preset: '" + filename + "'! Took: " + std::to_string(duration.count()) + "ms";
 					m_lastMessageColor = ImVec4(0.0f, 1.0f, 0.0f, 1.0f);
 				}
-
-				//Refresh
-				m_presets.clear();
-				m_presets = Manager::GetSingleton()->enumeratePresets();
 
 				ImGui::CloseCurrentPopup();
 				m_saveConfigPopupOpen = false;

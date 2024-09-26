@@ -9,7 +9,7 @@ bool Manager::parseJSONPreset(const std::string& presetName)
 	std::ifstream openFile(fullPath);
 	if (!openFile.is_open())
 	{
-		SKSE::log::error("Couldn't load preset {}!", fullPath);
+		//SKSE::log::error("Couldn't load preset {}!", fullPath);
 		return false;
 	}
 
@@ -71,7 +71,6 @@ void Manager::serializeINI()
 
 	CSimpleIniA ini;
 	ini.SetUnicode();
-	ini.LoadFile(path.c_str());
 
 	ini.SetValue("Preset", "LastPreset", m_lastPresetName.c_str());
 	ini.SaveFile(path.c_str());
