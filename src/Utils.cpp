@@ -46,11 +46,9 @@ namespace Utils
 
 	void loadINIStringSetting(const CSimpleIniA& a_ini, const char* a_sectionName, const char* a_settingName, std::string& a_setting)
 	{
-		const char* found = nullptr;
-		found = a_ini.GetValue(a_sectionName, a_settingName);
-		if (found)
+		if (const char* found = a_ini.GetValue(a_sectionName, a_settingName); found)
 		{
-			a_setting = a_ini.GetValue(a_sectionName, a_settingName);
+			a_setting = found;
 		}
 	}
 
