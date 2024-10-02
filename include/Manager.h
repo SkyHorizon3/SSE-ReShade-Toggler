@@ -32,6 +32,12 @@ struct TimeToggleInformation
 	bool isToggled = false;
 };
 
+struct UniformInfo
+{
+	std::string uniformName;
+	reshade::api::effect_uniform_variable uniformVariable;
+};
+
 class Manager : public ISingleton<Manager>
 {
 	// class for main functions used for all features
@@ -52,6 +58,9 @@ public:
 	std::vector<std::string> enumerateMenus() const;
 	std::vector<std::string> enumerateWorldSpaces() const;
 	std::vector<std::string> enumerateInteriorCells() const;
+	std::vector<UniformInfo> enumerateUniformNames(const std::string& effectName);
+
+	std::string getUniformType(const reshade::api::effect_uniform_variable& uniformVariable);
 
 	void toggleEffectMenu(const std::unordered_set<std::string>& openMenus);
 

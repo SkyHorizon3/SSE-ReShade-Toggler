@@ -53,6 +53,7 @@ private:
 	void AddNewInterior(std::map<std::string, std::vector<InteriorToggleInformation>>& updatedInfoList);
 	void AddNewTime(std::map<std::string, std::vector<TimeToggleInformation>>& updatedInfoList);
 	void ClampInputValue(char* inputStr, int maxVal);
+	void EditValues(const std::string& effectName);
 private:
 
 	char m_inputBuffer[256] = { 0 };

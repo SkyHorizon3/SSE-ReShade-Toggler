@@ -205,6 +205,68 @@ std::string Manager::constructKey(const RE::TESForm* form) const
 	return std::format("{:08X}|{}|{}", Utils::getTrimmedFormID(form), form->GetFormEditorID(), Utils::getModName(form));
 }
 
+std::vector<UniformInfo> Manager::enumerateUniformNames(const std::string& effectName)
+{
+	std::vector<UniformInfo> uniforms;
+
+	s_pRuntime->enumerate_uniform_variables(effectName.c_str(), [&](reshade::api::effect_runtime* runtime, reshade::api::effect_uniform_variable uniform)
+		{
+			char name[256];
+			size_t nameSize = sizeof(name);
+			runtime->get_uniform_variable_name(uniform, name, &nameSize);
+
+			SKSE::log::info("Retrieved variable: {}", name);
+
+			uniforms.emplace_back(name, uniform);
+		});
+
+	return uniforms;
+}
+
+std::string Manager::getUniformType(const reshade::api::effect_uniform_variable& uniformVariable)
+{
+	using format = reshade::api::format;
+	reshade::api::format baseType;
+	uint32_t rows = 0, columns = 0, arrayLength = 0;
+
+	// Call the API function to get the type information
+	s_pRuntime->get_uniform_variable_type(uniformVariable, &baseType, &rows, &columns, &arrayLength);
+
+	// Convert the base type to a string representation
+	std::string typeName;
+
+	switch (baseType)
+	{
+	case format::r32_float:
+		typeName = "float";
+		break;
+	case format::r32_sint:
+		typeName = "int";
+		break;
+	case format::r32_uint:
+		typeName = "unsigned int";
+		break;
+	case format::r32_typeless:
+		typeName = "typeless";
+		break;
+	default:
+		typeName = "unknown";
+		break;
+	}
+
+	// Append dimensions if applicable
+	if (rows > 0 && columns > 0)
+	{
+		typeName += " (" + std::to_string(rows) + "x" + std::to_string(columns) + ")";
+	}
+	else if (arrayLength > 0)
+	{
+		typeName += " [Array of " + std::to_string(arrayLength) + "]";
+	}
+
+	return typeName;
+}
+
 void Manager::toggleEffectMenu(const std::unordered_set<std::string>& openMenus)
 {
 	for (auto& menuInfo : m_menuToggleInfo)

@@ -149,6 +149,7 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 
 	int headerId = -1;
 	int globalIndex = 0;
+	static std::string currentEditingEffect;
 
 	for (const auto& [menuName, effects] : menuEffectMap)
 	{
@@ -192,7 +193,12 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 					globalIndex--;
 					continue;
 				}
-				if (ImGui::Button(editId.c_str())) { ImGui::Text("I do nothing"); }
+				if (ImGui::Button(editId.c_str())) 
+				{
+					currentEditingEffect = currentEffectName;
+					ImGui::OpenPopup("Edit Effect Values");
+				}
+
 				ImGui::TableNextColumn();
 				ImGui::Text("%s", menuName.c_str());
 
@@ -203,7 +209,10 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 					info.state = currentEffectState;
 					updatedInfoList[globalIndex] = info;
 				}
+
 			}
+
+			EditValues(currentEditingEffect);
 			ImGui::EndTable();
 		}
 	}
@@ -747,6 +756,36 @@ void Menu::ClampInputValue(char* inputStr, int maxVal)
 	{
 		val = maxVal;
 		snprintf(inputStr, 3, "%02d", val);
+	}
+}
+
+void Menu::EditValues(const std::string& effectName)
+{
+	if (ImGui::BeginPopupModal("Edit Effect Values", NULL, ImGuiWindowFlags_AlwaysAutoResize))
+	{
+		ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
+		ImGui::Text(("Editing " + effectName + ":").c_str());
+
+
+		// Get the uniform information
+		std::vector<UniformInfo> uniforms = Manager::GetSingleton()->enumerateUniformNames(effectName);
+
+		// Loop through each uniform to display its name and type
+		for (const auto& uniformInfo : uniforms)
+		{
+			// Get the type of the uniform variable
+			std::string type = Manager::GetSingleton()->getUniformType(uniformInfo.uniformVariable);
+
+			// Display the uniform name and its type
+			ImGui::Text("%s: %s", uniformInfo.uniformName.c_str(), type.c_str());
+		}
+
+		if (ImGui::Button("Cancel"))
+		{
+			ImGui::CloseCurrentPopup();
+		}
+
+		ImGui::EndPopup();
 	}
 }
 
