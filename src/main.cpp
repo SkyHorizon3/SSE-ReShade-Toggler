@@ -134,6 +134,8 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 {
 	SKSE::Init(skse);
 
+	SKSE::AllocTrampoline(28);
+
 	SetupLog();
 
 	if (!Load())
