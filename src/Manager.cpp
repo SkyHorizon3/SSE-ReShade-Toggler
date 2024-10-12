@@ -222,6 +222,27 @@ void Manager::toggleEffectMenu(const std::unordered_set<std::string>& openMenus)
 			toggleEffect(menuInfo.effectName.c_str(), !menuInfo.state);
 			menuInfo.isToggled = false;
 		}
+
+		for (auto& uniform : menuInfo.uniforms)
+		{
+			// Ugly, but works
+			if (!uniform.floatValues.empty())
+			{
+				Manager::GetSingleton()->setUniformValue<float>(uniform.uniformVariable, uniform.floatValues.data(), uniform.floatValues.size());
+			}
+			else if (!uniform.intValues.empty())
+			{
+				Manager::GetSingleton()->setUniformValue<int>(uniform.uniformVariable, uniform.intValues.data(), uniform.intValues.size());
+			}
+			else if (!uniform.uintValues.empty())
+			{
+				Manager::GetSingleton()->setUniformValue<unsigned int>(uniform.uniformVariable, uniform.uintValues.data(), uniform.uintValues.size());
+			}
+			else if (!uniform.boolValues.empty())
+			{
+				Manager::GetSingleton()->setUniformValue<bool>(uniform.uniformVariable, reinterpret_cast<bool*>(uniform.boolValues.data()), 1);
+			}
+		}
 	}
 }
 
@@ -476,6 +497,20 @@ void Manager::toggleEffect(const char* effect, const bool state) const
 }
 
 #pragma region TemplateTomfoolery
+template<>
+struct glz::meta<UniformInfo> 
+{
+	using T = UniformInfo;
+	static constexpr auto value = object(
+		"UniformName", &T::uniformName,
+		"BoolValue", &T::boolValues,
+		"IntValues", &T::intValues,
+		"FloatValues", &T::floatValues,
+		"UIntValues", &T::uintValues
+	);
+};
+
+
 template <typename T>
 bool Manager::serializeVector(const std::string& key, const std::vector<T>& vec, std::string& output)
 {
@@ -723,9 +758,42 @@ std::vector<UniformInfo> Manager::enumerateUniformNames(const std::string& effec
 			size_t nameSize = sizeof(name);
 			runtime->get_uniform_variable_name(uniform, name, &nameSize);
 
-			SKSE::log::info("Retrieved variable: {}", name);
+			// Create a UniformInfo object
+			UniformInfo uniformInfo(name, uniform);
 
-			uniforms.emplace_back(name, uniform);
+			// Fetch the type of the uniform
+			std::string type = getUniformType(uniform);
+
+			// Retrieve the current value based on the type
+			if (type.find("bool") != std::string::npos)
+			{
+				bool value = false;
+				getUniformValue(uniform, &value, 1);
+				uniformInfo.setBoolValues(reinterpret_cast<char*>(value), 1);
+			}
+			else if (type.find("float") != std::string::npos)
+			{
+				float values[4] = { 0.0f };
+				int numElements = std::min(4, getUniformDimension(uniform));
+				getUniformValue(uniform, values, numElements);
+				uniformInfo.setFloatValues(values, numElements);
+			}
+			else if (type.find("int") != std::string::npos)
+			{
+				int values[4] = { 0 };
+				int numElements = std::min(4, getUniformDimension(uniform));
+				getUniformValue(uniform, values, numElements);
+				uniformInfo.setIntValues(values, numElements);
+			}
+			else if (type.find("unsigned int") != std::string::npos)
+			{
+				unsigned int values[4] = { 0 };
+				int numElements = std::min(4, getUniformDimension(uniform));
+				getUniformValue(uniform, values, numElements);
+				uniformInfo.setUIntValues(values, numElements);
+			}
+
+			uniforms.emplace_back(std::move(uniformInfo));
 		});
 
 	return uniforms;

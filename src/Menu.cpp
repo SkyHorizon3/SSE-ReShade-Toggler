@@ -150,6 +150,7 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 	int headerId = -1;
 	int globalIndex = 0;
 	static std::string currentEditingEffect;
+	static int editingEffectIndex = -1;
 
 	for (const auto& [menuName, effects] : menuEffectMap)
 	{
@@ -167,7 +168,6 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 			ImGui::TableSetupColumn(("Actions##" + headerUniqueId).c_str());
 			ImGui::TableSetupColumn(("MenuName##" + headerUniqueId).c_str());
 			ImGui::TableHeadersRow();
-
 			for (int i = 0; i < effects.size(); i++, globalIndex++)
 			{
 				MenuToggleInformation info = effects[i];
@@ -193,9 +193,10 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 					globalIndex--;
 					continue;
 				}
-				if (ImGui::Button(editId.c_str())) 
+				if (ImGui::Button(editId.c_str()))
 				{
 					currentEditingEffect = currentEffectName;
+					editingEffectIndex = globalIndex; // Store the index of the effect being edited
 					ImGui::OpenPopup("Edit Effect Values");
 				}
 
@@ -210,9 +211,24 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 					updatedInfoList[globalIndex] = info;
 				}
 
-			}
+				if (editingEffectIndex == globalIndex)
+				{
+					std::vector<UniformInfo> uniformInfos = EditValues(currentEditingEffect);
+					if (!uniformInfos.empty())
+					{
+						for (auto& uniformInfo : uniformInfos)
+						{
+							updatedInfoList[editingEffectIndex].uniforms.emplace_back(uniformInfo);
+						}
+					}
 
-			EditValues(currentEditingEffect);
+					if (!ImGui::IsPopupOpen("Edit Effect Values"))
+					{
+						editingEffectIndex = -1;
+						currentEditingEffect.clear();
+					}
+				}
+			}
 			ImGui::EndTable();
 		}
 	}
@@ -759,20 +775,21 @@ void Menu::ClampInputValue(char* inputStr, int maxVal)
 	}
 }
 
-void Menu::EditValues(const std::string& effectName)
+std::vector<UniformInfo> Menu::EditValues(const std::string& effectName)
 {
+
 	if (ImGui::BeginPopupModal("Edit Effect Values", NULL, ImGuiWindowFlags_AlwaysAutoResize))
 	{
+		std::vector<UniformInfo> toReturn;
 		ImGui::PushFont(ImGui::GetIO().Fonts->Fonts[0]);
 
 		ImGui::Text("Editing effect: %s", effectName.c_str());
-
-		std::vector<UniformInfo> uniforms = Manager::GetSingleton()->enumerateUniformNames(effectName);
 
 
 		ImGui::Spacing();
 		ImGui::Separator();
 		ImGui::Spacing();
+		std::vector<UniformInfo> uniforms = Manager::GetSingleton()->enumerateUniformNames(effectName);
 
 		for (auto& uniformInfo : uniforms)
 		{
@@ -780,14 +797,16 @@ void Menu::EditValues(const std::string& effectName)
 
 			ImGui::Text("Uniform: %s", uniformInfo.uniformName.c_str());
 			ImGui::SameLine();
-			ImGui::TextDisabled("[%s]", type.c_str()); 
+			ImGui::TextDisabled("[%s]", type.c_str());
+
 
 			if (type.find("bool") != std::string::npos)
 			{
 				bool value = false;
 				Manager::GetSingleton()->getUniformValue<bool>(uniformInfo.uniformVariable, &value, 1);
-				ImGui::Checkbox(uniformInfo.uniformName.c_str(), &value);
-				Manager::GetSingleton()->setUniformValue<bool>(uniformInfo.uniformVariable, &value, 1);
+				if (ImGui::Checkbox(uniformInfo.uniformName.c_str(), &value)) {
+					uniformInfo.setBoolValues(reinterpret_cast<char*>(&value), 1);
+				}
 			}
 			else if (type.find("float") != std::string::npos)
 			{
@@ -796,40 +815,67 @@ void Menu::EditValues(const std::string& effectName)
 
 				Manager::GetSingleton()->getUniformValue<float>(uniformInfo.uniformVariable, values, numElements);
 
-
-					// Handle other float types (float1 or float2)
-					switch (numElements)
-					{
-					case 1: ImGui::SliderFloat(uniformInfo.uniformName.c_str(), &values[0], 0.0f, 1.0f); break;
-					case 2: ImGui::SliderFloat2(uniformInfo.uniformName.c_str(), values, 0.0f, 1.0f); break;
-					case 3: ImGui::ColorEdit3(uniformInfo.uniformName.c_str(), values); break;
-					case 4: ImGui::ColorEdit4(uniformInfo.uniformName.c_str(), values);
+				// Handle other float types (float1 or float2)
+				switch (numElements)
+				{
+				case 1:
+					if (ImGui::SliderFloat(uniformInfo.uniformName.c_str(), &values[0], 0.0f, 1.0f)) {
+						uniformInfo.setFloatValues(values, 1);
 					}
+					break;
+				case 2:
+					if (ImGui::SliderFloat2(uniformInfo.uniformName.c_str(), values, 0.0f, 1.0f)) {
+						uniformInfo.setFloatValues(values, 2);
+					}
+					break;
+				case 3:
+					if (ImGui::ColorEdit3(uniformInfo.uniformName.c_str(), values)) {
+						uniformInfo.setFloatValues(values, 3);
+					}
+					break;
+				case 4:
+					if (ImGui::ColorEdit4(uniformInfo.uniformName.c_str(), values)) {
+						uniformInfo.setFloatValues(values, 4);
+					}
+					break;
+				}
 
-				// Set the new uniform values back to the API
-				Manager::GetSingleton()->setUniformValue<float>(uniformInfo.uniformVariable, values, numElements);
 			}
 			else if (type.find("int") != std::string::npos)
 			{
 				// Handle multi-dimensional int types (int, int2, int3, int4)
-				int values[4] = { 0 };  // Max size for vec4
+				int values[4] = { 0 };
 				int numElements = std::min(4, Manager::GetSingleton()->getUniformDimension(uniformInfo.uniformVariable));
 
 				Manager::GetSingleton()->getUniformValue<int>(uniformInfo.uniformVariable, values, numElements);
 
 				switch (numElements)
 				{
-				case 1: ImGui::SliderInt(uniformInfo.uniformName.c_str(), &values[0], 0, 100); break;
-				case 2: ImGui::SliderInt2(uniformInfo.uniformName.c_str(), values, 0, 100); break;
-				case 3: ImGui::SliderInt3(uniformInfo.uniformName.c_str(), values, 0, 100); break;
-				case 4: ImGui::SliderInt4(uniformInfo.uniformName.c_str(), values, 0, 100); break;
-				}
+				case 1:
+					if (ImGui::SliderInt(uniformInfo.uniformName.c_str(), &values[0], 0, 100)) {
+						uniformInfo.setIntValues(values, 1);
+					}
+					break;
+				case 2:
+					if (ImGui::SliderInt2(uniformInfo.uniformName.c_str(), values, 0, 100)) {
+						uniformInfo.setIntValues(values, 2);
+						break;
+				case 3:
+					if (ImGui::SliderInt3(uniformInfo.uniformName.c_str(), values, 0, 100)) {
+						uniformInfo.setIntValues(values, 3);
+					}
+					break;
+				case 4:
+					if (ImGui::SliderInt4(uniformInfo.uniformName.c_str(), values, 0, 100)) {
+						uniformInfo.setIntValues(values, 4);
+					}
+					break;
+					}
 
-				Manager::GetSingleton()->setUniformValue<int>(uniformInfo.uniformVariable, values, numElements);
+				}
 			}
 			else if (type.find("unsigned int") != std::string::npos)
 			{
-				// Handle multi-dimensional unsigned int types (uint, uint2, uint3, uint4)
 				unsigned int values[4] = { 0 };  // Max size for vec4
 				int numElements = std::min(4, Manager::GetSingleton()->getUniformDimension(uniformInfo.uniformVariable));
 
@@ -837,19 +883,43 @@ void Menu::EditValues(const std::string& effectName)
 
 				switch (numElements)
 				{
-				case 1: ImGui::SliderScalar(uniformInfo.uniformName.c_str(), ImGuiDataType_U32, &values[0], 0, reinterpret_cast<void*>(100)); break;
-				case 2: ImGui::SliderScalarN(uniformInfo.uniformName.c_str(), ImGuiDataType_U32, values, 2, 0, reinterpret_cast<void*>(100)); break;
-				case 3: ImGui::SliderScalarN(uniformInfo.uniformName.c_str(), ImGuiDataType_U32, values, 3, 0, reinterpret_cast<void*>(100)); break;
-				case 4: ImGui::SliderScalarN(uniformInfo.uniformName.c_str(), ImGuiDataType_U32, values, 4, 0, reinterpret_cast<void*>(100)); break;
+				case 1:
+					if (ImGui::SliderScalar(uniformInfo.uniformName.c_str(), ImGuiDataType_U32, &values[0], 0, reinterpret_cast<void*>(100))) {
+						uniformInfo.setUIntValues(values, 1); 
+					}
+					break;
+				case 2:
+					if (ImGui::SliderScalarN(uniformInfo.uniformName.c_str(), ImGuiDataType_U32, values, 2, 0, reinterpret_cast<void*>(100))) {
+						uniformInfo.setUIntValues(values, 2);
+					}
+					break;
+				case 3:
+					if (ImGui::SliderScalarN(uniformInfo.uniformName.c_str(), ImGuiDataType_U32, values, 3, 0, reinterpret_cast<void*>(100))) {
+						uniformInfo.setUIntValues(values, 3);
+					}
+					break;
+				case 4:
+					if (ImGui::SliderScalarN(uniformInfo.uniformName.c_str(), ImGuiDataType_U32, values, 4, 0, reinterpret_cast<void*>(100))) {
+						uniformInfo.setUIntValues(values, 4); 
+					}
+					break;
 				}
-
-				Manager::GetSingleton()->setUniformValue<unsigned int>(uniformInfo.uniformVariable, values, numElements);
 			}
 
 			// Add a separator between different uniforms for visual clarity
 			ImGui::Spacing();
 			ImGui::Separator();
 			ImGui::Spacing();
+
+			toReturn.emplace_back(uniformInfo);
+		}
+
+		if (ImGui::Button("Save"))
+		{
+			ImGui::CloseCurrentPopup();
+			ImGui::PopFont();
+			ImGui::EndPopup();
+			return toReturn;
 		}
 
 		// Add a cancel button to close the modal
@@ -858,10 +928,11 @@ void Menu::EditValues(const std::string& effectName)
 			ImGui::CloseCurrentPopup();
 		}
 
-		// Restore previous font and end the popup
 		ImGui::PopFont();
 		ImGui::EndPopup();
 	}
+
+	return {};
 }
 
 

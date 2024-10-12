@@ -1,12 +1,41 @@
 #pragma once
 #include <glaze/json/json_t.hpp>
 
+struct UniformInfo
+{
+	std::string uniformName;
+	reshade::api::effect_uniform_variable uniformVariable;
+	std::vector<char> boolValues;
+	std::vector<int> intValues;           
+	std::vector<float> floatValues;       
+	std::vector<unsigned int> uintValues; 
+
+	// Methods to set pointers to values used by ReShade
+	void setIntValues(int* values, size_t count) {
+		intValues.assign(values, values + count);
+	}
+
+	void setFloatValues(float* values, size_t count) {
+		floatValues.assign(values, values + count);
+	}
+
+	void setBoolValues(char* values, size_t count) {
+		boolValues.assign(values, values + count);
+	}
+
+	void setUIntValues(unsigned int* values, size_t count) {
+		uintValues.assign(values, values + count);
+	}
+};
+
 struct MenuToggleInformation
 {
 	std::string effectName{};
 	std::string menuName{};
 	bool state = true;
 	bool isToggled = false;
+
+	std::vector<UniformInfo> uniforms;
 };
 
 struct WeatherToggleInformation
@@ -30,13 +59,6 @@ struct TimeToggleInformation
 	float stopTime = 0.f;
 	bool state = true;
 	bool isToggled = false;
-};
-
-struct UniformInfo
-{
-	std::string uniformName;
-	reshade::api::effect_uniform_variable uniformVariable;
-	bool useColorPicker;
 };
 
 class Manager : public ISingleton<Manager>
