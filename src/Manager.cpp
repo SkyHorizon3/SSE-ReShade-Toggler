@@ -205,68 +205,6 @@ std::string Manager::constructKey(const RE::TESForm* form) const
 	return std::format("{:08X}|{}|{}", Utils::getTrimmedFormID(form), form->GetFormEditorID(), Utils::getModName(form));
 }
 
-std::vector<UniformInfo> Manager::enumerateUniformNames(const std::string& effectName)
-{
-	std::vector<UniformInfo> uniforms;
-
-	s_pRuntime->enumerate_uniform_variables(effectName.c_str(), [&](reshade::api::effect_runtime* runtime, reshade::api::effect_uniform_variable uniform)
-		{
-			char name[256];
-			size_t nameSize = sizeof(name);
-			runtime->get_uniform_variable_name(uniform, name, &nameSize);
-
-			SKSE::log::info("Retrieved variable: {}", name);
-
-			uniforms.emplace_back(name, uniform);
-		});
-
-	return uniforms;
-}
-
-std::string Manager::getUniformType(const reshade::api::effect_uniform_variable& uniformVariable)
-{
-	using format = reshade::api::format;
-	reshade::api::format baseType;
-	uint32_t rows = 0, columns = 0, arrayLength = 0;
-
-	// Call the API function to get the type information
-	s_pRuntime->get_uniform_variable_type(uniformVariable, &baseType, &rows, &columns, &arrayLength);
-
-	// Convert the base type to a string representation
-	std::string typeName;
-
-	switch (baseType)
-	{
-	case format::r32_float:
-		typeName = "float";
-		break;
-	case format::r32_sint:
-		typeName = "int";
-		break;
-	case format::r32_uint:
-		typeName = "unsigned int";
-		break;
-	case format::r32_typeless:
-		typeName = "typeless";
-		break;
-	default:
-		typeName = "unknown";
-		break;
-	}
-
-	// Append dimensions if applicable
-	if (rows > 0 && columns > 0)
-	{
-		typeName += " (" + std::to_string(rows) + "x" + std::to_string(columns) + ")";
-	}
-	else if (arrayLength > 0)
-	{
-		typeName += " [Array of " + std::to_string(arrayLength) + "]";
-	}
-
-	return typeName;
-}
-
 void Manager::toggleEffectMenu(const std::unordered_set<std::string>& openMenus)
 {
 	for (auto& menuInfo : m_menuToggleInfo)
@@ -706,4 +644,180 @@ bool Manager::deserializeArbitraryData(const std::string& buf, Args&... args)
 	return success;
 }
 
+
+template <typename T>
+void Manager::setUniformValue(const reshade::api::effect_uniform_variable& uniformVariable, T* value, size_t count)
+{
+	assert(count > 0 && count <= 4);
+
+	if constexpr (std::is_same<T, float>::value)
+	{
+		s_pRuntime->set_uniform_value_float(uniformVariable, value, count);
+	}
+	else if constexpr (std::is_same<T, int>::value)
+	{
+		s_pRuntime->set_uniform_value_int(uniformVariable, value, count);
+	}
+	else if constexpr (std::is_same<T, unsigned int>::value)
+	{
+		s_pRuntime->set_uniform_value_uint(uniformVariable, value, count);
+	}
+	else if constexpr (std::is_same<T, bool>::value)
+	{
+		s_pRuntime->set_uniform_value_bool(uniformVariable, value, count);
+	}
+	else
+	{
+		static_assert(false, "Unsupported uniform type.");
+	}
+}
+
+template <typename T>
+void Manager::getUniformValue(const reshade::api::effect_uniform_variable& uniformVariable, T* value, size_t count)
+{
+	assert(count > 0 && count <= 4);
+
+	if constexpr (std::is_same<T, float>::value)
+	{
+		s_pRuntime->get_uniform_value_float(uniformVariable, value, count);
+	}
+	else if constexpr (std::is_same<T, int>::value)
+	{
+		s_pRuntime->get_uniform_value_int(uniformVariable, value, count);
+	}
+	else if constexpr (std::is_same<T, unsigned int>::value)
+	{
+		s_pRuntime->get_uniform_value_uint(uniformVariable, value, count);
+	}
+	else if constexpr (std::is_same<T, bool>::value)
+	{
+		s_pRuntime->get_uniform_value_bool(uniformVariable, value, count);
+	}
+	else
+	{
+		static_assert(false, "Unsupported uniform type.");
+	}
+}
+
+template void Manager::getUniformValue<bool>(const reshade::api::effect_uniform_variable& uniformVariable, bool* values, size_t count);
+template void Manager::setUniformValue<bool>(const reshade::api::effect_uniform_variable& uniformVariable, bool* values, size_t count);
+
+template void Manager::getUniformValue<float>(const reshade::api::effect_uniform_variable& uniformVariable, float* values, size_t count);
+template void Manager::setUniformValue<float>(const reshade::api::effect_uniform_variable& uniformVariable, float* values, size_t count);
+
+template void Manager::getUniformValue<int>(const reshade::api::effect_uniform_variable& uniformVariable, int* values, size_t count);
+template void Manager::setUniformValue<int>(const reshade::api::effect_uniform_variable& uniformVariable, int* values, size_t count);
+
+template void Manager::getUniformValue<unsigned int>(const reshade::api::effect_uniform_variable& uniformVariable, unsigned int* values, size_t count);
+template void Manager::setUniformValue<unsigned int>(const reshade::api::effect_uniform_variable& uniformVariable, unsigned int* values, size_t count);
 #pragma endregion
+
+
+std::vector<UniformInfo> Manager::enumerateUniformNames(const std::string& effectName)
+{
+	std::vector<UniformInfo> uniforms;
+
+	s_pRuntime->enumerate_uniform_variables(effectName.c_str(), [&](reshade::api::effect_runtime* runtime, reshade::api::effect_uniform_variable uniform)
+		{
+			char name[256];
+			size_t nameSize = sizeof(name);
+			runtime->get_uniform_variable_name(uniform, name, &nameSize);
+
+			SKSE::log::info("Retrieved variable: {}", name);
+
+			uniforms.emplace_back(name, uniform);
+		});
+
+	return uniforms;
+}
+
+std::string Manager::getUniformType(const reshade::api::effect_uniform_variable& uniformVariable)
+{
+	using format = reshade::api::format;
+	reshade::api::format baseType;
+	uint32_t rows = 0, columns = 0, arrayLength = 0;
+
+	// Call the API function to get the type information
+	s_pRuntime->get_uniform_variable_type(uniformVariable, &baseType, &rows, &columns, &arrayLength);
+
+	char name[256];
+	size_t nameSize = sizeof(name);
+	s_pRuntime->get_uniform_variable_name(uniformVariable, name, &nameSize);
+	std::string typeName;
+
+	std::string varName = name;
+
+	switch (baseType)
+	{
+	case format::r32_float:
+		typeName = "float";
+		break;
+	case format::r32_sint:
+		typeName = "int";
+		break;
+	case format::r32_uint:
+		typeName = "unsigned int";
+		break;
+	case format::r32_typeless:
+		typeName = "typeless";
+		break;
+	default:
+		typeName = "unknown";
+		break;
+	}
+
+	// Heuristic: Check if the name follows a boolean convention
+	if (varName.find("is") == 0 || varName.find("use") == 0 || varName.find("enable") == 0)
+	{
+		typeName = "bool";
+	}
+
+	// Append dimensions if applicable
+	if (rows > 0 && columns > 0)
+	{
+		typeName += " (" + std::to_string(rows) + "x" + std::to_string(columns) + ")";
+	}
+	else if (arrayLength > 0)
+	{
+		typeName += " [Array of " + std::to_string(arrayLength) + "]";
+	}
+
+	return typeName;
+}
+
+int Manager::getUniformDimension(const reshade::api::effect_uniform_variable& uniformVariable) const
+{
+
+	using format = reshade::api::format;
+	reshade::api::format baseType;
+	uint32_t rows = 0, columns = 0, arrayLength = 0;
+
+	s_pRuntime->get_uniform_variable_type(uniformVariable, &baseType, &rows, &columns, &arrayLength);
+
+	// Determine the dimension based on the base type and dimensions
+	if (arrayLength > 0)
+	{
+		// If it's an array, return the array length
+		return arrayLength;
+	}
+
+	// For non-array types, determine based on rows and columns
+	if (rows > 0 && columns > 0)
+	{
+		// Return total components for matrices (rows * columns)
+		return rows * columns;
+	}
+	else if (rows > 0)
+	{
+		// Return number of rows for vector types
+		return rows;
+	}
+	else if (columns > 0)
+	{
+		// Return number of columns for matrix types (though typically rows should be > 0)
+		return columns;
+	}
+
+	// Default to 1 if none of the conditions above are met (scalar case)
+	return 1;
+}

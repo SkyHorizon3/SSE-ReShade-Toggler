@@ -36,6 +36,7 @@ struct UniformInfo
 {
 	std::string uniformName;
 	reshade::api::effect_uniform_variable uniformVariable;
+	bool useColorPicker;
 };
 
 class Manager : public ISingleton<Manager>
@@ -86,6 +87,15 @@ public:
 	void setLastPreset(const std::string& updatedPreset) { m_lastPresetName = updatedPreset; }
 
 	std::string getPresetPath(const std::string& presetName) const;
+
+
+	template<typename T>
+	void setUniformValue(const reshade::api::effect_uniform_variable& uniformVariable, T* value, size_t count);
+
+	template<typename T>
+	void getUniformValue(const reshade::api::effect_uniform_variable& uniformVariable, T* value, size_t count);
+
+	int getUniformDimension(const reshade::api::effect_uniform_variable& uniformVariable) const;
 private:
 
 	bool timeWithinRange(const float& startTime, const float& stopTime) const;
