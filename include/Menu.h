@@ -17,7 +17,7 @@ private:
 private:
 	void SaveFile();
 
-	void AddNewMenu(std::vector<MenuToggleInformation>& updatedInfoList);
+	void AddNewMenu(std::map<std::string, std::vector<MenuToggleInformation>>& updatedInfoList);
 	void AddNewWeather(std::map<std::string, std::vector<WeatherToggleInformation>>& updatedInfoList);
 	void AddNewInterior(std::map<std::string, std::vector<InteriorToggleInformation>>& updatedInfoList);
 	void AddNewTime(std::map<std::string, std::vector<TimeToggleInformation>>& updatedInfoList);

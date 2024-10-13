@@ -131,19 +131,8 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 	ImGui::SeparatorText("Effects");
 
 	// Get the list of toggle information
-	std::vector<MenuToggleInformation> infoList = Manager::GetSingleton()->getMenuToggleInfo();
-	std::vector<MenuToggleInformation> updatedInfoList = infoList;
-
-	// Group menus
-	std::unordered_map<std::string, std::vector<MenuToggleInformation>> menuEffectMap;
-	for (auto& info : infoList)
-	{
-		if (!info.effectName.empty())
-		{
-			menuEffectMap[info.menuName].emplace_back(info);
-		}
-	}
-
+	std::map<std::string, std::vector<MenuToggleInformation>> infoList = Manager::GetSingleton()->getMenuToggleInfo();
+	std::map<std::string, std::vector<MenuToggleInformation>> updatedInfoList = infoList;
 	static char inputBuffer[256] = "";
 	ImGui::InputTextWithHint("##Search", "Search Menus...", inputBuffer, sizeof(inputBuffer));
 
@@ -152,7 +141,7 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 	static std::string currentEditingEffect;
 	static int editingEffectIndex = -1;
 
-	for (const auto& [menuName, effects] : menuEffectMap)
+	for (const auto& [menuName, effects] : infoList)
 	{
 		if (strlen(inputBuffer) > 0 && menuName.find(inputBuffer) == std::string::npos)
 			continue;
@@ -189,7 +178,20 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 				ImGui::TableNextColumn();
 				if (ImGui::Button(removeId.c_str()))
 				{
-					updatedInfoList.erase(updatedInfoList.begin() + globalIndex);
+					updatedInfoList[menuName].erase(
+						std::remove_if(updatedInfoList[menuName].begin(), updatedInfoList[menuName].end(),
+						[&info](const MenuToggleInformation& timeInfo) {
+							return timeInfo.effectName == info.effectName;
+						}
+					),
+						updatedInfoList[menuName].end()
+					);
+
+					if (updatedInfoList[menuName].empty())
+					{
+						updatedInfoList.erase(menuName);
+					}
+
 					globalIndex--;
 					continue;
 				}
@@ -208,7 +210,7 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 					info.menuName = menuName;
 					info.effectName = currentEffectName;
 					info.state = currentEffectState;
-					updatedInfoList[globalIndex] = info;
+					updatedInfoList[menuName].at(i) = info;
 				}
 
 				if (editingEffectIndex == globalIndex)
@@ -218,7 +220,7 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 					{
 						for (auto& uniformInfo : uniformInfos)
 						{
-							updatedInfoList[editingEffectIndex].uniforms.emplace_back(uniformInfo);
+							updatedInfoList[menuName][editingEffectIndex].uniforms.emplace_back(uniformInfo);
 						}
 					}
 
@@ -228,6 +230,7 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 						currentEditingEffect.clear();
 					}
 				}
+
 			}
 			ImGui::EndTable();
 		}
@@ -247,7 +250,7 @@ void Menu::SpawnMenuSettings(ImGuiID dockspace_id)
 	ImGui::End();
 }
 
-void Menu::AddNewMenu(std::vector<MenuToggleInformation>& updatedInfoList)
+void Menu::AddNewMenu(std::map<std::string, std::vector<MenuToggleInformation>>& updatedInfoList)
 {
 	static std::vector<std::string> currentMenus;
 	static std::vector<std::string> currentEffects;
@@ -279,7 +282,7 @@ void Menu::AddNewMenu(std::vector<MenuToggleInformation>& updatedInfoList)
 			{
 				for (const auto& effect : currentEffects)
 				{
-					updatedInfoList.emplace_back(MenuToggleInformation{ effect, menu, toggled });
+					updatedInfoList[menu].emplace_back(MenuToggleInformation{ effect, menu, toggled });
 				}
 			}
 

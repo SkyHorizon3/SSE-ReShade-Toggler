@@ -6,9 +6,9 @@ struct UniformInfo
 	std::string uniformName;
 	reshade::api::effect_uniform_variable uniformVariable;
 	std::vector<char> boolValues;
-	std::vector<int> intValues;           
-	std::vector<float> floatValues;       
-	std::vector<unsigned int> uintValues; 
+	std::vector<int> intValues;
+	std::vector<float> floatValues;
+	std::vector<unsigned int> uintValues;
 
 	// Methods to set pointers to values used by ReShade
 	void setIntValues(int* values, size_t count) {
@@ -93,8 +93,8 @@ public:
 
 	void toggleEffectInterior(const bool isInterior);
 
-	std::vector<MenuToggleInformation> getMenuToggleInfo() const { return m_menuToggleInfo; }
-	void setMenuToggleInfo(const std::vector<MenuToggleInformation>& info) { m_menuToggleInfo = info; }
+	std::map<std::string, std::vector<MenuToggleInformation>> getMenuToggleInfo() const { return m_menuToggleInfo; }
+	void setMenuToggleInfo(const std::map<std::string, std::vector<MenuToggleInformation>>& info) { m_menuToggleInfo = info; }
 
 	std::map<std::string, std::vector<TimeToggleInformation>> getTimeToggleInfo() const { return m_timeToggleInfo; }
 	void setTimeToggleInfo(const std::map<std::string, std::vector<TimeToggleInformation>>& info) { m_timeToggleInfo = info; }
@@ -120,6 +120,8 @@ public:
 	int getUniformDimension(const reshade::api::effect_uniform_variable& uniformVariable) const;
 private:
 
+	void setUniformValues(UniformInfo& uniform);
+
 	bool timeWithinRange(const float& startTime, const float& stopTime) const;
 
 	bool allowtoggleEffectWeather(const WeatherToggleInformation& cachedweather, const std::map<std::string, std::vector<WeatherToggleInformation>>::iterator& it) const;
@@ -132,7 +134,7 @@ private:
 
 	void toggleEffect(const char* technique, bool state) const;
 
-	std::vector<MenuToggleInformation> m_menuToggleInfo;
+	std::map<std::string, std::vector<MenuToggleInformation>> m_menuToggleInfo;
 	std::map<std::string, std::vector<WeatherToggleInformation>> m_weatherToggleInfo;
 	std::map<std::string, std::vector<InteriorToggleInformation>> m_interiorToggleInfo;
 	std::map<std::string, std::vector<TimeToggleInformation>> m_timeToggleInfo;

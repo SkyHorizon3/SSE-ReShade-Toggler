@@ -207,42 +207,51 @@ std::string Manager::constructKey(const RE::TESForm* form) const
 
 void Manager::toggleEffectMenu(const std::unordered_set<std::string>& openMenus)
 {
-	for (auto& menuInfo : m_menuToggleInfo)
+	for (auto& [menuName, menuInfoList] : m_menuToggleInfo)
 	{
-		if (openMenus.find(menuInfo.menuName) != openMenus.end())
-		{
-			if (!menuInfo.isToggled)
-			{
-				toggleEffect(menuInfo.effectName.c_str(), menuInfo.state);
-				menuInfo.isToggled = true;
-			}
-		}
-		else if (menuInfo.isToggled)
-		{
-			toggleEffect(menuInfo.effectName.c_str(), !menuInfo.state);
-			menuInfo.isToggled = false;
-		}
+		const bool isOpen = openMenus.find(menuName) != openMenus.end();
 
-		for (auto& uniform : menuInfo.uniforms)
+		for (auto& info : menuInfoList)
 		{
-			// Ugly, but works
-			if (!uniform.floatValues.empty())
+			if (isOpen && !info.isToggled)
 			{
-				Manager::GetSingleton()->setUniformValue<float>(uniform.uniformVariable, uniform.floatValues.data(), uniform.floatValues.size());
+				toggleEffect(info.effectName.c_str(), info.state);
+				info.isToggled = true;
 			}
-			else if (!uniform.intValues.empty())
+			else if (!isOpen && info.isToggled)
 			{
-				Manager::GetSingleton()->setUniformValue<int>(uniform.uniformVariable, uniform.intValues.data(), uniform.intValues.size());
+				toggleEffect(info.effectName.c_str(), !info.state);
+				info.isToggled = false;
 			}
-			else if (!uniform.uintValues.empty())
+
+			for (auto& uniform : info.uniforms)
 			{
-				Manager::GetSingleton()->setUniformValue<unsigned int>(uniform.uniformVariable, uniform.uintValues.data(), uniform.uintValues.size());
-			}
-			else if (!uniform.boolValues.empty())
-			{
-				Manager::GetSingleton()->setUniformValue<bool>(uniform.uniformVariable, reinterpret_cast<bool*>(uniform.boolValues.data()), 1);
+				setUniformValues(uniform);
 			}
 		}
+	}
+
+}
+
+void Manager::setUniformValues(UniformInfo& uniform)
+{
+	const auto manager = Manager::GetSingleton();
+
+	if (!uniform.floatValues.empty())
+	{
+		manager->setUniformValue<float>(uniform.uniformVariable, uniform.floatValues.data(), uniform.floatValues.size());
+	}
+	else if (!uniform.intValues.empty())
+	{
+		manager->setUniformValue<int>(uniform.uniformVariable, uniform.intValues.data(), uniform.intValues.size());
+	}
+	else if (!uniform.uintValues.empty())
+	{
+		manager->setUniformValue<unsigned int>(uniform.uniformVariable, uniform.uintValues.data(), uniform.uintValues.size());
+	}
+	else if (!uniform.boolValues.empty())
+	{
+		manager->setUniformValue<bool>(uniform.uniformVariable, reinterpret_cast<bool*>(uniform.boolValues.data()), 1);
 	}
 }
 
@@ -703,7 +712,7 @@ void Manager::setUniformValue(const reshade::api::effect_uniform_variable& unifo
 	}
 	else
 	{
-		//static_assert(false, "Unsupported uniform type.");
+		SKSE::log::error("Unsupported uniform type in setUniformValue!");
 	}
 }
 
@@ -730,7 +739,7 @@ void Manager::getUniformValue(const reshade::api::effect_uniform_variable& unifo
 	}
 	else
 	{
-		//static_assert(false, "Unsupported uniform type.");
+		SKSE::log::error("Unsupported uniform type in getUniformValue!");
 	}
 }
 
