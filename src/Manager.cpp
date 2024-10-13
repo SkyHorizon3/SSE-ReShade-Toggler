@@ -55,7 +55,7 @@ bool Manager::serializeJSONPreset(const std::string& presetName)
 
 void Manager::parseINI()
 {
-	const auto path = std::format("Data/SKSE/Plugins/{}.ini", Plugin::NAME.data());
+	const auto path = std::format("Data/SKSE/Plugins/{}.ini", Plugin::NAME);
 
 	CSimpleIniA ini;
 	ini.SetUnicode();
@@ -67,7 +67,7 @@ void Manager::parseINI()
 
 void Manager::serializeINI()
 {
-	const auto path = std::format("Data/SKSE/Plugins/{}.ini", Plugin::NAME.data());
+	const auto path = std::format("Data/SKSE/Plugins/{}.ini", Plugin::NAME);
 
 	CSimpleIniA ini;
 	ini.SetUnicode();
@@ -147,7 +147,7 @@ std::vector<std::string> Manager::enumerateMenus() const
 
 	for (const auto& menu : ui->menuMap)
 	{
-		menuNames.emplace_back(std::string(menu.first));
+		menuNames.emplace_back(menu.first.c_str());
 	}
 	std::sort(menuNames.begin(), menuNames.end());
 	return menuNames;
@@ -498,7 +498,7 @@ void Manager::toggleEffect(const char* effect, const bool state) const
 
 #pragma region TemplateTomfoolery
 template<>
-struct glz::meta<UniformInfo> 
+struct glz::meta<UniformInfo>
 {
 	using T = UniformInfo;
 	static constexpr auto value = object(
