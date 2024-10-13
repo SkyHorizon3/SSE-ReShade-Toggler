@@ -703,7 +703,7 @@ void Manager::setUniformValue(const reshade::api::effect_uniform_variable& unifo
 	}
 	else
 	{
-		static_assert(false, "Unsupported uniform type.");
+		//static_assert(false, "Unsupported uniform type.");
 	}
 }
 
@@ -730,7 +730,7 @@ void Manager::getUniformValue(const reshade::api::effect_uniform_variable& unifo
 	}
 	else
 	{
-		static_assert(false, "Unsupported uniform type.");
+		//static_assert(false, "Unsupported uniform type.");
 	}
 }
 

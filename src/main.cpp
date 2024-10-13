@@ -114,6 +114,14 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 
 	spdlog::set_pattern("[%H:%M:%S:%e] [%l] %v"s);
 
+#ifndef NDEBUG
+	spdlog::set_level(spdlog::level::trace);
+	spdlog::flush_on(spdlog::level::trace);
+#else
+	spdlog::set_level(spdlog::level::info);
+	spdlog::flush_on(spdlog::level::info);
+#endif
+
 	SKSE::log::info("Game version : {}", skse->RuntimeVersion());
 
 	SKSE::AllocTrampoline(28);
