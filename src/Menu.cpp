@@ -275,7 +275,13 @@ void Menu::AddNewMenu(std::vector<MenuToggleInformation>& updatedInfoList)
 		ImGui::Separator();
 		if (ImGui::Button("Finish"))
 		{
-			CombineVectorsToStructs(currentMenus, currentEffects, updatedInfoList, toggled);
+			for (const auto& menu : currentMenus)
+			{
+				for (const auto& effect : currentEffects)
+				{
+					updatedInfoList.emplace_back(MenuToggleInformation{ effect, menu, toggled });
+				}
+			}
 
 			Manager::GetSingleton()->setMenuToggleInfo(updatedInfoList);
 

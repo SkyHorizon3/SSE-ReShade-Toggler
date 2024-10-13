@@ -74,18 +74,6 @@ bool MenuManager::CreateTreeNode(const char* label, std::vector<std::string>& se
 	return itemsChanged;
 }
 
-template <typename StructType, typename Vector1, typename Vector2, typename... Args>
-void MenuManager::CombineVectorsToStructs(const Vector1& vec1, const Vector2& vec2, std::vector<StructType>& outputList, Args&&... args)
-{
-	for (const auto& item1 : vec1)
-	{
-		for (const auto& item2 : vec2)
-		{
-			outputList.emplace_back(StructType{ item1, item2, std::forward<Args>(args)... });
-		}
-	}
-}
-
 #pragma region Colors
 void MenuManager::SetColors()
 {

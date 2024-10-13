@@ -34,9 +34,6 @@ public:
 	bool CreateCombo(const char* label, std::string& currentItem, std::vector<std::string>& items, ImGuiComboFlags_ flags);
 	bool CreateTreeNode(const char* label, std::vector<std::string>& selectedItems, std::vector<std::string>& items);
 
-	template <typename StructType, typename Vector1, typename Vector2, typename... Args>
-	void CombineVectorsToStructs(const Vector1& vec1, const Vector2& vec2, std::vector<StructType>& outputList, Args&&... args);
-
 	void SetColors();
 	void RemoveColors();
 
