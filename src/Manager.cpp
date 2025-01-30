@@ -225,6 +225,11 @@ void Manager::toggleEffectMenu(const std::string& menu, const bool opening)
 				}
 				effectUsageCount++;
 				info.isToggled = true;
+
+				for (auto& uniform : info.uniforms)
+				{
+					setUniformValues(uniform);
+				}
 			}
 		}
 		else
@@ -241,10 +246,6 @@ void Manager::toggleEffectMenu(const std::string& menu, const bool opening)
 			}
 		}
 
-		for (auto& uniform : info.uniforms)
-		{
-			setUniformValues(uniform);
-		}
 	}
 }
 
@@ -373,6 +374,11 @@ void Manager::toggleEffectWeather()
 			m_weatherToggleCache.first = ws;
 
 			updateOrAddObject(m_weatherToggleCache.second, info);
+
+			for (auto& uniform : info.uniforms)
+			{
+				setUniformValues(uniform);
+			}
 		}
 		else if (info.isToggled)
 		{
@@ -382,10 +388,6 @@ void Manager::toggleEffectWeather()
 			removeById(m_weatherToggleCache.second, info);
 		}
 
-		for (auto& uniform : info.uniforms)
-		{
-			setUniformValues(uniform);
-		}
 	}
 }
 
@@ -441,6 +443,11 @@ void Manager::toggleEffectTime()
 			m_timeToggleCache.first = ws;
 
 			updateOrAddObject(m_timeToggleCache.second, timeInfo);
+
+			for (auto& uniform : timeInfo.uniforms)
+			{
+				setUniformValues(uniform);
+			}
 		}
 		else if (!inRange && timeInfo.isToggled)
 		{
@@ -450,10 +457,6 @@ void Manager::toggleEffectTime()
 			removeById(m_timeToggleCache.second, timeInfo);
 		}
 
-		for (auto& uniform : timeInfo.uniforms)
-		{
-			setUniformValues(uniform);
-		}
 	}
 
 }

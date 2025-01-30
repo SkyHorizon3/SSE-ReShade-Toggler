@@ -80,7 +80,7 @@ extern "C" DLLEXPORT constinit auto SKSEPlugin_Version = []()
 	{
 		SKSE::PluginVersionData v;
 		v.PluginName(Plugin::NAME);
-		v.AuthorName("SkyHorizon and PhilikusHD");
+		v.AuthorName("SkyHorizon and PhilikusHD"sv);
 		v.PluginVersion(Plugin::VERSION);
 		v.UsesAddressLibrary();
 		v.UsesNoStructs();
@@ -134,7 +134,7 @@ SKSEPluginLoad(const SKSE::LoadInterface* skse)
 	SKSE::AllocTrampoline(28);
 
 	if (!Load())
-		SKSE::stl::report_and_fail("ReShade not present!\nIf you want to use ReShade Effect Toggler, please install ReShade with full add-on support."sv);
+		SKSE::stl::report_and_fail("ReShade not present!\nIf you want to use ReShade Effect Toggler, please install ReShade 6.1.1+ with full add-on support."sv);
 
 	auto papyrus = SKSE::GetPapyrusInterface();
 	papyrus->Register(Papyrus::Bind);
